@@ -8,7 +8,8 @@ Dieses Projekt ist fuer ein minimales erstes LeoCloud-Deployment vorbereitet.
 
 - Namespace: `student-it220269`
 - Host: `it220269.cloud.htl-leonding.ac.at`
-- Image: `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning:latest`
+- erstes Test-Image: `nginx:1.27-alpine` mit ConfigMap-Inhalt
+- vorbereitetes GHCR-Image fuer spaetere App-Builds: `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning:latest`
 
 Deployment:
 
