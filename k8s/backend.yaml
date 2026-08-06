@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamebased-learning-web
+  labels:
+    app: gamebased-learning-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gamebased-learning-web
+  template:
+    metadata:
+      labels:
+        app: gamebased-learning-web
+    spec:
+      # Falls das GHCR-Package privat bleibt, muss hier ein imagePullSecret ergaenzt werden.
+      # imagePullSecrets:
+      #   - name: ghcr-credentials
+      containers:
+        - name: gamebased-learning-web
+          image: ghcr.io/davidberghahn/diplomarbeit-gamebased-learning:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 5
+            failureThreshold: 12
+          resources:
+            requests:
+              cpu: "25m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gamebased-learning-web
+  labels:
+    app: gamebased-learning-web
+spec:
+  selector:
+    app: gamebased-learning-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+

@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gamebased-learning-web-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: it220269.cloud.htl-leonding.ac.at
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gamebased-learning-web
+                port:
+                  number: 80
+
