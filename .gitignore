@@ -1,4 +1,5 @@
 .DS_Store
+.idea/
 node_modules/
 dist/
 build/
@@ -6,4 +7,3 @@ target/
 .env
 .env.*
 !.env.example
-

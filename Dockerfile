@@ -1,6 +1,15 @@
-FROM nginx:1.27-alpine
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 
-COPY public/ /usr/share/nginx/html/
+WORKDIR /workspace
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B package -DskipTests
 
-EXPOSE 80
+FROM eclipse-temurin:21-jre-alpine
 
+WORKDIR /deployments
+COPY --from=build /workspace/target/quarkus-app/ ./
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]
