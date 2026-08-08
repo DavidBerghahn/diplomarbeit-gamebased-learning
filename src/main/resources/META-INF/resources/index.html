@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Game-based Learning API</title>
     <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/login.js"></script>
   </head>
   <body>
     <main class="page">
@@ -12,23 +13,29 @@
         <p class="eyebrow">HTL Leonding Diplomarbeit</p>
         <h1>Game-based Learning API</h1>
         <p class="lead">
-          Backend-Grundlage mit austauschbarer Auth-Schicht. Aktuell wird ein
-          Mock-Login verwendet; spaeter kann Keycloak/OIDC angeschlossen werden.
+          Backend-Grundlage mit Schul-Keycloak Login. Nach der Anmeldung wird
+          dein Schulaccount als interner App-User im Backend verwendet.
         </p>
         <div class="status-grid">
           <article>
             <span>Login</span>
-            <strong>MockAuthProvider aktiv</strong>
+            <strong id="auth-mode">Wird geladen</strong>
           </article>
           <article>
             <span>Benutzer</span>
-            <strong>/api/auth/me</strong>
+            <strong id="user-summary">Nicht angemeldet</strong>
           </article>
           <article>
             <span>API Docs</span>
-            <strong>/api/docs</strong>
+            <a href="/api/docs">/api/docs</a>
           </article>
         </div>
+        <div class="actions">
+          <button id="login-button" type="button">Mit Schulaccount anmelden</button>
+          <button id="profile-button" type="button">Profil laden</button>
+          <button id="logout-button" type="button">Abmelden</button>
+        </div>
+        <pre id="login-output" aria-live="polite"></pre>
       </section>
     </main>
   </body>

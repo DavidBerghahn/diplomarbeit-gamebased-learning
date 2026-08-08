@@ -23,8 +23,10 @@ spec:
           env:
             - name: QUARKUS_PROFILE
               value: "prod"
-            - name: AUTH_PROVIDER
-              value: "mock"
+            - name: OIDC_AUTH_SERVER_URL
+              value: "https://auth.htl-leonding.ac.at/realms/2526_5bhitm"
+            - name: OIDC_CLIENT_ID
+              value: "frontend"
             - name: DATABASE_JDBC_URL
               value: "jdbc:postgresql://gamebased-learning-postgres:5432/gamebased"
             - name: DATABASE_USERNAME

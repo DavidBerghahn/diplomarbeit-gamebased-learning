@@ -5,32 +5,26 @@ import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
 class AuthResourceTest {
     @Test
-    void returnsDefaultMockUser() {
+    void rejectsMissingBearerToken() {
         given()
                 .when().get("/api/auth/me")
                 .then()
-                .statusCode(200)
-                .body("id", notNullValue())
-                .body("username", equalTo("it220269"))
-                .body("role", equalTo("STUDENT"));
+                .statusCode(401);
     }
 
     @Test
-    void acceptsMockHeadersForOtherRoles() {
+    void exposesAuthConfig() {
         given()
-                .header("X-Mock-User", "teacher01")
-                .header("X-Mock-Name", "Test Teacher")
-                .header("X-Mock-Role", "TEACHER")
-                .when().get("/api/auth/me")
+                .when().get("/api/auth/config")
                 .then()
                 .statusCode(200)
-                .body("username", equalTo("teacher01"))
-                .body("displayName", equalTo("Test Teacher"))
-                .body("role", equalTo("TEACHER"));
+                .body("provider", equalTo("keycloak"))
+                .body("keycloakUrl", equalTo("https://auth.htl-leonding.ac.at"))
+                .body("keycloakRealm", equalTo("2526_5bhitm"))
+                .body("keycloakClientId", equalTo("frontend"));
     }
 }

@@ -87,6 +87,58 @@ article strong {
   overflow-wrap: anywhere;
 }
 
+article a {
+  display: block;
+  margin-top: 10px;
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(23, 32, 51, 0.16);
+  border-radius: 8px;
+  background: #172033;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button + button {
+  background: #ffffff;
+  color: #172033;
+}
+
+button:hover {
+  border-color: #2563eb;
+}
+
+pre {
+  min-height: 160px;
+  max-height: 420px;
+  margin: 18px 0 0;
+  padding: 16px;
+  border: 1px solid rgba(23, 32, 51, 0.1);
+  border-radius: 8px;
+  background: #0f172a;
+  color: #dbeafe;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow: auto;
+}
+
 @media (max-width: 760px) {
   .status-grid {
     grid-template-columns: 1fr;

@@ -2,24 +2,9 @@
 
 This project keeps authentication separate from game, progress, and AI logic.
 
-## Current Development Mode
+## Keycloak Mode
 
-The backend currently uses `MockAuthProvider`.
-
-It reads optional HTTP headers:
-
-```text
-X-Mock-User: it220269
-X-Mock-Name: David Berghahn
-X-Mock-Class: 5BHITM
-X-Mock-Role: STUDENT
-```
-
-If no headers are provided, the backend creates a default student user.
-
-## Later Keycloak Mode
-
-The future Keycloak/OIDC implementation should replace only the `AuthProvider`.
+The backend uses Keycloak/OIDC as its only authentication mechanism.
 
 The application should still work with the same internal `app_user` table:
 
@@ -27,9 +12,40 @@ The application should still work with the same internal `app_user` table:
 external_subject -> OIDC sub claim or Keycloak user id
 username         -> preferred_username
 display_name     -> name
-school_class     -> class/group claim when available
-role             -> mapped from OIDC roles/groups
+school_class     -> class/group claim or parsed from distinguishedName
+role             -> mapped from custom_roles, groups, realm roles, or client roles
 ```
+
+Herr Aberger's LDAP demo shows that the school LDAP data is exposed through
+Keycloak. The backend must not talk to LDAP directly. It receives a normal
+Bearer token from the frontend and reads claims such as:
+
+```text
+sub
+preferred_username
+name
+distinguishedName
+custom_roles
+```
+
+For local development start the backend with:
+
+```bash
+./mvnw quarkus:dev \
+  -Dquarkus.console.enabled=false \
+  -Dquarkus.analytics.disabled=true \
+  -Ddebug=false
+```
+
+The current default values are based on the LDAP demo:
+
+```text
+OIDC_AUTH_SERVER_URL=https://auth.htl-leonding.ac.at/realms/2526_5bhitm
+OIDC_CLIENT_ID=frontend
+```
+
+If the final project gets its own realm or client, only these environment
+variables have to change.
 
 Game and AI modules must not parse tokens directly. They should receive the
 internal `AppUser.id` from controllers/services and store their data against

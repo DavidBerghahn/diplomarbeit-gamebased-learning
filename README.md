@@ -4,9 +4,9 @@ KI-gestuetzte Spieleplattform fuer Game-based Learning.
 
 ## Backend
 
-Das Backend ist als Quarkus-Anwendung vorbereitet. Der aktuelle Login ist ein
-Mock-Login, damit die Spiel- und KI-Module weiterentwickelt werden koennen,
-bevor die echte Schuluser-/Keycloak-Anbindung feststeht.
+Das Backend ist als Quarkus-Anwendung vorbereitet und verwendet den
+Schul-Keycloak der HTL Leonding. Die LDAP-Daten der Schule werden nicht direkt
+aus der Anwendung gelesen, sondern kommen ueber Claims im Keycloak Token.
 
 Wichtige Endpoints:
 
@@ -20,26 +20,35 @@ PATCH /api/users/{id}   # ADMIN
 GET /api/docs
 ```
 
-Mock-Login per Header:
-
-```bash
-curl http://localhost:8080/api/auth/me \
-  -H "X-Mock-User: it220269" \
-  -H "X-Mock-Name: David Berghahn" \
-  -H "X-Mock-Class: 5BHITM" \
-  -H "X-Mock-Role: STUDENT"
-```
-
-Die spaetere Keycloak-Anbindung soll nur den `AuthProvider` ersetzen. Die
-fachliche Datenbank fuer Userprofile, Fortschritt, Spiele und KI-Daten bleibt
-dadurch stabil. Siehe `docs/auth-architecture.md`.
+Die Keycloak-Anbindung laeuft ueber den gleichen `AuthProvider`. Die fachliche
+Datenbank fuer Userprofile, Fortschritt, Spiele und KI-Daten bleibt dadurch
+stabil. Siehe `docs/auth-architecture.md`.
 
 Lokal testen:
 
 ```bash
 ./mvnw test
-./mvnw quarkus:dev
 ```
+
+Backend mit Keycloak-Login lokal starten:
+
+```bash
+./mvnw quarkus:dev \
+  -Dquarkus.console.enabled=false \
+  -Dquarkus.analytics.disabled=true \
+  -Ddebug=false
+```
+
+Das Frontend sendet nach dem Schul-Login einen Bearer Token mit:
+
+```text
+Authorization: Bearer <keycloak-token>
+```
+
+Die integrierte Test-Loginseite ist danach unter `http://localhost:8080/`
+erreichbar. Wenn Keycloak eine `invalid redirect_uri` Meldung zeigt, muss der
+Keycloak-Client `frontend` von einem Admin fuer die lokale URL und die LeoCloud-
+URL freigeschaltet werden.
 
 Im Dev-Modus verwendet das Backend H2 im Speicher. Das gebaute Docker-/LeoCloud-
 Artefakt verwendet im `prod`-Profil PostgreSQL.
