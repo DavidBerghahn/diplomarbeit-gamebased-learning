@@ -14,6 +14,10 @@ spec:
       labels:
         app: gamebased-learning-api
     spec:
+      hostAliases:
+        - ip: "10.191.112.13"
+          hostnames:
+            - "auth.htl-leonding.ac.at"
       containers:
         - name: gamebased-learning-api
           image: ghcr.io/davidberghahn/diplomarbeit-gamebased-learning:latest
