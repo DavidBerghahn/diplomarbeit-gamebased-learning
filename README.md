@@ -1,12 +1,12 @@
 # diplomarbeit-gamebased-learning
 
-KI-gestuetzte Spieleplattform fuer Game-based Learning.
+KI-gestützte Spieleplattform für Game-based Learning.
 
 ## Backend
 
 Das Backend ist als Quarkus-Anwendung vorbereitet und verwendet den
 Schul-Keycloak der HTL Leonding. Die LDAP-Daten der Schule werden nicht direkt
-aus der Anwendung gelesen, sondern kommen ueber Claims im Keycloak Token.
+aus der Anwendung gelesen, sondern kommen über Claims im Keycloak Token.
 
 Wichtige Endpoints:
 
@@ -20,12 +20,12 @@ PATCH /api/users/{id}   # ADMIN
 GET /api/docs
 ```
 
-Die Keycloak-Anbindung laeuft ueber den gleichen `AuthProvider`. Die fachliche
-Datenbank fuer Userprofile, Fortschritt, Spiele und KI-Daten bleibt dadurch
+Die Keycloak-Anbindung läuft über den gleichen `AuthProvider`. Die fachliche
+Datenbank für Userprofile, Fortschritt, Spiele und KI-Daten bleibt dadurch
 stabil. Siehe `docs/auth-architecture.md`.
 
-Eine einfache deutsche Erklaerung zu Login, Userverwaltung, Docker, GHCR,
-Kubernetes und LeoCloud steht in `docs/projektstand-einfach-erklaert.md`.
+Eine einfache deutsche Erklärung zu Login, Userverwaltung, Docker, GHCR,
+Kubernetes und LeoCloud steht in `docs/projektstand-einfach-erklärt.md`.
 
 Lokal testen:
 
@@ -50,7 +50,7 @@ Authorization: Bearer <keycloak-token>
 
 Die integrierte Test-Loginseite ist danach unter `http://localhost:8080/`
 erreichbar. Wenn Keycloak eine `invalid redirect_uri` Meldung zeigt, muss der
-Keycloak-Client `frontend` von einem Admin fuer die lokale URL und die LeoCloud-
+Keycloak-Client `frontend` von einem Admin für die lokale URL und die LeoCloud-
 URL freigeschaltet werden.
 
 Im Dev-Modus verwendet das Backend H2 im Speicher. Das gebaute Docker-/LeoCloud-
@@ -58,7 +58,7 @@ Artefakt verwendet im `prod`-Profil PostgreSQL.
 
 ## LeoCloud
 
-Dieses Projekt ist fuer ein LeoCloud-Deployment vorbereitet.
+Dieses Projekt ist für ein LeoCloud-Deployment vorbereitet.
 
 - Namespace: `student-it220269`
 - Host: `it220269.cloud.htl-leonding.ac.at`
