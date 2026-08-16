@@ -24,6 +24,9 @@ Die Keycloak-Anbindung laeuft ueber den gleichen `AuthProvider`. Die fachliche
 Datenbank fuer Userprofile, Fortschritt, Spiele und KI-Daten bleibt dadurch
 stabil. Siehe `docs/auth-architecture.md`.
 
+Eine einfache deutsche Erklaerung zu Login, Userverwaltung, Docker, GHCR,
+Kubernetes und LeoCloud steht in `docs/projektstand-einfach-erklaert.md`.
+
 Lokal testen:
 
 ```bash
