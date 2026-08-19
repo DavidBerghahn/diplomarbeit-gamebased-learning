@@ -1,41 +1,79 @@
-body{
+@font-face {
+  font-family: 'carter';
+  src: url('../../assets/fonts/Carter_One/CarterOne-Regular.ttf');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'superior';
+  src: url('../../assets/fonts/lt_superior/LTSuperior-Light.ttf');
+  font-weight: bold;
+  font-style: normal;
+}
+
+body {
   margin: 0;
+  width: 100vw;
   height: 100vh;
+  overflow: hidden;
+  background-color: #FFFFFF;
+  font-family: Arial, sans-serif;
+}
+
+.start-container {
+  width: 100vw;
+  height: 93vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: #FFFFFF;
-  font-family: Arial, sans-serif;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+h1 {
+  margin: 0;
+  font-family: carter;
+  font-size: 7vw;
+  font-weight: 600;
+  letter-spacing: -0.08vw;
   color: #004B8A;
 }
 
-h1{
-  margin: 0;
-  font-size: 6vw;
-  font-weight: 700;
-  text-align: center;
+.title-line {
+  width: 30vw;
+  height: 0.3vh;
+  margin-top: 1.2vh;
+  background-color: #61BEFF;
+  border-radius: 1vw;
 }
 
-p{
-  margin: 10px 0 30px;
+p {
+  margin: 1.5vh 0 4vh 0;
+  font-family: superior;
   font-size: 2vw;
-  color: #61BEFF;
-  text-align: center;
+  font-weight: 400;
+  color: #004B8A;
+  opacity: 0.65;
 }
 
-button{
-  padding: 12px 32px;
+button {
+  min-width: 10vw;
+  padding: 1.2vh 1.8vw;
+  font-family: superior;
   background-color: #004B8A;
   color: #FFFFFF;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border: 0.1vw solid #004B8A;
+  border-radius: 1vw;
+  font-size: 0.9vw;
+  font-weight: 500;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.2s ease-in-out;
 }
 
 button:hover {
-  background-color: #61BEFF;
+  background-color: #FFFFFF;
+  color: #004B8A;
+  scale: 1.1;
 }

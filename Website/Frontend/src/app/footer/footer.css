@@ -1,0 +1,60 @@
+@font-face {
+  font-family: 'carter';
+  src: url('../../assets/fonts/Carter_One/CarterOne-Regular.ttf');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'superior';
+  src: url('../../assets/fonts/lt_superior/LTSuperior-Light.ttf');
+  font-weight: bold;
+  font-style: normal;
+}
+
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  width: 100vw;
+  height: 7vh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4vw;
+  background-color: rgba(7, 50, 145, 0.17);
+  border-top: 0.12vh solid #004B8A;
+  color: #004B8A;
+}
+
+.footer-left {
+  font-family: superior;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+}
+
+.footer-title {
+  font-family: carter;
+  font-size: 0.95vw;
+  font-weight: 600;
+}
+
+.footer-subtitle {
+  font-family: superior;
+  font-size: 0.72vw;
+  color: #004B8A;
+  opacity: 0.6;
+}
+
+.footer-right {
+  font-family: superior;
+  display: flex;
+  align-items: center;
+  gap: 1.4vw;
+  font-size: 0.72vw;
+  color: #004B8A;
+  opacity: 0.65;
+}
