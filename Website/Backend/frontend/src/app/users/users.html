@@ -1,0 +1,9 @@
+
+@for (user of users(); track user.id) {
+  <div>
+    <h2>Name: {{user.username}}</h2>
+    <p>Fav. Console: {{user.favConsole.modelName}}</p>
+    <p>Fav. Game: {{user.favGame.name}}</p>
+  </div>
+}
+<app-add-user></app-add-user>

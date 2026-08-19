@@ -1,0 +1,21 @@
+<form [formGroup]="form" (ngSubmit)="saveUser()">
+  <label for="username">Name</label>
+  <input id="username" type="text" formControlName="username">
+
+  <label for="favConsole">Lieblingskonsole</label>
+  <select id="favConsole" formControlName="favConsole">
+    @for (console of consoles(); track console.id) {
+      <option [value]="console.id">{{ console.modelName }}</option>
+    }
+  </select>
+
+  <label for="favGame">Lieblingsspiel</label>
+  <select id="favGame" formControlName="favGame">
+    @for (game of games(); track game.id) {
+      <option [value]="game.id">{{ game.name }}</option>
+    }
+  </select>
+
+  <button type="submit">Speichern</button>
+</form>
+
