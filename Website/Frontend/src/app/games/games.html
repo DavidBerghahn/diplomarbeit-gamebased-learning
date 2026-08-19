@@ -1,1 +1,33 @@
-<p>games works!</p>
+<main class="games-page">
+  <header class="games-header">
+    <h1>Alle Spiele</h1>
+
+    <button type="button" (click)="loadGames()">Aktualisieren</button>
+  </header>
+
+  <section class="games-list">
+    @for (game of games(); track game.id) {
+      <article class="game-card">
+        <div class="card-header">
+          <h2>{{ game.name }}</h2>
+          <span>{{ game.spiel_typ }}</span>
+        </div>
+
+        <p>{{ game.beschreibung }}</p>
+
+        <div class="details">
+          <span>{{ game.fach || 'Kein Fach' }}</span>
+          <span>{{ game.lehrer }}</span>
+          <span>{{ game.gespielte_runden }} Runden</span>
+          <span>{{ game.erstellungsdatum | date: 'dd.MM.yyyy' }}</span>
+        </div>
+
+        <div class="branches">
+          @for (branch of game.zweige; track branch) {
+            <small>{{ branch }}</small>
+          }
+        </div>
+      </article>
+    }
+  </section>
+</main>
