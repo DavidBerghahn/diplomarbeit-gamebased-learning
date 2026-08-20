@@ -1,14 +1,27 @@
+<nav class="game-navigation">
+
+  <div class="nav-main">
+    <a routerLink="/games" class="nav-link">Alle Spiele</a>
+    <a routerLink="/myGames" class="nav-link">Meine Spiele</a>
+  </div>
+
+  <a routerLink="/createGame" class="create-button">Spiel erstellen</a>
+</nav>
 
 
-<a routerLink="/games">
-  <button style="background-color: #004B8A ">Alle Spiele</button>
-</a>
-<div>
-  <a routerLink="/myGames">
-    <button style="background-color: #004B8A">Meine Inhalte</button>
-  </a>
-  <a routerLink="/createGame">
-    <button style="background-color: #61BEFF">Neuen Inhalt erstellen</button>
-  </a>
-</div>
+<main class="join-section">
+  <div class="join-content">
+    <span class="join-label">MIT CODE BEITRETEN</span>
 
+    <h1>Bereit für ein Spiel?</h1>
+
+    <p>Gib den vierstelligen Spiel-PIN ein und leg direkt los.</p>
+
+    <div class="pin-container">
+      <input class="pin-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000">
+    </div>
+
+    <button class="join-button">Beitreten</button>
+  </div>
+
+</main>
