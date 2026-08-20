@@ -8,6 +8,7 @@ const userSummary = document.querySelector("#user-summary");
 const loginButton = document.querySelector("#login-button");
 const profileButton = document.querySelector("#profile-button");
 const logoutButton = document.querySelector("#logout-button");
+const continueLink = document.querySelector("#continue-link");
 const output = document.querySelector("#login-output");
 
 loginButton.addEventListener("click", login);
@@ -61,7 +62,7 @@ async function finishLogin() {
   const pkce = JSON.parse(sessionStorage.getItem(pkceStorageKey) || "{}");
 
   if (!code || !state || state !== pkce.state || !pkce.codeVerifier) {
-    throw new Error("Keycloak Rueckleitung konnte nicht verifiziert werden.");
+    throw new Error("Keycloak-Rückleitung konnte nicht verifiziert werden.");
   }
 
   const tokenResponse = await fetch(`${realmUrl()}/protocol/openid-connect/token`, {
@@ -120,6 +121,7 @@ function logout() {
   const tokens = readTokens();
   sessionStorage.removeItem(tokenStorageKey);
   userSummary.textContent = "Nicht angemeldet";
+  continueLink.classList.add("hidden");
 
   if (authConfig?.provider === "keycloak" && tokens?.id_token) {
     const params = new URLSearchParams({
@@ -130,12 +132,14 @@ function logout() {
     return;
   }
 
-  writeOutput({ status: "Lokale Sitzung geloescht." });
+  writeOutput({ status: "Lokale Sitzung gelöscht." });
 }
 
 function renderProfile(profile) {
   userSummary.textContent = `${profile.username} (${profile.role})`;
+  continueLink.classList.remove("hidden");
   writeOutput({
+    status: "Login erfolgreich. Du kannst jetzt zur Plattform weitergehen.",
     backendUser: profile,
     tokenClaims: safeTokenClaims()
   });

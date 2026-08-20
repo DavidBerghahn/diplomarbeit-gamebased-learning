@@ -70,9 +70,8 @@ Der Ordner `Website/Frontend` enthält das Angular-Frontend der Spieleplattform.
 Im Docker-Build wird dieses Frontend gebaut und anschließend vom Quarkus-
 Backend als statische Web-App ausgeliefert.
 
-Das frühere separate Demo-Backend unter `Website/Backend` dient nur noch als
-Quelle für die Spielidee. Die fachlich relevanten Teile daraus sind im
-Hauptbackend integriert:
+Das frühere separate Demo-Backend der Website wurde entfernt. Die fachlich
+relevanten Teile daraus sind im Hauptbackend integriert:
 
 ```text
 Game

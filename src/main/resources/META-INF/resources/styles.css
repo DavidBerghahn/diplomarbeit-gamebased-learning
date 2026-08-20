@@ -115,13 +115,32 @@ button {
   cursor: pointer;
 }
 
+.button-link {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid rgba(23, 32, 51, 0.16);
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 button + button {
   background: #ffffff;
   color: #172033;
 }
 
-button:hover {
+button:hover,
+.button-link:hover {
   border-color: #2563eb;
+}
+
+.hidden {
+  display: none;
 }
 
 pre {
