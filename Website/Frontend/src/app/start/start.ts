@@ -12,17 +12,26 @@ import { AuthService } from '../auth.service';
 export class Start implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  message = '';
 
   async ngOnInit(): Promise<void> {
     if (!new URLSearchParams(window.location.search).has('code')) {
       return;
     }
 
-    await this.authService.finishLogin();
-    await this.router.navigateByUrl('/login');
+    try {
+      await this.authService.finishLogin();
+      await this.router.navigateByUrl('/home');
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : String(error);
+    }
   }
 
   async login(): Promise<void> {
-    await this.authService.login();
+    try {
+      await this.authService.login();
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : String(error);
+    }
   }
 }

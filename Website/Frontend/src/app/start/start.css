@@ -77,3 +77,10 @@ button:hover {
   color: #004B8A;
   scale: 1.1;
 }
+
+.message {
+  max-width: 34rem;
+  margin: 1rem auto 0;
+  color: #9b243c;
+  opacity: 1;
+}

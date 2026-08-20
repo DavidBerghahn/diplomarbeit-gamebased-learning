@@ -3,6 +3,9 @@
   <div class="title-line"></div>
   <p>A better way to learn.</p>
   <button type="button" (click)="login()">Mit Schulaccount anmelden</button>
+  @if (message) {
+    <p class="message">{{ message }}</p>
+  }
 </main>
 
 <app-footer></app-footer>
