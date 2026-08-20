@@ -40,6 +40,12 @@ body {
   gap: 2.5vw;
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
 .nav-link {
   position: relative;
   padding: 1.2vh 0;
@@ -84,6 +90,51 @@ body {
 .create-button:hover {
   background-color: #FFFFFF;
   color: #004B8A;
+}
+
+.auth-details-button {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(0, 75, 138, 0.35);
+  border-radius: 4px;
+  background: #FFFFFF;
+  color: #004B8A;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.auth-details-button:hover {
+  border-color: #004B8A;
+}
+
+.auth-details {
+  width: min(92vw, 960px);
+  max-height: 38vh;
+  margin: 1rem auto 0;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow: auto;
+  border: 1px solid rgba(0, 75, 138, 0.2);
+  border-radius: 4px;
+  background: #f6fbff;
+  color: #003f74;
+}
+
+.auth-details p {
+  margin: 0 0 0.8rem;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+}
+
+.auth-details pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 0.78rem/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.auth-error {
+  color: #9b243c;
 }
 
 .join-section {

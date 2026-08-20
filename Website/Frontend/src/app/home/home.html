@@ -5,9 +5,26 @@
     <a routerLink="/myGames" class="nav-link">Meine Spiele</a>
   </div>
 
-  <a routerLink="/createGame" class="create-button">Spiel erstellen</a>
+  <div class="nav-actions">
+    <button type="button" class="auth-details-button" (click)="toggleAuthDetails()" [attr.aria-expanded]="debugVisible">
+      {{ debugVisible ? 'Login-Details schließen' : 'Login-Details' }}
+    </button>
+    <a routerLink="/createGame" class="create-button">Spiel erstellen</a>
+  </div>
 </nav>
 
+@if (debugVisible) {
+  <section class="auth-details" aria-label="Login-Details">
+    @if (profile) {
+      <p><strong>Angemeldet als:</strong> {{ profile.displayName }} ({{ profile.username }})</p>
+    }
+    @if (authError) {
+      <p class="auth-error">{{ authError }}</p>
+    } @else {
+      <pre>{{ debugText }}</pre>
+    }
+  </section>
+}
 
 <main class="join-section">
   <div class="join-content">
