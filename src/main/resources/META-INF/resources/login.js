@@ -14,6 +14,7 @@ const output = document.querySelector("#login-output");
 loginButton.addEventListener("click", login);
 profileButton.addEventListener("click", loadProfile);
 logoutButton.addEventListener("click", logout);
+continueLink.addEventListener("click", continueToPlatform);
 
 boot();
 
@@ -21,6 +22,7 @@ async function boot() {
   try {
     authConfig = await fetchJson("/api/auth/config");
     authMode.textContent = "Keycloak aktiv";
+    continueLink.href = platformUrl();
 
     if (new URLSearchParams(window.location.search).has("code")) {
       await finishLogin();
@@ -137,12 +139,27 @@ function logout() {
 
 function renderProfile(profile) {
   userSummary.textContent = `${profile.username} (${profile.role})`;
+  continueLink.href = platformUrl();
   continueLink.classList.remove("hidden");
   writeOutput({
     status: "Login erfolgreich. Du kannst jetzt zur Plattform weitergehen.",
     backendUser: profile,
     tokenClaims: safeTokenClaims()
   });
+}
+
+function continueToPlatform(event) {
+  event.preventDefault();
+  window.location.href = platformUrl();
+}
+
+function platformUrl() {
+  if ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+      && window.location.port === "8080") {
+    return "http://localhost:4200/home";
+  }
+
+  return "/home";
 }
 
 function safeTokenClaims() {

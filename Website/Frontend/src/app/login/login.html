@@ -11,7 +11,7 @@
         <strong>{{ profile.displayName }}</strong>
         <span>{{ profile.username }} · {{ profile.role }}</span>
       </div>
-      <a routerLink="/home" class="primary-link">Weiter zur Plattform</a>
+      <button type="button" class="primary-link" (click)="continueToPlatform()">Weiter zur Plattform</button>
     } @else {
       <button type="button" (click)="login()">Login starten</button>
     }

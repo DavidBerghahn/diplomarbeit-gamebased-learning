@@ -1,15 +1,15 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService, UserProfile } from '../auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
 export class Login implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   profile: UserProfile | null = null;
   message = '';
@@ -34,5 +34,9 @@ export class Login implements OnInit {
     } catch (error) {
       this.message = error instanceof Error ? error.message : String(error);
     }
+  }
+
+  async continueToPlatform(): Promise<void> {
+    await this.router.navigateByUrl('/home');
   }
 }
