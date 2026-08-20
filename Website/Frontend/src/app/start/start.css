@@ -59,14 +59,14 @@ p {
 }
 
 button {
-  min-width: 10vw;
+  min-width: 220px;
   padding: 1.2vh 1.8vw;
   font-family: superior;
   background-color: #004B8A;
   color: #FFFFFF;
   border: 0.1vw solid #004B8A;
   border-radius: 1vw;
-  font-size: 0.9vw;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: 0.2s ease-in-out;

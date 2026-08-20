@@ -1,11 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Footer } from '../footer/footer';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-start',
-  imports: [Footer, RouterLink],
+  imports: [Footer],
   templateUrl: './start.html',
   styleUrl: './start.css',
 })
@@ -19,6 +19,10 @@ export class Start implements OnInit {
     }
 
     await this.authService.finishLogin();
-    await this.router.navigateByUrl('/home');
+    await this.router.navigateByUrl('/login');
+  }
+
+  async login(): Promise<void> {
+    await this.authService.login();
   }
 }

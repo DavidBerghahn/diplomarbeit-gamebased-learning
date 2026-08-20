@@ -13,7 +13,7 @@ export class Login implements OnInit {
 
   profile: UserProfile | null = null;
   message = '';
-  debugVisible = false;
+  debugVisible = true;
   debugText = '';
 
   async ngOnInit(): Promise<void> {
@@ -27,6 +27,9 @@ export class Login implements OnInit {
 
       this.profile = await this.authService.loadProfile();
       this.updateDebugText();
+      if (this.profile) {
+        this.message = 'Du bist bereits angemeldet.';
+      }
     } catch (error) {
       this.message = error instanceof Error ? error.message : String(error);
     }
