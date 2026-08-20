@@ -2,10 +2,11 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { GameWebSocketService } from '../game-websocket.service';
 import { Game } from '../model/game.model';
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-games',
-  imports: [DatePipe],
+  imports: [DatePipe, FormsModule],
   templateUrl: './games.html',
   styleUrl: './games.css',
 })

@@ -43,6 +43,41 @@
       </div>
     }
 
+    @if (selectedGameType != "") {
+      <div class="filter-container">
+        <div class="filter-box">
+          <h2>Filter</h2>
+
+          <label>
+            Suche
+            <input type="text" placeholder="Spiel suchen">
+          </label>
+
+          <label>
+            Fach
+            <select>
+              <option>Alle Faecher</option>
+              <option>Programmieren</option>
+              <option>Netzwerktechnik</option>
+              <option>Medientechnik</option>
+            </select>
+          </label>
+
+          <label>
+            Sortieren
+            <select>
+              <option>Neueste zuerst</option>
+              <option>Name A-Z</option>
+              <option>Meiste Runden</option>
+            </select>
+          </label>
+
+          <button type="button">Filter anwenden</button>
+        </div>
+      </div>
+
+    }
+
     @if (selectedGameType != "Quizbattle") {
       <div class="game-type-box" (click)="setSelectedGameType('DuellUmDieWelt')">
         <h2>Duell um die Welt</h2>

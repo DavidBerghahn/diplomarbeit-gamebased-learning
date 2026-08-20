@@ -29,8 +29,13 @@ button {
   font-weight: 700;
 }
 
+button:hover {
+  background-color: #61BEFF;
+}
+
 .games-list {
   display: flex;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -49,6 +54,47 @@ button {
 .game-type-box:hover {
   background-color: #004b8a;
   color: #fff;
+}
+
+.filter-container{
+  width: 35%;
+}
+
+.filter-box {
+  border: 1px solid #d8dee6;
+  border-radius: 6px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.filter-box h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+}
+
+.filter-box label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: #405064;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.filter-box input,
+.filter-box select {
+  min-width: 180px;
+  border: 1px solid #ccd5df;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #fbfbfb;
+  color: #122033;
+  font: inherit;
+}
+
+.filter-box button {
+  width: 100%;
+  margin-top: 4px;
 }
 
 .type-games {
