@@ -16,7 +16,7 @@
 }
 
 .login-panel {
-  width: min(420px, 88vw);
+  width: min(720px, 88vw);
   border: 1px solid rgba(0, 75, 138, 0.18);
   border-radius: 8px;
   padding: 32px;
@@ -70,6 +70,34 @@ button:hover,
   padding: 14px;
   border-radius: 6px;
   background: #f4f9ff;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.secondary-link {
+  background: #ffffff;
+  color: #004b8a;
+}
+
+.debug-output {
+  max-height: 360px;
+  margin: 18px 0 0;
+  padding: 14px;
+  border: 1px solid rgba(0, 75, 138, 0.18);
+  border-radius: 6px;
+  background: #0f172a;
+  color: #dbeafe;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: auto;
+  text-align: left;
+  white-space: pre-wrap;
 }
 
 .profile-box span,

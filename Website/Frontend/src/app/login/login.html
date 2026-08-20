@@ -11,7 +11,16 @@
         <strong>{{ profile.displayName }}</strong>
         <span>{{ profile.username }} · {{ profile.role }}</span>
       </div>
-      <button type="button" class="primary-link" (click)="continueToPlatform()">Weiter zur Plattform</button>
+      <div class="action-row">
+        <button type="button" class="primary-link" (click)="continueToPlatform()">Weiter zur Plattform</button>
+        <button type="button" class="secondary-link" (click)="toggleDebug()">
+          {{ debugVisible ? 'Details ausblenden' : 'Technische Details anzeigen' }}
+        </button>
+      </div>
+
+      @if (debugVisible) {
+        <pre class="debug-output">{{ debugText }}</pre>
+      }
     } @else {
       <button type="button" (click)="login()">Login starten</button>
     }

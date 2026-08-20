@@ -24,6 +24,18 @@ export interface UserProfile {
   active: boolean;
 }
 
+export interface AuthDebugInfo {
+  backendUser: UserProfile | null;
+  token: {
+    hasAccessToken: boolean;
+    hasIdToken: boolean;
+    expiresAt: string | null;
+    expiresInSeconds: number | null;
+  };
+  accessTokenClaims: Record<string, unknown> | null;
+  idTokenClaims: Record<string, unknown> | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -119,6 +131,22 @@ export class AuthService {
     return response.json() as Promise<UserProfile>;
   }
 
+  debugInfo(profile: UserProfile | null): AuthDebugInfo {
+    const tokens = this.readTokens();
+
+    return {
+      backendUser: profile,
+      token: {
+        hasAccessToken: Boolean(tokens?.access_token),
+        hasIdToken: Boolean(tokens?.id_token),
+        expiresAt: tokens?.expires_at ? new Date(tokens.expires_at).toISOString() : null,
+        expiresInSeconds: tokens?.expires_at ? Math.max(0, Math.floor((tokens.expires_at - Date.now()) / 1000)) : null,
+      },
+      accessTokenClaims: this.tokenClaims(tokens?.access_token),
+      idTokenClaims: this.tokenClaims(tokens?.id_token),
+    };
+  }
+
   private async config(): Promise<AuthConfig> {
     if (this.authConfig) {
       return this.authConfig;
@@ -162,5 +190,20 @@ export class AuthService {
       binary += String.fromCharCode(byte);
     });
     return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  private tokenClaims(token?: string): Record<string, unknown> | null {
+    const payload = token?.split('.')[1];
+    if (!payload) {
+      return null;
+    }
+
+    return JSON.parse(new TextDecoder().decode(this.base64UrlToBytes(payload))) as Record<string, unknown>;
+  }
+
+  private base64UrlToBytes(value: string): Uint8Array {
+    const base64 = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+    const binary = atob(base64);
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
   }
 }
