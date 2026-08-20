@@ -1,0 +1,78 @@
+@font-face {
+  font-family: 'superior';
+  src: url('../../assets/fonts/lt_superior/LTSuperior-Light.ttf');
+  font-weight: bold;
+  font-style: normal;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: #004b8a;
+  font-family: superior, Arial, sans-serif;
+}
+
+.login-panel {
+  width: min(420px, 88vw);
+  border: 1px solid rgba(0, 75, 138, 0.18);
+  border-radius: 8px;
+  padding: 32px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #61beff;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+p {
+  color: rgba(0, 75, 138, 0.72);
+}
+
+button,
+.primary-link {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 160px;
+  margin-top: 14px;
+  padding: 12px 18px;
+  border: 1px solid #004b8a;
+  border-radius: 6px;
+  background: #004b8a;
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+button:hover,
+.primary-link:hover {
+  background: #ffffff;
+  color: #004b8a;
+}
+
+.profile-box {
+  display: grid;
+  gap: 6px;
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 6px;
+  background: #f4f9ff;
+}
+
+.profile-box span,
+.message {
+  font-size: 14px;
+}

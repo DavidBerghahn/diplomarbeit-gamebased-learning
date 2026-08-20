@@ -1,1 +1,23 @@
-<p>login works!</p>
+<main class="login-page">
+  <section class="login-panel">
+    <p class="eyebrow">HTL Leonding</p>
+    <h1>Mit Schulaccount anmelden</h1>
+    <p>
+      Nach dem Login wird dein Schulaccount im Backend als App-User verwendet.
+    </p>
+
+    @if (profile) {
+      <div class="profile-box">
+        <strong>{{ profile.displayName }}</strong>
+        <span>{{ profile.username }} · {{ profile.role }}</span>
+      </div>
+      <a routerLink="/home" class="primary-link">Zur Startseite</a>
+    } @else {
+      <button type="button" (click)="login()">Login starten</button>
+    }
+
+    @if (message) {
+      <p class="message">{{ message }}</p>
+    }
+  </section>
+</main>

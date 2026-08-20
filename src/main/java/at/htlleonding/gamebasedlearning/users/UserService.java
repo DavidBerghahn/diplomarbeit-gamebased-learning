@@ -19,7 +19,7 @@ public class UserService {
         user.username = identity.username();
         user.displayName = identity.displayName();
         user.schoolClass = identity.schoolClass();
-        user.role = identity.role();
+        user.role = mergedRole(user.role, identity.role());
         return user;
     }
 
@@ -71,6 +71,16 @@ public class UserService {
         user.active = true;
         user.persist();
         return user;
+    }
+
+    private UserRole mergedRole(UserRole currentRole, UserRole identityRole) {
+        if (currentRole == UserRole.ADMIN) {
+            return UserRole.ADMIN;
+        }
+        if (currentRole == UserRole.TEACHER && identityRole == UserRole.STUDENT) {
+            return UserRole.TEACHER;
+        }
+        return identityRole;
     }
 
     private String blankToNull(String value) {

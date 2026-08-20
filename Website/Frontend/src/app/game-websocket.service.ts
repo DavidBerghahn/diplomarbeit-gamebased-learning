@@ -56,7 +56,10 @@ export class GameWebSocketService {
 
     this.connectPromise = new Promise<WebSocket>((resolve, reject) => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const socket = new WebSocket(`${protocol}//localhost:8080/user-socket`);
+      const backendHost = window.location.port === '4200'
+        ? `${window.location.hostname}:8080`
+        : window.location.host;
+      const socket = new WebSocket(`${protocol}//${backendHost}/user-socket`);
 
       socket.onopen = () => {
         this.socket = socket;

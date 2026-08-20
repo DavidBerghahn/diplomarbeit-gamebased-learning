@@ -4,4 +4,8 @@ k8s
 docs
 .DS_Store
 README.md
-
+Website/Frontend/node_modules
+Website/Frontend/dist
+Website/Backend/target
+Website/Backend/frontend/node_modules
+Website/Backend/frontend/dist

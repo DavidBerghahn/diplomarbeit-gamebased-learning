@@ -17,6 +17,14 @@ GET /api/users/me
 PUT /api/users/me
 GET /api/users          # TEACHER oder ADMIN
 PATCH /api/users/{id}   # ADMIN
+GET /api/games
+GET /api/games/grouped
+GET /api/games/type/{gameType}
+GET /api/games/{id}
+POST /api/games         # TEACHER oder ADMIN
+PUT /api/games/{id}     # TEACHER oder ADMIN
+DELETE /api/games/{id}  # TEACHER oder ADMIN
+WS  /user-socket
 GET /api/docs
 ```
 
@@ -55,6 +63,27 @@ URL freigeschaltet werden.
 
 Im Dev-Modus verwendet das Backend H2 im Speicher. Das gebaute Docker-/LeoCloud-
 Artefakt verwendet im `prod`-Profil PostgreSQL.
+
+## Frontend und Spiele
+
+Der Ordner `Website/Frontend` enthält das Angular-Frontend der Spieleplattform.
+Im Docker-Build wird dieses Frontend gebaut und anschließend vom Quarkus-
+Backend als statische Web-App ausgeliefert.
+
+Das frühere separate Demo-Backend unter `Website/Backend` dient nur noch als
+Quelle für die Spielidee. Die fachlich relevanten Teile daraus sind im
+Hauptbackend integriert:
+
+```text
+Game
+Question
+AnswerOption
+GET /api/games
+WS /user-socket
+```
+
+Damit laufen Login, Userverwaltung, Spiele-API und PostgreSQL über dasselbe
+Backend.
 
 ## LeoCloud
 
