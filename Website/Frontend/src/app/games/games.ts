@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { GameWebSocketService } from '../game-websocket.service';
 import { Game } from '../model/game.model';
@@ -13,6 +13,18 @@ export class Games implements OnInit {
   private readonly gameWebSocketService = inject(GameWebSocketService);
 
   games = signal<Game[]>([]);
+  quizbattleGames = computed(() =>
+    this.games().filter((game) => game.spiel_typ === 'Quizbattle'),
+  );
+  duellUmDieWeltGames = computed(() =>
+    this.games().filter((game) => game.spiel_typ === 'DuellUmDieWelt'),
+  );
+
+  selectedGameType:String = ""
+
+  setSelectedGameType(gameType:String){
+    this.selectedGameType = gameType;
+  }
 
   ngOnInit(): void {
     void this.loadGames();

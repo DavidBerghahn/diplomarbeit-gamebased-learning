@@ -6,28 +6,77 @@
   </header>
 
   <section class="games-list">
-    @for (game of games(); track game.id) {
-      <article class="game-card">
-        <div class="card-header">
-          <h2>{{ game.name }}</h2>
-          <span>{{ game.spiel_typ }}</span>
-        </div>
+    @if (selectedGameType != "DuellUmDieWelt") {
+      <div class="game-type-box" (click)="setSelectedGameType('Quizbattle')">
+        <h2>Quizbattle</h2>
 
-        <p>{{ game.beschreibung }}</p>
+        <div class="type-games">
+          @for (game of selectedGameType == "" ? quizbattleGames().slice(0, 2) : quizbattleGames(); track game.id) {
 
-        <div class="details">
-          <span>{{ game.fach || 'Kein Fach' }}</span>
-          <span>{{ game.lehrer }}</span>
-          <span>{{ game.gespielte_runden }} Runden</span>
-          <span>{{ game.erstellungsdatum | date: 'dd.MM.yyyy' }}</span>
-        </div>
+            <article class="game-card">
+              <div class="card-header">
+                <h3>{{ game.name }}</h3>
+              </div>
 
-        <div class="branches">
-          @for (branch of game.zweige; track branch) {
-            <small>{{ branch }}</small>
+              <p>{{ game.beschreibung }}</p>
+
+              @if (selectedGameType != "") {
+                <div class="details">
+                  <span>{{ game.fach || 'Kein Fach' }}</span>
+                  <span>{{ game.lehrer }}</span>
+                  <span>{{ game.gespielte_runden }} Runden</span>
+                  <span>{{ game.erstellungsdatum | date: 'dd.MM.yyyy' }}</span>
+                </div>
+
+                <div class="branches">
+                  @for (branch of game.zweige; track branch) {
+                    <small>{{ branch }}</small>
+                  }
+                </div>
+              }
+
+            </article>
+          } @empty {
+            <p class="empty-message">Keine Quizbattle-Spiele vorhanden.</p>
           }
         </div>
-      </article>
+      </div>
+    }
+
+    @if (selectedGameType != "Quizbattle") {
+      <div class="game-type-box" (click)="setSelectedGameType('DuellUmDieWelt')">
+        <h2>Duell um die Welt</h2>
+
+        <div class="type-games">
+          @for (game of selectedGameType == "" ? duellUmDieWeltGames().slice(0, 2) : duellUmDieWeltGames(); track game.id) {
+            <article class="game-card">
+              <div class="card-header">
+                <h3>{{ game.name }}</h3>
+              </div>
+
+              <p>{{ game.beschreibung }}</p>
+
+              @if (selectedGameType != "") {
+                <div class="details">
+                  <span>{{ game.fach || 'Kein Fach' }}</span>
+                  <span>{{ game.lehrer }}</span>
+                  <span>{{ game.gespielte_runden }} Runden</span>
+                  <span>{{ game.erstellungsdatum | date: 'dd.MM.yyyy' }}</span>
+                </div>
+
+                <div class="branches">
+                  @for (branch of game.zweige; track branch) {
+                    <small>{{ branch }}</small>
+                  }
+                </div>
+              }
+
+            </article>
+          } @empty {
+            <p class="empty-message">Keine Duell-um-die-Welt-Spiele vorhanden.</p>
+          }
+        </div>
+      </div>
     }
   </section>
 </main>
