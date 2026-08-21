@@ -1,1 +1,85 @@
-<p>lobby works!</p>
+<main class="lobby-page">
+  @if (loading()) {
+    <section class="state-panel">Lobby wird geladen...</section>
+  } @else if (error()) {
+    <section class="state-panel error">{{ error() }}</section>
+  } @else if (game(); as selectedGame) {
+    @if (!setupComplete()) {
+      <section class="setup-view">
+        <span class="eyebrow">Lobby vorbereiten</span>
+        <h1>{{ selectedGame.name }}</h1>
+        <p>{{ selectedGame.beschreibung || 'Keine Beschreibung vorhanden.' }}</p>
+
+        <div class="setup-options">
+          <label class="team-slider">
+            <span>Teams</span>
+            <input type="range" min="1" max="6" [value]="teamCount()" (input)="updateTeamCount($any($event.target).value)">
+            <strong>{{ teamCount() }}</strong>
+          </label>
+
+          <div class="mode-switch" aria-label="Team-Beitritt">
+            <button type="button" [class.active]="assignmentMode === 'self'" (click)="setAssignmentMode('self')">
+              Spieler waehlen Team
+            </button>
+            <button type="button" [class.active]="assignmentMode === 'random'" (click)="setAssignmentMode('random')">
+              Zufaellig zuweisen
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="primary-action" (click)="createLobby()">Lobby oeffnen</button>
+      </section>
+    } @else {
+      <section class="live-view">
+        <span class="eyebrow">{{ selectedGame.spiel_typ }}</span>
+        <h1>{{ selectedGame.name }}</h1>
+        <p>{{ selectedGame.fach || 'Kein Fach' }} | {{ selectedGame.gespielte_runden }} Runden | {{ answerCount }} Antworten</p>
+
+        <div class="code-block">
+          <span>Spielcode</span>
+          <strong>{{ lobbyCode }}</strong>
+        </div>
+
+        <div class="lobby-meta">
+          <span>{{ participants().length }} Spieler in der Lobby</span>
+          <span>{{ assignmentMode === 'random' ? 'Teams werden zufaellig vergeben' : 'Spieler waehlen ihr Team selbst' }}</span>
+        </div>
+
+        <section class="teams-board" [style.gridTemplateColumns]="'repeat(' + teamCount() + ', minmax(0, 1fr))'" aria-label="Teams">
+          @for (team of visibleTeams(); track team.name) {
+            <article class="team-lane" [style.borderColor]="team.color">
+              <div>
+                <span class="team-dot" [style.background]="team.color"></span>
+                <h2>{{ team.name }}</h2>
+                <small>{{ team.members.length }} Spieler</small>
+              </div>
+
+              <div class="members">
+                @for (member of team.members; track member) {
+                  <span>{{ member }}</span>
+                } @empty {
+                  <em>Wartet auf Spieler</em>
+                }
+              </div>
+            </article>
+          }
+        </section>
+
+        <button type="button" class="primary-action" (click)="openStartDialog()">Spiel starten</button>
+      </section>
+    }
+
+    @if (showStartDialog) {
+      <div class="modal-backdrop" (click)="closeStartDialog()">
+        <section class="start-dialog" (click)="$event.stopPropagation()" aria-label="Spielstart bestaetigen">
+          <h2>Sind alle da?</h2>
+          <p>Pruefe kurz, ob alle Teilnehmer in der Lobby sind, bevor du das Spiel startest.</p>
+          <div class="dialog-actions">
+            <button type="button" class="secondary-button" (click)="closeStartDialog()">Noch warten</button>
+            <button type="button" (click)="closeStartDialog()">Ja, starten</button>
+          </div>
+        </section>
+      </div>
+    }
+  }
+</main>

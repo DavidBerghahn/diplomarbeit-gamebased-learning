@@ -13,7 +13,7 @@
         <div class="type-games">
           @for (game of selectedGameType == "" ? quizbattleGames().slice(0, 2) : quizbattleGames(); track game.id) {
 
-            <article class="game-card">
+            <article class="game-card" (click)="openHostDialog($event, game)" (keydown.enter)="openHostDialog($event, game)" tabindex="0" role="button">
               <div class="card-header">
                 <h3>{{ game.name }}</h3>
               </div>
@@ -84,7 +84,7 @@
 
         <div class="type-games">
           @for (game of selectedGameType == "" ? duellUmDieWeltGames().slice(0, 2) : duellUmDieWeltGames(); track game.id) {
-            <article class="game-card">
+            <article class="game-card" (click)="openHostDialog($event, game)" (keydown.enter)="openHostDialog($event, game)" tabindex="0" role="button">
               <div class="card-header">
                 <h3>{{ game.name }}</h3>
               </div>
@@ -114,4 +114,19 @@
       </div>
     }
   </section>
+
+  @if (selectedGameForHosting) {
+    <div class="modal-backdrop" (click)="closeHostDialog()">
+      <section class="host-dialog" (click)="$event.stopPropagation()" aria-label="Spiel hosten">
+        <span class="dialog-label">{{ selectedGameForHosting.spiel_typ }}</span>
+        <h2>Spiel hosten</h2>
+        <p>{{ selectedGameForHosting.name }}</p>
+
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" (click)="closeHostDialog()">Abbrechen</button>
+          <button type="button" (click)="hostSelectedGame()">Lobby erstellen</button>
+        </div>
+      </section>
+    </div>
+  }
 </main>

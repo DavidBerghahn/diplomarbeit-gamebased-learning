@@ -11,6 +11,7 @@ import {Lobby} from './lobby/lobby';
 export const routes: Routes = [
   { path: '', component: Start },
   { path: 'login', component: Login},
+  { path: 'lobby/:id', component: Lobby},
   { path: 'lobby', component: Lobby},
   { path: 'kwizbattle', component: Quizbattle},
   { path: 'home', component: Home },
