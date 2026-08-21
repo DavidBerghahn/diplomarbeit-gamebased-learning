@@ -1,0 +1,129 @@
+<main class="quizbattle-page">
+  <section class="game-shell" aria-label="Quizbattle Spielansicht">
+    <aside class="information-area" aria-label="Spielinformationen">
+      <div class="info-header">
+        <span class="eyebrow">Quizbattle</span>
+        <h1>Wissensduell</h1>
+        <p>Waehlt reihum eine Antwort. Wenn ihr nicht sicher seid, koennt ihr aussetzen und seid fuer diese Runde raus.</p>
+      </div>
+
+      <section class="info-panel">
+        <div class="section-title">
+          <span>Spieldetails</span>
+          <strong>Runde {{ currentRound() }}</strong>
+        </div>
+
+        <dl class="details-list">
+          <div>
+            <dt>Aktuelles Team</dt>
+            <dd>{{ currentTeam().name }}</dd>
+          </div>
+          <div>
+            <dt>Offene Felder</dt>
+            <dd>{{ remainingQuestions() }}</dd>
+          </div>
+          <div>
+            <dt>Aktive Teams</dt>
+            <dd>{{ activeTeams() }}</dd>
+          </div>
+          <div>
+            <dt>Gewaehlte Antwort</dt>
+            <dd>{{ selectedField()?.label || 'Noch keines' }}</dd>
+          </div>
+        </dl>
+      </section>
+    </aside>
+
+    <section class="play-area" aria-label="Spielflaeche">
+      <div class="turn-banner" [style.borderColor]="currentTeam().color">
+        <span class="team-dot" [style.background]="currentTeam().color"></span>
+        <strong>{{ currentTeam().name }}</strong>
+        <span>ist an der Reihe</span>
+      </div>
+
+      <div class="quizbattle-grid">
+        @for (field of fields(); track field.id) {
+          <button
+            type="button"
+            class="quizbattle-field"
+            [style.gridColumn]="field.column"
+            [style.gridRow]="field.row"
+            [class.active]="field.state === 'active'"
+            [class.answered]="field.state === 'answered'"
+            (click)="selectField(field.id)"
+            [disabled]="field.state === 'answered'"
+          >
+            <span>{{ field.label }}</span>
+          </button>
+        }
+
+        <div class="quizbattle-center">
+          <span>Behauptung</span>
+          <strong>{{ sampleQuestion }}</strong>
+          <p>{{ selectedPrompt() }}</p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="team-overview" aria-label="Teamuebersicht">
+      <div class="section-title">
+        <span>Teams</span>
+        <strong>Punktestand</strong>
+      </div>
+
+      <div class="teams-list">
+        @for (team of teams(); track team.name; let teamIndex = $index) {
+          <article
+            class="team-card"
+            [class.current]="teamIndex === currentTeamIndex() && !team.eliminated"
+            [class.eliminated]="team.eliminated"
+            [style.borderColor]="team.color"
+            [style.background]="teamIndex === currentTeamIndex() && !team.eliminated ? team.color : null"
+          >
+            <header>
+              <div>
+                <span class="team-dot" [style.background]="team.color"></span>
+                <h2>{{ team.name }}</h2>
+              </div>
+              <strong>{{ team.points }} P</strong>
+            </header>
+
+            <div class="members">
+              @for (member of team.members; track member.name) {
+                <span [class.leader]="member.leader">
+                  @if (member.leader) {
+                    <i aria-label="Teamleader">*</i>
+                  }
+                  {{ member.name }}
+                </span>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      <section class="answer-panel" [class.inactive]="!selectedField()" aria-label="Antwort abgeben">
+        <div class="section-title">
+          <span>Antwort</span>
+          <strong>{{ selectedField()?.label || 'Kein Feld' }}</strong>
+        </div>
+
+        <p>
+          @if (selectedField()) {
+            Gilt die Behauptung fuer {{ selectedField()?.label }}?
+          } @else {
+            Waehlt ein Feld auf der Spielflaeche, um wahr oder falsch zu antworten.
+          }
+        </p>
+
+        <div class="answer-actions">
+          <button type="button" class="answer-button true" (click)="answerSelectedField(true)" [disabled]="!selectedField()">Wahr</button>
+          <button type="button" class="answer-button false" (click)="answerSelectedField(false)" [disabled]="!selectedField()">Falsch</button>
+          <button type="button" class="answer-button cancel" (click)="cancelAnswer()" [disabled]="!selectedField()">Abbrechen</button>
+        </div>
+      </section>
+
+      <button type="button" class="pass-button" (click)="passTurn()">Aussetzen</button>
+    </aside>
+  </section>
+</main>
