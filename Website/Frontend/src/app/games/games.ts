@@ -23,11 +23,39 @@ export class Games implements OnInit {
     this.games().filter((game) => game.spiel_typ === 'DuellUmDieWelt'),
   );
 
-  selectedGameType:String = ""
+  selectedGameType: 'Quizbattle' | 'DuellUmDieWelt' | '' = '';
   selectedGameForHosting: Game | null = null;
 
-  setSelectedGameType(gameType:String){
+  selectedGames = computed(() => {
+    if (this.selectedGameType === 'Quizbattle') {
+      return this.quizbattleGames();
+    }
+
+    if (this.selectedGameType === 'DuellUmDieWelt') {
+      return this.duellUmDieWeltGames();
+    }
+
+    return [];
+  });
+
+  selectedGameTypeTitle = computed(() => {
+    if (this.selectedGameType === 'Quizbattle') {
+      return 'Quizbattle';
+    }
+
+    if (this.selectedGameType === 'DuellUmDieWelt') {
+      return 'Duell um die Welt';
+    }
+
+    return '';
+  });
+
+  setSelectedGameType(gameType: 'Quizbattle' | 'DuellUmDieWelt'){
     this.selectedGameType = gameType;
+  }
+
+  clearSelectedGameType(): void {
+    this.selectedGameType = '';
   }
 
   openHostDialog(event: Event, game: Game): void {

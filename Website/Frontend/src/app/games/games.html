@@ -1,119 +1,60 @@
 <main class="games-page">
-  <header class="games-header">
-    <h1>Alle Spiele</h1>
+  @if (selectedGameType === '') {
+    <section class="type-selection">
+      <span class="eyebrow">Alle Spiele</span>
+      <h1>Spielart auswählen</h1>
+      <p>Wähle zuerst eine Spielart aus. Danach siehst du die passenden Spiele und kannst eine Lobby hosten.</p>
 
-    <button type="button" (click)="loadGames()">Aktualisieren</button>
-  </header>
+      <div class="type-options">
+        <button type="button" class="type-option" (click)="setSelectedGameType('Quizbattle')">
+          <span>Quizbattle</span>
+          <strong>{{ quizbattleGames().length }} Spiele</strong>
+        </button>
 
-  <section class="games-list">
-    @if (selectedGameType != "DuellUmDieWelt") {
-      <div class="game-type-box" (click)="setSelectedGameType('Quizbattle')">
-        <h2>Quizbattle</h2>
+        <button type="button" class="type-option" (click)="setSelectedGameType('DuellUmDieWelt')">
+          <span>Duell um die Welt</span>
+          <strong>{{ duellUmDieWeltGames().length }} Spiele</strong>
+        </button>
+      </div>
 
-        <div class="type-games">
-          @for (game of selectedGameType == "" ? quizbattleGames().slice(0, 2) : quizbattleGames(); track game.id) {
+      <button type="button" class="refresh-button" (click)="loadGames()">Aktualisieren</button>
+    </section>
+  } @else {
+    <section class="game-selection">
+      <button type="button" class="back-button" (click)="clearSelectedGameType()">Zurück</button>
 
-            <article class="game-card" (click)="openHostDialog($event, game)" (keydown.enter)="openHostDialog($event, game)" tabindex="0" role="button">
-              <div class="card-header">
-                <h3>{{ game.name }}</h3>
-              </div>
+      <span class="eyebrow">Alle Spiele</span>
+      <h1>{{ selectedGameTypeTitle() }}</h1>
+      <p>Klicke auf ein Spiel, um dafür eine Lobby vorzubereiten.</p>
 
-              <p>{{ game.beschreibung }}</p>
+      <div class="games-list">
+        @for (game of selectedGames(); track game.id) {
+          <article class="game-card" (click)="openHostDialog($event, game)" (keydown.enter)="openHostDialog($event, game)" tabindex="0" role="button">
+            <div class="card-header">
+              <h2>{{ game.name }}</h2>
+              <span>{{ game.gespielte_runden }} Runden</span>
+            </div>
 
-              @if (selectedGameType != "") {
-                <div class="details">
-                  <span>{{ game.fach || 'Kein Fach' }}</span>
-                  <span>{{ game.lehrer }}</span>
-                  <span>{{ game.gespielte_runden }} Runden</span>
-                  <span>{{ game.erstellungsdatum | date: 'dd.MM.yyyy' }}</span>
-                </div>
+            <p>{{ game.beschreibung || 'Keine Beschreibung vorhanden.' }}</p>
 
-                <div class="branches">
-                  @for (branch of game.zweige; track branch) {
-                    <small>{{ branch }}</small>
-                  }
-                </div>
+            <div class="details">
+              <span>{{ game.fach || 'Kein Fach' }}</span>
+              <span>{{ game.lehrer }}</span>
+              <span>{{ game.erstellungsdatum | date: 'dd.MM.yyyy' }}</span>
+            </div>
+
+            <div class="branches">
+              @for (branch of game.zweige; track branch) {
+                <small>{{ branch }}</small>
               }
-
-            </article>
-          } @empty {
-            <p class="empty-message">Keine Quizbattle-Spiele vorhanden.</p>
-          }
-        </div>
+            </div>
+          </article>
+        } @empty {
+          <p class="empty-message">Für diese Spielart sind noch keine Spiele vorhanden.</p>
+        }
       </div>
-    }
-
-    @if (selectedGameType != "") {
-      <div class="filter-container">
-        <div class="filter-box">
-          <h2>Filter</h2>
-
-          <label>
-            Suche
-            <input type="text" placeholder="Spiel suchen">
-          </label>
-
-          <label>
-            Fach
-            <select>
-              <option>Alle Faecher</option>
-              <option>Programmieren</option>
-              <option>Netzwerktechnik</option>
-              <option>Medientechnik</option>
-            </select>
-          </label>
-
-          <label>
-            Sortieren
-            <select>
-              <option>Neueste zuerst</option>
-              <option>Name A-Z</option>
-              <option>Meiste Runden</option>
-            </select>
-          </label>
-
-          <button type="button">Filter anwenden</button>
-        </div>
-      </div>
-
-    }
-
-    @if (selectedGameType != "Quizbattle") {
-      <div class="game-type-box" (click)="setSelectedGameType('DuellUmDieWelt')">
-        <h2>Duell um die Welt</h2>
-
-        <div class="type-games">
-          @for (game of selectedGameType == "" ? duellUmDieWeltGames().slice(0, 2) : duellUmDieWeltGames(); track game.id) {
-            <article class="game-card" (click)="openHostDialog($event, game)" (keydown.enter)="openHostDialog($event, game)" tabindex="0" role="button">
-              <div class="card-header">
-                <h3>{{ game.name }}</h3>
-              </div>
-
-              <p>{{ game.beschreibung }}</p>
-
-              @if (selectedGameType != "") {
-                <div class="details">
-                  <span>{{ game.fach || 'Kein Fach' }}</span>
-                  <span>{{ game.lehrer }}</span>
-                  <span>{{ game.gespielte_runden }} Runden</span>
-                  <span>{{ game.erstellungsdatum | date: 'dd.MM.yyyy' }}</span>
-                </div>
-
-                <div class="branches">
-                  @for (branch of game.zweige; track branch) {
-                    <small>{{ branch }}</small>
-                  }
-                </div>
-              }
-
-            </article>
-          } @empty {
-            <p class="empty-message">Keine Duell-um-die-Welt-Spiele vorhanden.</p>
-          }
-        </div>
-      </div>
-    }
-  </section>
+    </section>
+  }
 
   @if (selectedGameForHosting) {
     <div class="modal-backdrop" (click)="closeHostDialog()">

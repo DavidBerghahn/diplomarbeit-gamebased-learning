@@ -1,165 +1,197 @@
-.games-page {
-  min-height: 100vh;
-  padding: 24px;
-  background: #f7f7f7;
-  color: #122033;
-  font-family: Arial, sans-serif;
+@font-face {
+  font-family: 'carter';
+  src: url('../../assets/fonts/Carter_One/CarterOne-Regular.ttf');
 }
 
-.games-header {
+@font-face {
+  font-family: 'superior';
+  src: url('../../assets/fonts/lt_superior/LTSuperior-Light.ttf');
+}
+
+.games-page {
+  min-height: 100vh;
+  padding: 5vh 6vw;
+  box-sizing: border-box;
+  background: #fff;
+  color: #004b8a;
+  font-family: superior, Arial, sans-serif;
+}
+
+.type-selection,
+.game-selection {
+  width: min(980px, 100%);
+  min-height: 84vh;
+  margin: 0 auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
+  justify-content: center;
+  text-align: center;
+}
+
+.game-selection {
+  justify-content: flex-start;
+  padding-top: 4vh;
+}
+
+.eyebrow,
+.dialog-label {
+  color: #61beff;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 h1 {
-  margin: 0;
-  font-size: 28px;
+  margin: 10px 0 0;
+  font-family: carter, Arial, sans-serif;
+  font-size: clamp(42px, 6vw, 82px);
+  font-weight: 600;
+  color: #004b8a;
+}
+
+.game-selection h1 {
+  font-size: clamp(36px, 5vw, 64px);
+}
+
+p {
+  max-width: 640px;
+  margin: 12px 0 30px;
+  color: #004b8a;
+  font-size: 18px;
+  line-height: 1.5;
+  opacity: 0.65;
 }
 
 button {
-  border: 0;
-  border-radius: 6px;
-  padding: 9px 14px;
+  border: 1px solid #004b8a;
+  border-radius: 10px;
+  padding: 13px 18px;
   background: #004b8a;
-  color: white;
-  cursor: pointer;
+  color: #fff;
+  font: inherit;
   font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 button:hover {
-  background-color: #61BEFF;
+  background: #fff;
+  color: #004b8a;
+  transform: translateY(-2px);
+}
+
+.type-options {
+  width: min(720px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.type-option {
+  min-height: 136px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  background: #fff;
+  color: #004b8a;
+}
+
+.type-option span {
+  font-family: carter, Arial, sans-serif;
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.type-option strong {
+  color: #004b8a;
+  opacity: 0.6;
+}
+
+.refresh-button,
+.back-button {
+  background: #fff;
+  color: #004b8a;
+}
+
+.back-button {
+  align-self: flex-start;
+  margin-bottom: 22px;
+  padding: 10px 14px;
 }
 
 .games-list {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.game-type-box {
-  border: 1px solid #d8dee6;
-  border-radius: 6px;
-  padding: 16px;
-  background: #ffffff;
-}
-
-.game-type-box > h2 {
-  margin: 0 0 14px;
-  font-size: 20px;
-}
-
-.game-type-box:hover {
-  border-color: #b8c8d8;
-}
-
-.filter-container{
-  width: 35%;
-}
-
-.filter-box {
-  border: 1px solid #d8dee6;
-  border-radius: 6px;
-  padding: 16px;
-  background: #ffffff;
-}
-
-.filter-box h2 {
-  margin: 0 0 14px;
-  font-size: 20px;
-}
-
-.filter-box label {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 12px;
-  color: #405064;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.filter-box input,
-.filter-box select {
-  min-width: 180px;
-  border: 1px solid #ccd5df;
-  border-radius: 6px;
-  padding: 8px 10px;
-  background: #fbfbfb;
-  color: #122033;
-  font: inherit;
-}
-
-.filter-box button {
   width: 100%;
-  margin-top: 4px;
-}
-
-.type-games {
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  text-align: left;
 }
 
 .game-card {
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 16px;
-  background: #fbfbfb;
-  color: black;
+  padding: 18px 0;
+  border-top: 1px solid rgba(0, 75, 138, 0.18);
+  color: #004b8a;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, padding-left 0.2s ease;
+}
+
+.game-card:last-child {
+  border-bottom: 1px solid rgba(0, 75, 138, 0.18);
 }
 
 .game-card:hover,
 .game-card:focus-visible {
-  border-color: #004b8a;
-  box-shadow: 0 10px 24px rgba(0, 75, 138, 0.14);
+  padding-left: 12px;
+  border-color: #61beff;
   outline: none;
-  transform: translateY(-2px);
 }
 
 .card-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  gap: 18px;
+  align-items: center;
 }
 
-h3 {
+h2 {
   margin: 0;
-  font-size: 18px;
+  color: #004b8a;
+  font-size: 24px;
 }
 
-p {
-  margin: 10px 0 14px;
-  color: #405064;
+.card-header span,
+.details,
+.branches small {
+  color: #004b8a;
+  opacity: 0.62;
 }
 
-.details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  margin-bottom: 12px;
-  color: #5c6b7a;
-  font-size: 14px;
+.game-card p {
+  max-width: 760px;
+  margin: 8px 0 12px;
+  font-size: 16px;
 }
 
+.details,
 .branches {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 8px 18px;
+}
+
+.branches {
+  margin-top: 10px;
 }
 
 .branches small {
-  border-radius: 4px;
-  padding: 5px 7px;
-  background: #e8f4ff;
-  color: #004b8a;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(0, 75, 138, 0.28);
+  font-weight: 700;
 }
 
 .empty-message {
-  margin: 0;
-  color: #5c6b7a;
+  margin: 20px auto 0;
+  text-align: center;
 }
 
 .modal-backdrop {
@@ -175,27 +207,18 @@ p {
 .host-dialog {
   width: min(420px, 100%);
   border: 1px solid rgba(0, 75, 138, 0.18);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 24px;
-  background: #ffffff;
+  background: #fff;
   box-shadow: 0 24px 60px rgba(18, 32, 51, 0.22);
-}
-
-.dialog-label {
-  color: #61beff;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
 }
 
 .host-dialog h2 {
   margin: 8px 0 6px;
-  color: #122033;
-  font-size: 24px;
 }
 
 .host-dialog p {
-  margin: 0 0 22px;
+  margin-bottom: 22px;
 }
 
 .dialog-actions {
@@ -205,13 +228,22 @@ p {
 }
 
 .secondary-button {
-  border: 1px solid #c9d5df;
-  background: #ffffff;
+  background: #fff;
   color: #004b8a;
 }
 
-@media (max-width: 800px) {
-  .games-list {
+@media (max-width: 760px) {
+  .games-page {
+    padding: 4vh 22px;
+  }
+
+  .type-options {
     grid-template-columns: 1fr;
+  }
+
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
 }
