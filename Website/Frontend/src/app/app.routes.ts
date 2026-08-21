@@ -12,7 +12,7 @@ export const routes: Routes = [
   { path: '', component: Start },
   { path: 'login', component: Login},
   { path: 'lobby', component: Lobby},
-  { path: 'quizbattle', component: Quizbattle},
+  { path: 'kwizbattle', component: Quizbattle},
   { path: 'home', component: Home },
   { path: 'games', component: Games },
   { path: 'myGames', component: MyGames },
