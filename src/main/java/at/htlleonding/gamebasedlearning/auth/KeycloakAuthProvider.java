@@ -7,6 +7,9 @@ import jakarta.ws.rs.core.HttpHeaders;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -112,10 +115,28 @@ public class KeycloakAuthProvider {
         if (containsAny(roleValues, "teacher", "teachers", "lehrer", "professor")) {
             return UserRole.TEACHER;
         }
-        if (distinguishedName != null && distinguishedName.toLowerCase(Locale.ROOT).contains("ou=lehrer")) {
+        if (isTeacherDistinguishedName(distinguishedName)) {
             return UserRole.TEACHER;
         }
         return defaultRole;
+    }
+
+    static boolean isTeacherDistinguishedName(String distinguishedName) {
+        if (distinguishedName == null || distinguishedName.isBlank()) {
+            return false;
+        }
+
+        try {
+            for (Rdn rdn : new LdapName(distinguishedName).getRdns()) {
+                if ("OU".equalsIgnoreCase(rdn.getType())
+                        && "Teachers".equalsIgnoreCase(String.valueOf(rdn.getValue()))) {
+                    return true;
+                }
+            }
+        } catch (InvalidNameException ignored) {
+            return false;
+        }
+        return false;
     }
 
     private void addResourceRoles(Set<String> target) {
