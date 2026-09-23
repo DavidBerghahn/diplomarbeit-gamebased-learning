@@ -1,6 +1,6 @@
 # Projektübergabe: Diplomarbeit Game-based Learning
 
-Stand: 22. September 2026
+Stand: 23. September 2026
 
 ## Ziel und nächster Einstieg
 
@@ -8,30 +8,38 @@ Das Projekt ist eine KI-gestützte Spieleplattform für Game-based Learning an d
 
 Der nächste sinnvolle Einstieg ist:
 
-1. Lehrerlogin mit einem echten Lehreraccount erneut testen und in `Login-Details` sowie `GET /api/auth/me` verifizieren, dass `role: TEACHER` geliefert wird.
-2. Die noch uncommitteten Rollen- und Autorisierungsänderungen gemeinsam prüfen, committen und anschließend deployen.
-3. Danach Datenmodelle und APIs für von Lehrkräften erstellte Spiele, Fragen, Ergebnisse und Lernfortschritt konkretisieren.
+1. Den geplanten OpenSpec-Change [`game-visibility-and-ownership`](openspec/changes/game-visibility-and-ownership/proposal.md) gemeinsam durchsehen. Er regelt private/öffentliche Spiele und Eigentümerrechte, ist aber **noch nicht implementiert**. Erst nach einem neuen Umsetzungsauftrag mit `$openspec-apply-change` beginnen.
+2. Vor einer späteren Produktivschaltung die Datenmigration und den Rollback-Schutz aus dem [Design](openspec/changes/game-visibility-and-ownership/design.md) prüfen. Ein alter Backend-Stand würde private Spiele offenlegen.
+3. Den echten Lehrerlogin mit einem Lehreraccount end-to-end prüfen. Danach weitere Datenmodellteile wie Kopien, Sessions, Ergebnisse und Fortschritt in getrennten Changes angehen.
 
-## Fortsetzung am 22. September 2026
+## Fortsetzung am 23. September 2026
+
+- Die Rollen- und Autorisierungsänderungen sowie der fachliche [Datenmodell-Entwurf Version 1](docs/datenmodell-v1.md) sind mit `c9f3859` committet. Der Entwurf ist noch nicht als vollständiges Persistenzmodell umgesetzt.
+- OpenSpec und die Projekt-Skills wurden mit `17e3d12` eingerichtet. Proposal, Spezifikation, Design und Aufgabenliste des ersten Changes wurden mit `173b655` committet; `openspec validate game-visibility-and-ownership --strict` war erfolgreich. Anwendungscode wurde dafür nicht geändert.
+- Fünf Codex-Worktrees wurden mit dem lokalen `main` synchronisiert und waren danach sauber; `openspec doctor` war dort erfolgreich. Die vorherigen, unversionierten OpenSpec-Kopien wurden zur Sicherheit in fünf Git-Stashes abgelegt. Den HEAD der Worktrees bei Fortsetzung erneut prüfen.
+- Für Supervisor, Researcher, Coder, Writer und Reviewer wurden zuvor separate Codex-Aufgaben angestoßen, aber am 23. September war in der Aufgabenliste nur der ursprüngliche Projektchat nachweisbar. Die Worktrees allein belegen keine einsatzbereiten Chats. Keine doppelte Anlage ohne Statusklärung.
+- Der lokale Branch `main` stand vor dieser Dokumentationsaktualisierung auf `173b655`, `origin/main` auf `c9f3859` (zwei lokale Commits voraus). Diese Commits wurden nicht gepusht. Der Git-Stand muss beim nächsten Einstieg erneut geprüft werden.
+- LeoCloud, Lehrerlogin, Maven-/Angular-Tests und Deployment wurden am 23. September **nicht** erneut geprüft. Frühere Nachweise unten gelten nur für ihr jeweiliges Datum.
+
+## Rückblick: Fortsetzung am 22. September 2026
 
 - Ein echter Login wurde live erneut durchgeführt. Das verwendete Konto wurde von `GET /api/auth/me` korrekt als `STUDENT` erkannt; ein echter Lehreraccount wurde dabei nicht verwendet. Der Nachweis für `role: TEACHER` bleibt daher offen.
 - Die Frontend-Routen unterscheiden jetzt zwischen allgemeinen angemeldeten Benutzern und `TEACHER`/`ADMIN`. `Meine Spiele`, `Spiel erstellen` und die Host-Lobby sind für Schüler weder als Aktion sichtbar noch direkt per URL erreichbar.
 - Der OIDC-PKCE-Flow bewahrt ein geprüftes internes Rücksprungziel. Externe oder unbekannte Ziele werden auf `/home` zurückgesetzt.
 - Inaktive Konten werden bei schreibenden Spieleaktionen und allen Endpunkten der Benutzerverwaltung auch serverseitig mit `403` abgewiesen.
-- Die Änderungen sind lokal implementiert und geprüft, aber noch nicht committet, gepusht oder deployt.
+- Die Änderungen waren zu diesem Zeitpunkt lokal implementiert und geprüft, aber noch nicht committet, gepusht oder deployt. Der spätere Commit-Stand steht oben.
 
 ## Verifizierter Projektzugang
 
 - Lokaler Pfad: `/Users/davidberghahn/Documents/diplomarbeit-gamebased-learning`
 - Repository: `https://github.com/DavidBerghahn/diplomarbeit-gamebased-learning`
 - Branch: `main`
-- Aktueller Commit lokal und auf `origin/main`: `e37c583` (`Recognize teachers from LDAP distinguished name`)
-- Lokal existieren uncommittete Änderungen für Rollen-Guards, rollenabhängige Lehreraktionen, sichere Login-Rücksprünge, serverseitige Aktivitätsprüfungen und die zugehörigen Tests. `PROJECT_HANDOFF.md` ist weiterhin eine neue, noch nicht committete Datei.
+- Zuletzt vor dieser Dokumentationsaktualisierung verifiziert: lokal `173b655`, `origin/main` `c9f3859`. Lokale Commits sind nicht automatisch veröffentlicht; der Git-Stand kann sich danach ändern.
 - LeoCloud-Namespace: `student-it220269`
 - Live-Adresse: `https://it220269.cloud.htl-leonding.ac.at/`
 - Container-Image: `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning:latest`
 
-## Heute verifizierter Live-Zustand
+## Am 22. September 2026 verifizierter Live-Zustand
 
 Am 22. September 2026 wurden folgende Punkte read-only geprüft:
 
@@ -40,7 +48,7 @@ Am 22. September 2026 wurden folgende Punkte read-only geprüft:
 - Der PostgreSQL-Pod ist `1/1 Running`.
 - Service und Ingress sind vorhanden; der Ingress zeigt auf `it220269.cloud.htl-leonding.ac.at`.
 
-Das belegt die Erreichbarkeit und den Kubernetes-Zustand an diesem Datum. Ein vollständiger End-to-End-Login mit einem Lehreraccount wurde heute nicht erneut durchgeführt.
+Das belegt die Erreichbarkeit und den Kubernetes-Zustand nur an diesem Datum. Am 23. September wurde kein neuer Live-Check durchgeführt. Ein vollständiger End-to-End-Login mit einem Lehreraccount bleibt offen.
 
 ## Architektur
 
@@ -117,7 +125,7 @@ cd Website/Frontend
 npm run build
 ```
 
-Zuletzt nachgewiesen am 22. September 2026:
+Historisch nachgewiesen am 22. September 2026; nach den späteren Commits hier nicht erneut ausgeführt:
 
 - Maven: 9 Tests, 0 Fehler
 - Angular: 29 Tests, 0 Fehler
@@ -144,9 +152,9 @@ Ein `git push` allein aktualisiert das Image in GHCR, startet aber das bestehend
 ## Bekannte offene Punkte und Altlasten
 
 1. Der Lehrer-Login muss mit dem aktuellen Deployment einmal end-to-end bestätigt werden. Die Backendlogik und Unit-Tests sind vorhanden, der reale Nachweis nach der Änderung fehlt noch.
-2. Das Frontend besitzt noch keine konsequente Route-Guard-/Rollenstruktur für Schüler- und Lehreransichten.
-3. Lehrer sollen später Spielmodi auswählen und eigene Fragen/Antworten verwalten. Dafür fehlen noch vollständige Besitz-, Veröffentlichungs- und Bearbeitungsregeln im Datenmodell.
-4. Ergebnisse, Fortschritt, Achievements und KI-Daten sind fachlich vorgesehen, aber noch nicht als vollständige persistente Domänenmodelle umgesetzt.
+2. Das Frontend besitzt bereits erste Route-Guards, weicht aber noch vom Fachentwurf ab: Schüler dürfen laut Entwurf öffentliche Spiele hosten; die derzeitige Lobby ist auf `TEACHER`/`ADMIN` beschränkt.
+3. Spielsichtbarkeit und Erstellerrechte sind fachlich modelliert und als OpenSpec-Change geplant, aber noch nicht im Code umgesetzt. Kopien, Versionen, Sessions, Ergebnisse und Fortschritt folgen später.
+4. Achievements und KI-Daten sind fachlich vorgesehen, aber noch nicht als vollständige persistente Domänenmodelle umgesetzt.
 5. Der frühere Ordner `Website/Backend` wurde von Team-Commits wieder eingefügt und enthält unter anderem generierte Angular-Cache- und lokale Datenbankdateien. Er gehört nicht zur aktuellen Hauptarchitektur und sollte nach Abstimmung bereinigt sowie über `.gitignore` ausgeschlossen werden.
 6. Das README verweist auf `docs/auth-architecture.md` und `docs/projektstand-einfach-erklärt.md`; diese Pfade existieren im aktuellen Stand nicht. Die vorhandene Erklärung heißt [`docs/leocloud-keycloak-backend-erklärt.md`](docs/leocloud-keycloak-backend-erklärt.md) und enthält am Ende noch eine veraltete Aussage, dass die LeoCloud-Keycloak-Verbindung offen sei. Diese Dokumentation muss aktualisiert werden.
 7. Das PostgreSQL-Manifest enthält derzeit einfache, im Repository definierte Zugangswerte. Vor einer echten produktiven Nutzung mit sensiblen Daten sollte das Secret außerhalb des Manifests verwaltet und rotiert werden.
