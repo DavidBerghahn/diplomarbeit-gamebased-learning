@@ -71,7 +71,11 @@ public class UserResource {
 
     private AppUser currentUser(HttpHeaders headers) {
         AuthenticatedUser identity = authProvider.currentUser(headers);
-        return userService.getOrCreateFromIdentity(identity);
+        AppUser user = userService.getOrCreateFromIdentity(identity);
+        if (!user.active) {
+            throw new ForbiddenException("Active account required");
+        }
+        return user;
     }
 
     private void requireAtLeastTeacher(AppUser user) {

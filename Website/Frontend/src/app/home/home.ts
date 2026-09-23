@@ -16,8 +16,17 @@ export class Home implements OnInit {
   debugVisible = false;
   debugText = '';
   authError = '';
+  accessNotice = '';
+
+  get canManageGames(): boolean {
+    return this.profile?.role === 'TEACHER' || this.profile?.role === 'ADMIN';
+  }
 
   async ngOnInit(): Promise<void> {
+    if (new URLSearchParams(window.location.search).get('reason') === 'teacher-required') {
+      this.accessNotice = 'Diese Funktion ist nur für Lehrkräfte und Administratoren verfügbar.';
+    }
+
     try {
       this.profile = await this.authService.loadProfile();
       this.debugText = JSON.stringify(this.authService.debugInfo(this.profile), null, 2);

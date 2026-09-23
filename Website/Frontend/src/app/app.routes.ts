@@ -7,16 +7,17 @@ import {MyGames} from './my-games/my-games';
 import { Login } from './login/login';
 import {Quizbattle} from './quizbattle/quizbattle';
 import {Lobby} from './lobby/lobby';
+import { authenticatedGuard, teacherGuard } from './auth.guard';
 
 export const routes: Routes = [
   { path: '', component: Start },
   { path: 'login', component: Login},
-  { path: 'lobby/:id', component: Lobby},
-  { path: 'lobby', component: Lobby},
-  { path: 'kwizbattle', component: Quizbattle},
-  { path: 'home', component: Home },
-  { path: 'games', component: Games },
-  { path: 'myGames', component: MyGames },
-  { path: 'createGame', component: CreateGame },
+  { path: 'lobby/:id', component: Lobby, canActivate: [teacherGuard]},
+  { path: 'lobby', component: Lobby, canActivate: [teacherGuard]},
+  { path: 'kwizbattle', component: Quizbattle, canActivate: [authenticatedGuard]},
+  { path: 'home', component: Home, canActivate: [authenticatedGuard] },
+  { path: 'games', component: Games, canActivate: [authenticatedGuard] },
+  { path: 'myGames', component: MyGames, canActivate: [teacherGuard] },
+  { path: 'createGame', component: CreateGame, canActivate: [teacherGuard] },
   { path: '**', component: Start },
 ];

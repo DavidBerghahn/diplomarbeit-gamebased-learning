@@ -1,0 +1,253 @@
+@startuml Datenmodell_V1
+
+title Game-based Learning – Datenmodell Version 1
+
+hide circle
+hide methods
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam backgroundColor #FFFFFF
+skinparam entity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+  HeaderBackgroundColor #E2E8F0
+}
+
+package "Identität und Katalog" #EEF6FF {
+  entity users {
+    * id : UUID <<PK>>
+    --
+    external_subject : VARCHAR <<UQ>>
+    username : VARCHAR <<UQ>>
+    display_name : VARCHAR
+    role : VARCHAR
+    current_class_code : VARCHAR?
+    active : BOOLEAN
+  }
+
+  entity subjects {
+    * id : UUID <<PK>>
+    --
+    name : VARCHAR <<UQ>>
+    short_name : VARCHAR?
+    active : BOOLEAN
+  }
+}
+
+package "Spiele und Versionen" #F2FCEB {
+  entity game_families {
+    * id : UUID <<PK>>
+    --
+    created_at : TIMESTAMP
+  }
+
+  entity games {
+    * id : UUID <<PK>>
+    --
+    family_id : UUID <<FK>>
+    copied_from_game_id : UUID? <<FK>>
+    creator_user_id : UUID <<FK>>
+    visibility : VARCHAR
+    current_version_id : UUID <<FK>>
+    deleted_at : TIMESTAMP?
+  }
+
+  entity game_versions {
+    * id : UUID <<PK>>
+    --
+    game_id : UUID <<FK>>
+    version_number : INTEGER
+    title : VARCHAR
+    description : TEXT
+    game_mode : VARCHAR
+    subject_id : UUID <<FK>>
+    created_at : TIMESTAMP
+    --
+    UQ(game_id, version_number)
+  }
+}
+
+package "Fragen" #FFF8E7 {
+  entity questions {
+    * id : UUID <<PK>>
+    --
+    game_id : UUID <<FK>>
+    copied_from_question_id : UUID? <<FK>>
+    current_version_id : UUID <<FK>>
+    deleted_at : TIMESTAMP?
+  }
+
+  entity question_versions {
+    * id : UUID <<PK>>
+    --
+    question_id : UUID <<FK>>
+    version_number : INTEGER
+    type : VARCHAR
+    text : TEXT
+    created_at : TIMESTAMP
+    --
+    UQ(question_id, version_number)
+  }
+
+  entity game_version_questions {
+    * game_version_id : UUID <<PK,FK>>
+    * question_version_id : UUID <<PK,FK>>
+    --
+    position : INTEGER
+    UQ(game_version_id, position)
+  }
+
+  entity true_false_configs {
+    * question_version_id : UUID <<PK,FK>>
+    --
+    correct_value : BOOLEAN
+  }
+
+  entity ordering_items {
+    * id : UUID <<PK>>
+    --
+    question_version_id : UUID <<FK>>
+    text : VARCHAR
+    correct_position : INTEGER
+    --
+    UQ(question_version_id, correct_position)
+  }
+
+  entity accepted_text_answers {
+    * id : UUID <<PK>>
+    --
+    question_version_id : UUID <<FK>>
+    answer : VARCHAR
+  }
+}
+
+package "Sessions und Ergebnisse" #F5F0FF {
+  entity game_sessions {
+    * id : UUID <<PK>>
+    --
+    game_id : UUID <<FK>>
+    game_version_id : UUID <<FK>>
+    host_user_id : UUID <<FK>>
+    mode : VARCHAR
+    join_code : VARCHAR?
+    status : VARCHAR
+    started_at : TIMESTAMP?
+    finished_at : TIMESTAMP?
+  }
+
+  entity teams {
+    * id : UUID <<PK>>
+    --
+    session_id : UUID <<FK>>
+    name : VARCHAR
+    color : VARCHAR?
+    score : INTEGER
+    placement : INTEGER?
+    --
+    UQ(session_id, name)
+  }
+
+  entity session_participants {
+    * id : UUID <<PK>>
+    --
+    session_id : UUID <<FK>>
+    user_id : UUID <<FK>>
+    team_id : UUID? <<FK>>
+    score : INTEGER
+    placement : INTEGER?
+    winner : BOOLEAN
+    completed : BOOLEAN
+    --
+    UQ(session_id, user_id)
+  }
+
+  entity player_answers {
+    * id : UUID <<PK>>
+    --
+    participant_id : UUID <<FK>>
+    question_version_id : UUID <<FK>>
+    answer_data : JSON/TEXT
+    correct : BOOLEAN
+    score : INTEGER
+    response_time_ms : BIGINT?
+    answered_at : TIMESTAMP
+    --
+    UQ(participant_id, question_version_id)
+  }
+}
+
+package "Qualitätssicherung" #FFF0F3 {
+  entity question_reports {
+    * id : UUID <<PK>>
+    --
+    question_id : UUID <<FK>>
+    question_version_id : UUID <<FK>>
+    reporter_user_id : UUID <<FK>>
+    resolved_by_user_id : UUID? <<FK>>
+    comment : TEXT
+    status : VARCHAR
+    resolution_comment : TEXT?
+  }
+}
+
+users ||--o{ games : erstellt
+subjects ||--o{ game_versions : kategorisiert
+game_families ||--|{ games : gruppiert
+games ||--|{ game_versions : versioniert
+games |o--|| game_versions : aktuelle_Version
+
+games ||--o{ questions : enthaelt
+questions ||--|{ question_versions : versioniert
+questions |o--|| question_versions : aktuelle_Version
+game_versions ||--|{ game_version_questions : ordnet
+question_versions ||--o{ game_version_questions : verwendet
+question_versions ||--o| true_false_configs : Wahr_Falsch
+question_versions ||--o{ ordering_items : Reihenfolge
+question_versions ||--o{ accepted_text_answers : Freitext
+
+games ||--o{ game_sessions : wird_gespielt
+game_versions ||--o{ game_sessions : Snapshot
+users ||--o{ game_sessions : hostet
+game_sessions ||--o{ teams : bildet
+game_sessions ||--o{ session_participants : hat
+users ||--o{ session_participants : spielt
+teams |o--o{ session_participants : gruppiert
+session_participants ||--o{ player_answers : beantwortet
+question_versions ||--o{ player_answers : bewertet
+
+questions ||--o{ question_reports : betrifft
+question_versions ||--o{ question_reports : gemeldete_Version
+users ||--o{ question_reports : meldet
+users |o--o{ question_reports : bearbeitet
+
+note right of games
+  Nur Lehrkräfte erstellen und kopieren.
+  Nur der Ersteller bearbeitet oder löscht.
+  Private Spiele sieht nur der Ersteller.
+end note
+
+note right of game_versions
+  Änderungen erzeugen atomar einen neuen Snapshot.
+  Neue Sessions verwenden die aktuelle Version.
+  Laufende Sessions behalten ihre alte Version.
+end note
+
+note bottom of game_sessions
+  Schüler und Lehrkräfte dürfen öffentliche Spiele hosten.
+  Nur Schüler werden als fortschrittsrelevante Teilnehmer gespeichert.
+  join_code ist innerhalb aktiver Lobbys eindeutig.
+end note
+
+note bottom of session_participants
+  score ist die verbindliche Quelle für Fortschritt und Gesamtlevel.
+  team_id muss zu einem Team derselben Session gehören.
+end note
+
+note bottom of player_answers
+  question_version_id muss Teil der von der Session
+  verwendeten Spielversion sein.
+end note
+
+@enduml

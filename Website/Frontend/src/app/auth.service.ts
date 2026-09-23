@@ -43,14 +43,19 @@ export class AuthService {
   private readonly tokenStorageKey = 'gamebased.keycloak.tokens';
   private readonly pkceStorageKey = 'gamebased.keycloak.pkce';
   private authConfig?: AuthConfig;
+  private postLoginUrl = '/home';
 
-  async login(): Promise<void> {
+  async login(returnUrl?: string): Promise<void> {
     const config = await this.config();
     const state = this.randomBase64Url(32);
     const codeVerifier = this.randomBase64Url(64);
     const codeChallenge = await this.sha256Base64Url(codeVerifier);
 
-    sessionStorage.setItem(this.pkceStorageKey, JSON.stringify({ state, codeVerifier }));
+    sessionStorage.setItem(this.pkceStorageKey, JSON.stringify({
+      state,
+      codeVerifier,
+      returnUrl: this.safeInternalReturnUrl(returnUrl),
+    }));
 
     const params = new URLSearchParams({
       client_id: config.keycloakClientId,
@@ -97,6 +102,7 @@ export class AuthService {
     const tokens = await tokenResponse.json() as TokenResponse;
     tokens.expires_at = Date.now() + tokens.expires_in * 1000;
     sessionStorage.setItem(this.tokenStorageKey, JSON.stringify(tokens));
+    this.postLoginUrl = this.safeInternalReturnUrl(pkce.returnUrl);
     sessionStorage.removeItem(this.pkceStorageKey);
     window.history.replaceState({}, document.title, window.location.pathname);
 
@@ -105,6 +111,12 @@ export class AuthService {
       throw new Error('Backend-Profil konnte nach dem Login nicht geladen werden.');
     }
     return profile;
+  }
+
+  takePostLoginUrl(): string {
+    const returnUrl = this.postLoginUrl;
+    this.postLoginUrl = '/home';
+    return returnUrl;
   }
 
   async loadProfile(): Promise<UserProfile | null> {
@@ -166,6 +178,20 @@ export class AuthService {
 
   private redirectUri(): string {
     return `${window.location.origin}/`;
+  }
+
+  private safeInternalReturnUrl(value?: unknown): string {
+    if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) {
+      return '/home';
+    }
+
+    const url = new URL(value, window.location.origin);
+    const allowedPath = /^\/(?:home|games|myGames|createGame|kwizbattle|lobby(?:\/[^/]+)?)$/;
+    if (url.origin !== window.location.origin || !allowedPath.test(url.pathname)) {
+      return '/home';
+    }
+
+    return `${url.pathname}${url.search}${url.hash}`;
   }
 
   private readTokens(): TokenResponse | null {

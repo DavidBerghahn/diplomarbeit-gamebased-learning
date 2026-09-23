@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { GameWebSocketService } from '../game-websocket.service';
 import { Game } from '../model/game.model';
 import {FormsModule} from '@angular/forms';
+import { AuthService, UserProfile } from '../auth.service';
 
 @Component({
   selector: 'app-games',
@@ -14,8 +15,11 @@ import {FormsModule} from '@angular/forms';
 export class Games implements OnInit {
   private readonly gameWebSocketService = inject(GameWebSocketService);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   games = signal<Game[]>([]);
+  profile = signal<UserProfile | null>(null);
+  canHost = computed(() => this.profile()?.role === 'TEACHER' || this.profile()?.role === 'ADMIN');
   quizbattleGames = computed(() =>
     this.games().filter((game) => game.spiel_typ === 'Quizbattle'),
   );
@@ -60,6 +64,9 @@ export class Games implements OnInit {
 
   openHostDialog(event: Event, game: Game): void {
     event.stopPropagation();
+    if (!this.canHost()) {
+      return;
+    }
     this.selectedGameForHosting = game;
   }
 
@@ -78,9 +85,14 @@ export class Games implements OnInit {
 
   ngOnInit(): void {
     void this.loadGames();
+    void this.loadProfile();
   }
 
   async loadGames(): Promise<void> {
     this.games.set(await this.gameWebSocketService.getGames());
+  }
+
+  async loadProfile(): Promise<void> {
+    this.profile.set(await this.authService.loadProfile());
   }
 }

@@ -3,7 +3,12 @@
     <section class="type-selection">
       <span class="eyebrow">Alle Spiele</span>
       <h1>Spielart auswählen</h1>
-      <p>Wähle zuerst eine Spielart aus. Danach siehst du die passenden Spiele und kannst eine Lobby hosten.</p>
+      <p>
+        Wähle zuerst eine Spielart aus. Danach siehst du die passenden Spiele.
+        @if (canHost()) {
+          Als Lehrkraft kannst du dafür eine Lobby hosten.
+        }
+      </p>
 
       <div class="type-options">
         <button type="button" class="type-option" (click)="setSelectedGameType('Quizbattle')">
@@ -25,11 +30,22 @@
 
       <span class="eyebrow">Alle Spiele</span>
       <h1>{{ selectedGameTypeTitle() }}</h1>
-      <p>Klicke auf ein Spiel, um dafür eine Lobby vorzubereiten.</p>
+      @if (canHost()) {
+        <p>Klicke auf ein Spiel, um dafür eine Lobby vorzubereiten.</p>
+      } @else {
+        <p>Hier findest du die verfügbaren Spiele. Beitreten kannst du auf der Startseite mit einem Spiel-PIN.</p>
+      }
 
       <div class="games-list">
         @for (game of selectedGames(); track game.id) {
-          <article class="game-card" (click)="openHostDialog($event, game)" (keydown.enter)="openHostDialog($event, game)" tabindex="0" role="button">
+          <article
+            class="game-card"
+            [class.hostable]="canHost()"
+            (click)="openHostDialog($event, game)"
+            (keydown.enter)="openHostDialog($event, game)"
+            [attr.tabindex]="canHost() ? 0 : null"
+            [attr.role]="canHost() ? 'button' : null"
+          >
             <div class="card-header">
               <h2>{{ game.name }}</h2>
               <span>{{ game.gespielte_runden }} Runden</span>

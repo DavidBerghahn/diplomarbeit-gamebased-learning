@@ -102,6 +102,9 @@ public class GameResource {
     private AppUser requireTeacher(HttpHeaders headers) {
         AuthenticatedUser identity = authProvider.currentUser(headers);
         AppUser user = userService.getOrCreateFromIdentity(identity);
+        if (!user.active) {
+            throw new ForbiddenException("Active account required");
+        }
         if (user.role != UserRole.TEACHER && user.role != UserRole.ADMIN) {
             throw new ForbiddenException("Teacher or admin role required");
         }

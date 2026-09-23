@@ -13,15 +13,20 @@ export class Start implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   message = '';
+  private returnUrl: string | undefined;
 
   async ngOnInit(): Promise<void> {
-    if (!new URLSearchParams(window.location.search).has('code')) {
+    const params = new URLSearchParams(window.location.search);
+    this.message = this.messageForReason(params.get('reason'));
+    this.returnUrl = params.get('returnUrl') ?? undefined;
+
+    if (!params.has('code')) {
       return;
     }
 
     try {
       await this.authService.finishLogin();
-      await this.router.navigateByUrl('/home');
+      await this.router.navigateByUrl(this.authService.takePostLoginUrl());
     } catch (error) {
       this.message = error instanceof Error ? error.message : String(error);
     }
@@ -29,9 +34,22 @@ export class Start implements OnInit {
 
   async login(): Promise<void> {
     try {
-      await this.authService.login();
+      await this.authService.login(this.returnUrl);
     } catch (error) {
       this.message = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  private messageForReason(reason: string | null): string {
+    switch (reason) {
+      case 'login-required':
+        return 'Bitte melde dich zuerst mit deinem Schulaccount an.';
+      case 'account-inactive':
+        return 'Dein Konto ist derzeit nicht aktiv. Bitte wende dich an eine Lehrkraft.';
+      case 'session-check-failed':
+        return 'Deine Anmeldung konnte nicht überprüft werden. Bitte versuche es erneut.';
+      default:
+        return '';
     }
   }
 }

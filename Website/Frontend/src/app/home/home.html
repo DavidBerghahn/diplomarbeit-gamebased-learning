@@ -2,16 +2,24 @@
 
   <div class="nav-main">
     <a routerLink="/games" class="nav-link">Alle Spiele</a>
-    <a routerLink="/myGames" class="nav-link">Meine Spiele</a>
+    @if (canManageGames) {
+      <a routerLink="/myGames" class="nav-link">Meine Spiele</a>
+    }
   </div>
 
   <div class="nav-actions">
     <button type="button" class="auth-details-button" (click)="toggleAuthDetails()" [attr.aria-expanded]="debugVisible">
       {{ debugVisible ? 'Login-Details schließen' : 'Login-Details' }}
     </button>
-    <a routerLink="/createGame" class="create-button">Spiel erstellen</a>
+    @if (canManageGames) {
+      <a routerLink="/createGame" class="create-button">Spiel erstellen</a>
+    }
   </div>
 </nav>
+
+@if (accessNotice) {
+  <p class="access-notice" role="alert">{{ accessNotice }}</p>
+}
 
 @if (debugVisible) {
   <section class="auth-details" aria-label="Login-Details">
