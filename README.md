@@ -17,8 +17,9 @@ anderen unterstützten Assistenten. `verify` ersetzt weder die projektspezifisch
 Tests noch ein unabhängiges Review.
 
 Der fachliche Entwurf in `docs/datenmodell-v1.md` dient als Grundlage für neue
-Changes. Er beschreibt noch nicht den implementierten Datenbankstand. Aktuell
-gibt es deshalb bewusst noch keine OpenSpec-Spezifikation und keinen Change.
+Changes. Er beschreibt noch nicht den implementierten Datenbankstand. Der erste
+geplante Change liegt unter `openspec/changes/game-visibility-and-ownership/`;
+seine Anforderungen sind noch nicht implementiert.
 
 ## Backend
 
