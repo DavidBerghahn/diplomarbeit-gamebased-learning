@@ -2,6 +2,24 @@
 
 KI-gestützte Spieleplattform für Game-based Learning.
 
+## OpenSpec
+
+Neue, größere Funktionen können als OpenSpec-Change geplant werden. Die
+Projektkonfiguration liegt in `openspec/config.yaml`; die Codex-Workflows liegen
+unter `.agents/skills/`. Bei offenen Fragen hilft `$openspec-explore`. Ein
+erster Change kann mit `$openspec-propose` erstellt, nach gemeinsamer Durchsicht
+mit `$openspec-apply-change` umgesetzt, mit `$openspec-verify-change` geprüft
+und nach Abschluss mit `$openspec-archive-change` archiviert werden. Für eine
+gezielte Sicherheitsanalyse ist zusätzlich `$security-threat-model` vorhanden.
+
+In Codex heißen die Skills `$openspec-*`; die Schreibweise `/opsx:*` gehört zu
+anderen unterstützten Assistenten. `verify` ersetzt weder die projektspezifischen
+Tests noch ein unabhängiges Review.
+
+Der fachliche Entwurf in `docs/datenmodell-v1.md` dient als Grundlage für neue
+Changes. Er beschreibt noch nicht den implementierten Datenbankstand. Aktuell
+gibt es deshalb bewusst noch keine OpenSpec-Spezifikation und keinen Change.
+
 ## Backend
 
 Das Backend ist als Quarkus-Anwendung vorbereitet und verwendet den

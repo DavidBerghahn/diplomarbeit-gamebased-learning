@@ -1,0 +1,36 @@
+schema: spec-driven
+
+context: |
+  Language: de
+  All artifacts must be written in de.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Projekt: Game-based-Learning-Diplomarbeit mit Quarkus-Backend und Angular-Frontend.
+  Der fachliche Datenmodell-Entwurf steht in docs/datenmodell-v1.md; die Diagramme
+  stehen in docs/datenmodell-v1.puml und docs/datenmodellGrafik.md.
+  Der Entwurf ist noch nicht implementiert. Vor einem Change den aktuellen Code,
+  die bestehenden Tests und den Git-Stand prüfen; geplantes Verhalten nicht als
+  bereits vorhandene Funktion darstellen.
+  Bei Änderungen an Login, Rollen und Benutzerverwaltung die bestehende
+  Schul-Keycloak-Anbindung und die Berechtigungen berücksichtigen.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
