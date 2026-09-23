@@ -6,7 +6,7 @@ Diese Hinweise ergänzen Davids globale Codex-Regeln. Sie gelten für das Reposi
 
 - Prüfe vor Änderungen `git status --short --branch`, den aktuellen Commit und die betroffenen Dateien. Teamänderungen in anderen Worktrees oder auf `origin/main` nicht überschreiben.
 - Wenn du die Arbeit nach einem Chatwechsel fortsetzt, lies [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) und vergleiche dessen datierte Aussagen mit Git und Code. Die Übergabe ist keine automatische Bestätigung des heutigen Live-Zustands.
-- Für fachliche Regeln zu Spielen, Fragen, Sessions und Fortschritt nutze [docs/datenmodell-v1.md](docs/datenmodell-v1.md). Es ist ein Entwurf, keine bereits implementierte Datenbankstruktur.
+- Für die ursprünglichen fachlichen Antworten und ihre späteren Korrekturen nutze [docs/datenmodell-entscheidungen.md](docs/datenmodell-entscheidungen.md). Der daraus abgeleitete Entwurf steht in [docs/datenmodell-v1.md](docs/datenmodell-v1.md); er ist keine bereits implementierte Datenbankstruktur. Widersprüche zwischen Antworten und Entwurf benennen, nicht stillschweigend glätten.
 - Für den aktuellen Change zu Spielsichtbarkeit und Eigentümerschaft nutze [openspec/changes/game-visibility-and-ownership/](openspec/changes/game-visibility-and-ownership/). Seine Planung ist noch keine Implementierung.
 
 ## Struktur und Arbeitsweise

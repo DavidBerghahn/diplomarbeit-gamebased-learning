@@ -3,6 +3,10 @@
 Stand: 22. September 2026
 Status: Fachlicher Entwurf, noch nicht implementiert
 
+Die drei Fragerunden mit Davids Antworten, späteren Korrekturen und einer noch
+offenen Singleplayer-Frage sind in
+[`datenmodell-entscheidungen.md`](datenmodell-entscheidungen.md) dokumentiert.
+
 Eine eigenständige, renderbare PlantUML-Darstellung liegt in
 [`datenmodell-v1.puml`](datenmodell-v1.puml). Eine zusätzliche Mermaid-Fassung
 liegt in [`datenmodellGrafik.md`](datenmodellGrafik.md).

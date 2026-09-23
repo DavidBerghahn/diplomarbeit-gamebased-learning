@@ -8,13 +8,15 @@ Das Projekt ist eine KI-gestützte Spieleplattform für Game-based Learning an d
 
 Der nächste sinnvolle Einstieg ist:
 
-1. Den geplanten OpenSpec-Change [`game-visibility-and-ownership`](openspec/changes/game-visibility-and-ownership/proposal.md) gemeinsam durchsehen. Er regelt private/öffentliche Spiele und Eigentümerrechte, ist aber **noch nicht implementiert**. Erst nach einem neuen Umsetzungsauftrag mit `$openspec-apply-change` beginnen.
-2. Vor einer späteren Produktivschaltung die Datenmigration und den Rollback-Schutz aus dem [Design](openspec/changes/game-visibility-and-ownership/design.md) prüfen. Ein alter Backend-Stand würde private Spiele offenlegen.
-3. Den echten Lehrerlogin mit einem Lehreraccount end-to-end prüfen. Danach weitere Datenmodellteile wie Kopien, Sessions, Ergebnisse und Fortschritt in getrennten Changes angehen.
+1. Mit dem Supervisor und passenden Spezialisten das [Entscheidungsprotokoll der drei Datenmodell-Fragerunden](docs/datenmodell-entscheidungen.md) gegen den [V1-Entwurf](docs/datenmodell-v1.md) und bestehende OpenSpec-Changes abgleichen. Die dort markierte Frage zum Singleplayer für Lehrkräfte nicht stillschweigend entscheiden. Dies ist zunächst eine Planungs- und Prüfaufgabe, kein Umsetzungsauftrag.
+2. Den geplanten OpenSpec-Change [`game-visibility-and-ownership`](openspec/changes/game-visibility-and-ownership/proposal.md) gemeinsam durchsehen. Er regelt private/öffentliche Spiele und Eigentümerrechte, ist aber **noch nicht implementiert**. Erst nach einem neuen Umsetzungsauftrag mit `$openspec-apply-change` beginnen.
+3. Vor einer späteren Produktivschaltung die Datenmigration und den Rollback-Schutz aus dem [Design](openspec/changes/game-visibility-and-ownership/design.md) prüfen. Ein alter Backend-Stand würde private Spiele offenlegen.
+4. Den echten Lehrerlogin mit einem Lehreraccount end-to-end prüfen. Danach weitere Datenmodellteile wie Kopien, Sessions, Ergebnisse und Fortschritt in getrennten Changes angehen.
 
 ## Fortsetzung am 23. September 2026
 
 - Die Rollen- und Autorisierungsänderungen sowie der fachliche [Datenmodell-Entwurf Version 1](docs/datenmodell-v1.md) sind mit `c9f3859` committet. Der Entwurf ist noch nicht als vollständiges Persistenzmodell umgesetzt.
+- Die drei ursprünglichen Fragerunden mit Davids Antworten und späteren Korrekturen sind als [Entscheidungsprotokoll zum Datenmodell](docs/datenmodell-entscheidungen.md) festgehalten. Vor einer neuen Modell- oder OpenSpec-Bearbeitung dieses Protokoll mit dem V1-Entwurf abgleichen. Die Frage, ob Lehrkräfte öffentliche Spiele auch alleine spielen dürfen, bleibt wegen zweier Aussagen ausdrücklich offen.
 - OpenSpec und die Projekt-Skills wurden mit `17e3d12` eingerichtet. Proposal, Spezifikation, Design und Aufgabenliste des ersten Changes wurden mit `173b655` committet; `openspec validate game-visibility-and-ownership --strict` war erfolgreich. Anwendungscode wurde dafür nicht geändert.
 - Fünf Codex-Worktrees wurden mit dem lokalen `main` synchronisiert und waren danach sauber; `openspec doctor` war dort erfolgreich. Die vorherigen, unversionierten OpenSpec-Kopien wurden zur Sicherheit in fünf Git-Stashes abgelegt. Den HEAD der Worktrees bei Fortsetzung erneut prüfen.
 - Für Supervisor, Researcher, Coder, Writer und Reviewer wurden zuvor separate Codex-Aufgaben angestoßen, aber am 23. September war in der Aufgabenliste nur der ursprüngliche Projektchat nachweisbar. Die Worktrees allein belegen keine einsatzbereiten Chats. Keine doppelte Anlage ohne Statusklärung.
