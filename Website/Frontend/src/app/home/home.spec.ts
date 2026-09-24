@@ -66,7 +66,7 @@ describe('Home', () => {
 
     buttons[0].click();
     fixture.detectChanges();
-    expect(component.profile?.role).toBe('ADMIN');
+    expect(component.profile()?.role).toBe('ADMIN');
     expect(component.canManageGames).toBe(false);
     expect(home.textContent).not.toContain('Meine Spiele');
     expect(home.textContent).not.toContain('Spiel erstellen');
@@ -80,14 +80,31 @@ describe('Home', () => {
     expect(buttons[1].getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('shows the admin view switch as soon as the profile finishes loading', async () => {
+    let resolveProfile!: (value: UserProfile) => void;
+    authService.loadProfile.mockReturnValue(new Promise((resolve) => { resolveProfile = resolve; }));
+    fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+
+    const home = fixture.nativeElement as HTMLElement;
+    expect(home.textContent).not.toContain('Schüleransicht');
+
+    resolveProfile(profile('ADMIN'));
+    await Promise.resolve();
+    await fixture.whenStable();
+
+    expect(home.textContent).toContain('Schüleransicht');
+    expect(home.textContent).toContain('Lehreransicht');
+    expect(home.textContent).toContain('Spiel erstellen');
+  });
+
   async function createHome(role: UserProfile['role']): Promise<void> {
     authService.loadProfile.mockResolvedValue(profile(role));
     fixture = TestBed.createComponent(Home);
     component = fixture.componentInstance;
-    component.profile = profile(role);
     fixture.detectChanges();
+    await Promise.resolve();
     await fixture.whenStable();
-    fixture.detectChanges();
   }
 
   function profile(role: UserProfile['role']): UserProfile {

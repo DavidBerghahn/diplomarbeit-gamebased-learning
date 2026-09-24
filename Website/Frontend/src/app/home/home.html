@@ -35,8 +35,8 @@
 
 @if (debugVisible) {
   <section class="auth-details" aria-label="Login-Details">
-    @if (profile) {
-      <p><strong>Angemeldet als:</strong> {{ profile.displayName }} ({{ profile.username }})</p>
+    @if (profile(); as loadedProfile) {
+      <p><strong>Angemeldet als:</strong> {{ loadedProfile.displayName }} ({{ loadedProfile.username }})</p>
     }
     @if (authError) {
       <p class="auth-error">{{ authError }}</p>

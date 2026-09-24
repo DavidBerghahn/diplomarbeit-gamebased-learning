@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import {RouterLink} from '@angular/router';
 import { Footer } from '../footer/footer';
 import { AuthService, UserProfile } from '../auth.service';
@@ -14,7 +14,7 @@ export class Home implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly adminViewService = inject(AdminViewService);
 
-  profile: UserProfile | null = null;
+  profile = signal<UserProfile | null>(null);
   debugVisible = false;
   debugText = '';
   authError = '';
@@ -25,11 +25,11 @@ export class Home implements OnInit {
   }
 
   get isAdmin(): boolean {
-    return this.profile?.role === 'ADMIN';
+    return this.profile()?.role === 'ADMIN';
   }
 
   get canManageGames(): boolean {
-    return this.profile?.role === 'TEACHER' || (this.isAdmin && this.adminView === 'TEACHER');
+    return this.profile()?.role === 'TEACHER' || (this.isAdmin && this.adminView === 'TEACHER');
   }
 
   selectAdminView(view: AdminView): void {
@@ -44,8 +44,8 @@ export class Home implements OnInit {
     }
 
     try {
-      this.profile = await this.authService.loadProfile();
-      this.debugText = JSON.stringify(this.authService.debugInfo(this.profile), null, 2);
+      this.profile.set(await this.authService.loadProfile());
+      this.debugText = JSON.stringify(this.authService.debugInfo(this.profile()), null, 2);
     } catch (error) {
       this.authError = error instanceof Error ? error.message : String(error);
     }
