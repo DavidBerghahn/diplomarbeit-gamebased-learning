@@ -8,6 +8,18 @@
   </div>
 
   <div class="nav-actions">
+    @if (isAdmin) {
+      <div class="view-switch" role="group" aria-label="Ansicht wählen">
+        <button type="button" class="view-switch-button" [class.selected]="adminView === 'STUDENT'"
+                [attr.aria-pressed]="adminView === 'STUDENT'" (click)="selectAdminView('STUDENT')">
+          Schüleransicht
+        </button>
+        <button type="button" class="view-switch-button" [class.selected]="adminView === 'TEACHER'"
+                [attr.aria-pressed]="adminView === 'TEACHER'" (click)="selectAdminView('TEACHER')">
+          Lehreransicht
+        </button>
+      </div>
+    }
     <button type="button" class="auth-details-button" (click)="toggleAuthDetails()" [attr.aria-expanded]="debugVisible">
       {{ debugVisible ? 'Login-Details schließen' : 'Login-Details' }}
     </button>

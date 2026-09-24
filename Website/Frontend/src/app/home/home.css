@@ -46,6 +46,33 @@ body {
   gap: 0.8rem;
 }
 
+.view-switch {
+  display: flex;
+  border: 1px solid rgba(0, 75, 138, 0.35);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.view-switch-button {
+  padding: 0.7rem 0.9rem;
+  border: 0;
+  background: #FFFFFF;
+  color: #004B8A;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.view-switch-button.selected {
+  background: #004B8A;
+  color: #FFFFFF;
+}
+
+.view-switch-button:focus-visible {
+  outline: 2px solid #61BEFF;
+  outline-offset: -2px;
+}
+
 .nav-link {
   position: relative;
   padding: 1.2vh 0;

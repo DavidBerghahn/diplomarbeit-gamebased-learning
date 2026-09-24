@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import {RouterLink} from '@angular/router';
 import { Footer } from '../footer/footer';
 import { AuthService, UserProfile } from '../auth.service';
+import { AdminView, AdminViewService } from '../admin-view.service';
 
 @Component({
   selector: 'app-home',
@@ -11,6 +12,7 @@ import { AuthService, UserProfile } from '../auth.service';
 })
 export class Home implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly adminViewService = inject(AdminViewService);
 
   profile: UserProfile | null = null;
   debugVisible = false;
@@ -18,8 +20,22 @@ export class Home implements OnInit {
   authError = '';
   accessNotice = '';
 
+  get adminView(): AdminView {
+    return this.adminViewService.view();
+  }
+
+  get isAdmin(): boolean {
+    return this.profile?.role === 'ADMIN';
+  }
+
   get canManageGames(): boolean {
-    return this.profile?.role === 'TEACHER' || this.profile?.role === 'ADMIN';
+    return this.profile?.role === 'TEACHER' || (this.isAdmin && this.adminView === 'TEACHER');
+  }
+
+  selectAdminView(view: AdminView): void {
+    if (this.isAdmin) {
+      this.adminViewService.select(view);
+    }
   }
 
   async ngOnInit(): Promise<void> {

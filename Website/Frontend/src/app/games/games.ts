@@ -5,6 +5,7 @@ import { GameWebSocketService } from '../game-websocket.service';
 import { Game } from '../model/game.model';
 import {FormsModule} from '@angular/forms';
 import { AuthService, UserProfile } from '../auth.service';
+import { AdminViewService } from '../admin-view.service';
 
 @Component({
   selector: 'app-games',
@@ -16,10 +17,12 @@ export class Games implements OnInit {
   private readonly gameWebSocketService = inject(GameWebSocketService);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly adminViewService = inject(AdminViewService);
 
   games = signal<Game[]>([]);
   profile = signal<UserProfile | null>(null);
-  canHost = computed(() => this.profile()?.role === 'TEACHER' || this.profile()?.role === 'ADMIN');
+  canHost = computed(() => this.profile()?.role === 'TEACHER' ||
+    (this.profile()?.role === 'ADMIN' && this.adminViewService.view() === 'TEACHER'));
   quizbattleGames = computed(() =>
     this.games().filter((game) => game.spiel_typ === 'Quizbattle'),
   );

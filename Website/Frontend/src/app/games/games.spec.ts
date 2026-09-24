@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
 import { AuthService, UserProfile } from '../auth.service';
+import { AdminViewService } from '../admin-view.service';
 import { GameWebSocketService } from '../game-websocket.service';
 import { Game } from '../model/game.model';
 import { Games } from './games';
@@ -56,6 +57,21 @@ describe('Games', () => {
     expect(card.getAttribute('role')).toBe('button');
     expect(component.selectedGameForHosting?.id).toBe('game-1');
     expect(fixture.nativeElement.querySelector('.host-dialog')?.textContent).toContain('Lobby erstellen');
+  });
+
+  it('shows the student game view to admins after they switch views', async () => {
+    await createGames('ADMIN');
+    TestBed.inject(AdminViewService).select('STUDENT');
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.game-card') as HTMLElement;
+    card.click();
+    fixture.detectChanges();
+
+    expect(component.profile()?.role).toBe('ADMIN');
+    expect(component.canHost()).toBe(false);
+    expect(card.getAttribute('role')).toBeNull();
+    expect(component.selectedGameForHosting).toBeNull();
   });
 
   async function createGames(role: UserProfile['role']): Promise<void> {
