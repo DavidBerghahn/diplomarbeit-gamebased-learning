@@ -2,6 +2,15 @@
 
 KI-gestützte Spieleplattform für Game-based Learning.
 
+## Für Teammitglieder mit Codex
+
+Die gemeinsamen Projektregeln stehen in [`AGENTS.md`](AGENTS.md). Wer eigene
+sichtbare Supervisor- und Spezialisten-Chats einrichten möchte, verwendet die
+Anleitung und den kopierbaren Einrichtungsauftrag in
+[`docs/codex-team-setup.md`](docs/codex-team-setup.md). Diese Datei erstellt
+keine Chats automatisch; jedes Teammitglied startet die Einrichtung im eigenen
+Codex-Konto ausdrücklich selbst.
+
 ## OpenSpec
 
 Neue, größere Funktionen können als OpenSpec-Change geplant werden. Die

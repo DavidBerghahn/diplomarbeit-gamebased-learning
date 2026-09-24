@@ -1,6 +1,6 @@
 # Projektregeln: Diplomarbeit Game-based Learning
 
-Diese Hinweise ergänzen Davids globale Codex-Regeln. Sie gelten für das Repository und seine Worktrees; ein Chatverlauf allein ist keine verlässliche Projektübergabe.
+Diese Hinweise ergänzen die persönlichen Codex-Regeln der Projektmitglieder. Sie gelten für das Repository und seine Worktrees; ein Chatverlauf allein ist keine verlässliche Projektübergabe. Für Teammitglieder ohne Davids persönliches Codex-Setup erklärt [docs/codex-team-setup.md](docs/codex-team-setup.md) die eigene Einrichtung.
 
 ## Einstieg und Quellen
 
@@ -19,18 +19,19 @@ Diese Hinweise ergänzen Davids globale Codex-Regeln. Sie gelten für das Reposi
 
 ## Zusammenarbeit der Codex-Aufgaben
 
-- David erteilt den Auftrag im Supervisor-Chat. Für größere, sinnvoll teilbare Arbeiten beauftragt der Supervisor die **bereits vorhandene, separat sichtbare Codex-Aufgabe** der passenden Rolle (Researcher, Coder, Writer oder Reviewer) und führt deren Ergebnis im Supervisor-Chat zusammen. Ein intern gestarteter Unteragent ist **nicht** dieser Rollen-Chat und erfüllt diese Anforderung nicht.
+- Jedes Teammitglied richtet eigene Codex-Aufgaben im eigenen Konto ein; Davids Chats, lokale Worktrees und persönliche Rollendateien sind nicht automatisch für andere verfügbar.
+- Das Teammitglied erteilt den Auftrag im eigenen Supervisor-Chat. Für größere, sinnvoll teilbare Arbeiten beauftragt der Supervisor die **bereits vorhandene, separat sichtbare Codex-Aufgabe** der passenden Rolle (Researcher, Coder, Writer oder Reviewer) und führt deren Ergebnis im Supervisor-Chat zusammen. Ein intern gestarteter Unteragent ist **nicht** dieser Rollen-Chat und erfüllt diese Anforderung nicht.
 - Vor der Beauftragung die vorhandenen Aufgaben nach Titel und Aufgaben-ID ermitteln. Den passenden Rollen-Chat mit einer konkreten Nachricht beauftragen und dessen Ergebnis abwarten; nicht allein wegen eines Rollennamens oder eines vorhandenen Worktrees annehmen, dass der Chat existiert oder erreichbar ist. Keine neuen nutzereigenen Aufgaben ohne ausdrücklichen Auftrag anlegen.
 - Jede Beauftragung enthält Ziel, abgegrenzte Zuständigkeit, relevanten OpenSpec-Change beziehungsweise Dateien, Abnahmekriterien, Freigabegrenzen und den erwarteten Rückbericht. Den beauftragten Aufgaben-Titel und die tatsächliche Antwort im Supervisor-Ergebnis nennen. Behaupte eine Delegation an einen Rollen-Chat nur, wenn genau dort eine Nachricht angekommen ist und ein Ergebnis zurückkam.
 - Die Rollen-Chats können in getrennten Worktrees auf unterschiedlichen Commits arbeiten. Vor dem Auftrag Git-Stand und benötigte Änderungen abgleichen; den Ziel-Commit ausdrücklich angeben. Uncommittete Änderungen eines anderen Worktrees sind nicht automatisch sichtbar. Integration und Review erfolgen erst auf einem eindeutig bezeichneten Stand; kein implizites Pushen, Mergen oder Deployen.
-- Kurze Fragen und kleine Änderungen darf der Supervisor selbst erledigen. Fehlt für eine größere Aufgabe der passende sichtbare Rollen-Chat oder ist er nicht erreichbar, die Grenze offenlegen und David um Entscheidung bitten, statt unbemerkt einen internen Unteragenten als Ersatz zu starten.
+- Kurze Fragen und kleine Änderungen darf der Supervisor selbst erledigen. Fehlt für eine größere Aufgabe der passende sichtbare Rollen-Chat oder ist er nicht erreichbar, die Grenze offenlegen und das beauftragende Teammitglied um Entscheidung bitten, statt unbemerkt einen internen Unteragenten als Ersatz zu starten.
 
 ### Verbindlicher Ablauf zwischen den Chats
 
 1. Der Supervisor prüft Auftrag, Git-Stand und vorhandenen OpenSpec-Change. Er zerlegt nur unabhängig bearbeitbare Teile und weist jeder betroffenen Datei beziehungsweise jedem Artefakt genau einen verantwortlichen Chat zu. Abhängige Arbeit folgt nacheinander: erst Recherche oder Planung, dann Umsetzung, dann Review.
-2. Der Supervisor sendet den Teilauftrag an die **bestehende sichtbare Aufgabe** der passenden Rolle und wartet auf deren Antwort. Spezialisten starten weder eigene Unteragenten noch beauftragen sie andere Rollen-Chats; Rückfragen, Blockaden und Änderungsbedarf gehen an den Supervisor. Der Supervisor entscheidet über Umplanung und informiert David über wesentliche Abweichungen.
+2. Der Supervisor sendet den Teilauftrag an die **bestehende sichtbare Aufgabe** der passenden Rolle und wartet auf deren Antwort. Spezialisten starten weder eigene Unteragenten noch beauftragen sie andere Rollen-Chats; Rückfragen, Blockaden und Änderungsbedarf gehen an den Supervisor. Der Supervisor entscheidet über Umplanung und informiert das beauftragende Teammitglied über wesentliche Abweichungen.
 3. Researcher liefert belegte Analyse ohne ungefragte Projektänderungen. Coder ändert nur zugewiesene Bereiche und nennt Tests sowie Commit oder Diff. Writer pflegt zugewiesene Texte oder Planungsartefakte, ohne technische Entscheidungen eigenmächtig zu ändern. Reviewer prüft einen vom Supervisor festgelegten, danach unveränderten Stand unabhängig und verändert keine Dateien.
-4. Der Supervisor gleicht die Ergebnisse mit dem beauftragten Ziel ab, integriert Änderungen erst nach Prüfung des jeweiligen Git-Stands und lässt wesentliche Ergebnisse reviewen. Konkrete Review-Mängel gehen an den zuständigen Bearbeiter zurück; höchstens zwei Korrekturrunden. In seiner Antwort an David trennt er Umsetzung, tatsächliche Prüfung und offene Punkte.
+4. Der Supervisor gleicht die Ergebnisse mit dem beauftragten Ziel ab, integriert Änderungen erst nach Prüfung des jeweiligen Git-Stands und lässt wesentliche Ergebnisse reviewen. Konkrete Review-Mängel gehen an den zuständigen Bearbeiter zurück; höchstens zwei Korrekturrunden. In seiner Antwort trennt er Umsetzung, tatsächliche Prüfung und offene Punkte.
 
 ### OpenSpec-Verantwortung
 
