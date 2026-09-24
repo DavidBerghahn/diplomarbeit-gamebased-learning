@@ -4,6 +4,7 @@ import at.htlleonding.gamebasedlearning.auth.AuthenticatedUser;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class UserService {
         user.username = identity.username();
         user.displayName = identity.displayName();
         user.schoolClass = identity.schoolClass();
-        user.role = mergedRole(user.role, identity.role());
+        user.role = mergedRole(user.role, identity);
         return user;
     }
 
@@ -45,15 +46,15 @@ public class UserService {
 
     @Transactional
     public AppUser updateUser(UUID id, UpdateUserRequest request) {
+        if (request.role != null) {
+            throw new BadRequestException("Roles are managed by authentication");
+        }
         AppUser user = getById(id);
         if (request.displayName != null && !request.displayName.isBlank()) {
             user.displayName = request.displayName.trim();
         }
         if (request.schoolClass != null) {
             user.schoolClass = blankToNull(request.schoolClass);
-        }
-        if (request.role != null) {
-            user.role = request.role;
         }
         if (request.active != null) {
             user.active = request.active;
@@ -67,20 +68,20 @@ public class UserService {
         user.username = identity.username();
         user.displayName = identity.displayName();
         user.schoolClass = identity.schoolClass();
-        user.role = identity.role();
+        user.role = mergedRole(null, identity);
         user.active = true;
         user.persist();
         return user;
     }
 
-    private UserRole mergedRole(UserRole currentRole, UserRole identityRole) {
-        if (currentRole == UserRole.ADMIN) {
+    private UserRole mergedRole(UserRole currentRole, AuthenticatedUser identity) {
+        if (UserRole.isAdminUsername(identity.username()) && identity.role() == UserRole.ADMIN) {
             return UserRole.ADMIN;
         }
-        if (currentRole == UserRole.TEACHER && identityRole == UserRole.STUDENT) {
+        if (currentRole == UserRole.TEACHER || identity.role() == UserRole.TEACHER) {
             return UserRole.TEACHER;
         }
-        return identityRole;
+        return UserRole.STUDENT;
     }
 
     private String blankToNull(String value) {

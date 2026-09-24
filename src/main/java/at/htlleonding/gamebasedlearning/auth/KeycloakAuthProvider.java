@@ -34,7 +34,8 @@ public class KeycloakAuthProvider {
     ) {
         this.jwt = jwt;
         this.clientId = clientId;
-        this.defaultRole = UserRole.from(defaultRole);
+        UserRole configuredDefaultRole = UserRole.from(defaultRole);
+        this.defaultRole = configuredDefaultRole == UserRole.ADMIN ? UserRole.STUDENT : configuredDefaultRole;
     }
 
     public AuthenticatedUser currentUser(HttpHeaders headers) {
@@ -43,6 +44,8 @@ public class KeycloakAuthProvider {
             throw new NotAuthorizedException("Missing Keycloak bearer token");
         }
 
+        Object preferredUsernameClaim = jwt.getClaim("preferred_username");
+        String tokenUsername = preferredUsernameClaim instanceof String value ? value : null;
         String username = firstClaim("preferred_username", "username", "email");
         if (username == null) {
             username = subject;
@@ -64,7 +67,7 @@ public class KeycloakAuthProvider {
                 username,
                 displayName,
                 schoolClass,
-                roleFromClaims(distinguishedName)
+                UserRole.isAdminUsername(tokenUsername) ? UserRole.ADMIN : roleFromClaims(distinguishedName)
         );
     }
 
@@ -109,9 +112,6 @@ public class KeycloakAuthProvider {
         addNestedRoles(roleValues, "realm_access", "roles");
         addResourceRoles(roleValues);
 
-        if (containsAny(roleValues, "admin", "admins", "administrator")) {
-            return UserRole.ADMIN;
-        }
         if (containsAny(roleValues, "teacher", "teachers", "lehrer", "professor")) {
             return UserRole.TEACHER;
         }
