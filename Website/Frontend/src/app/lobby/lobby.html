@@ -19,15 +19,15 @@
 
           <div class="mode-switch" aria-label="Team-Beitritt">
             <button type="button" [class.active]="assignmentMode === 'self'" (click)="setAssignmentMode('self')">
-              Spieler waehlen Team
+              Spieler wählen Team
             </button>
             <button type="button" [class.active]="assignmentMode === 'random'" (click)="setAssignmentMode('random')">
-              Zufaellig zuweisen
+              Zufällig zuweisen
             </button>
           </div>
         </div>
 
-        <button type="button" class="primary-action" (click)="createLobby()">Lobby oeffnen</button>
+        <button type="button" class="primary-action" (click)="createLobby()">Lobby öffnen</button>
       </section>
     } @else {
       <section class="live-view">
@@ -42,7 +42,7 @@
 
         <div class="lobby-meta">
           <span>{{ participants().length }} Spieler in der Lobby</span>
-          <span>{{ assignmentMode === 'random' ? 'Teams werden zufaellig vergeben' : 'Spieler waehlen ihr Team selbst' }}</span>
+          <span>{{ assignmentMode === 'random' ? 'Teams werden zufällig vergeben' : 'Spieler wählen ihr Team selbst' }}</span>
         </div>
 
         <section class="teams-board" [style.gridTemplateColumns]="'repeat(' + teamCount() + ', minmax(0, 1fr))'" aria-label="Teams">
@@ -71,9 +71,9 @@
 
     @if (showStartDialog) {
       <div class="modal-backdrop" (click)="closeStartDialog()">
-        <section class="start-dialog" (click)="$event.stopPropagation()" aria-label="Spielstart bestaetigen">
+        <section class="start-dialog" (click)="$event.stopPropagation()" aria-label="Spielstart bestätigen">
           <h2>Sind alle da?</h2>
-          <p>Pruefe kurz, ob alle Teilnehmer in der Lobby sind, bevor du das Spiel startest.</p>
+          <p>Prüfe kurz, ob alle Teilnehmer in der Lobby sind, bevor du das Spiel startest.</p>
           <div class="dialog-actions">
             <button type="button" class="secondary-button" (click)="closeStartDialog()">Noch warten</button>
             <button type="button" (click)="closeStartDialog()">Ja, starten</button>

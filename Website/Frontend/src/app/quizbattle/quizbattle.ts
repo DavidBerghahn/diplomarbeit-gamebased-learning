@@ -68,7 +68,7 @@ export class Quizbattle {
       ],
     },
     {
-      name: 'Team Gruen',
+      name: 'Team Grün',
       color: '#137a3f',
       points: 0,
       eliminated: false,
@@ -83,13 +83,13 @@ export class Quizbattle {
   readonly currentTeamIndex = signal(0);
   readonly selectedField = signal<QuizField | null>(null);
   readonly currentRound = signal(1);
-  readonly sampleQuestion = 'Dieser Himmelskoerper gehoert zu den acht Planeten unseres Sonnensystems.';
+  readonly sampleQuestion = 'Dieser Himmelskörper gehört zu den acht Planeten unseres Sonnensystems.';
   readonly remainingQuestions = computed(() => this.fields().filter((field) => field.state !== 'answered').length);
   readonly currentTeam = computed(() => this.teams()[this.currentTeamIndex()]);
   readonly activeTeams = computed(() => this.teams().filter((team) => !team.eliminated).length);
   readonly selectedPrompt = computed(() => {
     const field = this.selectedField();
-    return field ? `${field.label}: wahr oder falsch?` : 'Waehlt zuerst ein Antwortfeld.';
+    return field ? `${field.label}: wahr oder falsch?` : 'Wählt zuerst ein Antwortfeld.';
   });
 
   selectField(fieldId: number): void {

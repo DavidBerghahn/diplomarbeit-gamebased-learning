@@ -47,7 +47,7 @@ export class Lobby implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.loading.set(false);
-      this.error.set('Kein Spiel ausgewaehlt.');
+      this.error.set('Kein Spiel ausgewählt.');
       return;
     }
 

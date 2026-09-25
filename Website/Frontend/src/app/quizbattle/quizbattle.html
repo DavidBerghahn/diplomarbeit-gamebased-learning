@@ -4,7 +4,7 @@
       <div class="info-header">
         <span class="eyebrow">Quizbattle</span>
         <h1>Wissensduell</h1>
-        <p>Waehlt reihum eine Antwort. Wenn ihr nicht sicher seid, koennt ihr aussetzen und seid fuer diese Runde raus.</p>
+        <p>Wählt reihum eine Antwort. Wenn ihr nicht sicher seid, könnt ihr aussetzen und seid für diese Runde raus.</p>
       </div>
 
       <section class="info-panel">
@@ -27,14 +27,14 @@
             <dd>{{ activeTeams() }}</dd>
           </div>
           <div>
-            <dt>Gewaehlte Antwort</dt>
+            <dt>Gewählte Antwort</dt>
             <dd>{{ selectedField()?.label || 'Noch keines' }}</dd>
           </div>
         </dl>
       </section>
     </aside>
 
-    <section class="play-area" aria-label="Spielflaeche">
+    <section class="play-area" aria-label="Spielfläche">
       <div class="turn-banner" [style.borderColor]="currentTeam().color">
         <span class="team-dot" [style.background]="currentTeam().color"></span>
         <strong>{{ currentTeam().name }}</strong>
@@ -65,7 +65,7 @@
       </div>
     </section>
 
-    <aside class="team-overview" aria-label="Teamuebersicht">
+    <aside class="team-overview" aria-label="Teamübersicht">
       <div class="section-title">
         <span>Teams</span>
         <strong>Punktestand</strong>
@@ -110,9 +110,9 @@
 
         <p>
           @if (selectedField()) {
-            Gilt die Behauptung fuer {{ selectedField()?.label }}?
+            Gilt die Behauptung für {{ selectedField()?.label }}?
           } @else {
-            Waehlt ein Feld auf der Spielflaeche, um wahr oder falsch zu antworten.
+            Wählt ein Feld auf der Spielfläche, um wahr oder falsch zu antworten.
           }
         </p>
 
