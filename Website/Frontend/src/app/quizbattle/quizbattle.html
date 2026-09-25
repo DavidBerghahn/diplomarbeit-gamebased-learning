@@ -35,10 +35,20 @@
     </aside>
 
     <section class="play-area" aria-label="Spielfläche">
-      <div class="turn-banner" [style.borderColor]="currentTeam().color">
-        <span class="team-dot" [style.background]="currentTeam().color"></span>
-        <strong>{{ currentTeam().name }}</strong>
-        <span>ist an der Reihe</span>
+      <div class="turn-banner" [class.game-over]="gameOver()" [style.borderColor]="currentTeam().color">
+        <div class="turn-banner-team">
+          @if (gameOver()) {
+            <strong>Spiel beendet</strong>
+          } @else {
+            <span class="team-dot" [style.background]="currentTeam().color"></span>
+            <strong>{{ currentTeam().name }}</strong>
+            <span>ist an der Reihe</span>
+          }
+        </div>
+        <div class="answer-timer" role="timer" aria-label="Verbleibende Antwortzeit">
+          <span>Antwortzeit</span>
+          <strong>{{ answerSecondsRemaining() }} s</strong>
+        </div>
       </div>
 
       <div class="quizbattle-grid">
@@ -50,10 +60,16 @@
             [style.gridRow]="field.row"
             [class.active]="field.state === 'active'"
             [class.answered]="field.state === 'answered'"
+            [class.correct]="field.answeredCorrectly === true"
+            [class.incorrect]="field.answeredCorrectly === false"
+            [class.game-over-unanswered]="gameOver() && field.state !== 'answered'"
             (click)="selectField(field.id)"
-            [disabled]="field.state === 'answered'"
+            [disabled]="field.state === 'answered' || gameOver()"
           >
             <span>{{ field.label }}</span>
+            @if (field.state === 'answered' || gameOver()) {
+              <span class="answer-reveal">{{ field.isTrue ? 'Wahr' : 'Falsch' }}</span>
+            }
           </button>
         }
 
@@ -102,14 +118,16 @@
         }
       </div>
 
-      <section class="answer-panel" [class.inactive]="!selectedField()" aria-label="Antwort abgeben">
+      <section class="answer-panel" [class.inactive]="!selectedField() || gameOver()" aria-label="Antwort abgeben">
         <div class="section-title">
           <span>Antwort</span>
           <strong>{{ selectedField()?.label || 'Kein Feld' }}</strong>
         </div>
 
         <p>
-          @if (selectedField()) {
+          @if (gameOver()) {
+            Das Spiel ist beendet.
+          } @else if (selectedField()) {
             Gilt die Behauptung für {{ selectedField()?.label }}?
           } @else {
             Wählt ein Feld auf der Spielfläche, um wahr oder falsch zu antworten.
@@ -117,13 +135,13 @@
         </p>
 
         <div class="answer-actions">
-          <button type="button" class="answer-button true" (click)="answerSelectedField(true)" [disabled]="!selectedField()">Wahr</button>
-          <button type="button" class="answer-button false" (click)="answerSelectedField(false)" [disabled]="!selectedField()">Falsch</button>
-          <button type="button" class="answer-button cancel" (click)="cancelAnswer()" [disabled]="!selectedField()">Abbrechen</button>
+          <button type="button" class="answer-button true" (click)="answerSelectedField(true)" [disabled]="!selectedField() || gameOver()">Wahr</button>
+          <button type="button" class="answer-button false" (click)="answerSelectedField(false)" [disabled]="!selectedField() || gameOver()">Falsch</button>
+          <button type="button" class="answer-button cancel" (click)="cancelAnswer()" [disabled]="!selectedField() || gameOver()">Abbrechen</button>
         </div>
       </section>
 
-      <button type="button" class="pass-button" (click)="passTurn()">Aussetzen</button>
+      <button type="button" class="pass-button" (click)="passTurn()" [disabled]="gameOver()">Aussetzen</button>
     </aside>
   </section>
 </main>

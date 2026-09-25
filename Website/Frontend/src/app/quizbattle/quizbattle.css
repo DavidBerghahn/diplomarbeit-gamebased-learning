@@ -147,15 +147,40 @@ dd {
 .turn-banner {
   min-height: 6vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.7vw;
+  gap: 0.45vh;
+  padding: 0.7vh 1vw;
   border-width: 0.16vw;
 }
 
-.turn-banner strong {
+.turn-banner-team {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7vw;
+}
+
+.turn-banner-team strong {
   color: #004b8a;
   font-size: clamp(1rem, 1.18vw, 1.45rem);
+}
+
+.turn-banner-team > span:last-child {
+  color: #61beff;
+  font-size: clamp(0.84rem, 0.86vw, 1rem);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.turn-banner.game-over {
+  border-color: rgba(0, 75, 138, 0.25) !important;
+  background: #f1f3f5;
+}
+
+.turn-banner.game-over .turn-banner-team strong {
+  color: #536273;
 }
 
 .pass-button {
@@ -233,12 +258,42 @@ dd {
   text-decoration: line-through;
 }
 
+.quizbattle-field.answered.correct {
+  border-color: #137a3f;
+  background: #137a3f;
+  color: #fff;
+  text-decoration: none;
+}
+
+.quizbattle-field.answered.incorrect {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff;
+  text-decoration: none;
+}
+
+.quizbattle-field.game-over-unanswered {
+  border-color: #aab3bb;
+  background: #e4e8ec;
+  color: #66727d;
+  cursor: default;
+  filter: grayscale(1);
+  opacity: 0.72;
+  text-decoration: none;
+}
+
 .quizbattle-field span {
   max-width: 100%;
   overflow-wrap: anywhere;
   font-size: clamp(0.86rem, 1.05vw, 1.25rem);
   font-weight: 700;
   text-align: center;
+}
+
+.quizbattle-field .answer-reveal {
+  margin-top: 0.35vh;
+  font-size: clamp(0.72rem, 0.78vw, 0.92rem);
+  font-weight: 400;
 }
 
 .quizbattle-center {
@@ -388,6 +443,27 @@ h2 {
 .answer-panel.inactive {
   opacity: 0.45;
   filter: grayscale(0.75);
+}
+
+.answer-timer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55vw;
+  color: #004b8a;
+  font-size: clamp(0.95rem, 0.96vw, 1.1rem);
+  font-weight: 700;
+}
+
+.answer-timer span {
+  color: #61beff;
+  font-size: clamp(0.78rem, 0.82vw, 0.95rem);
+  text-transform: uppercase;
+}
+
+.answer-timer strong {
+  font-size: clamp(1.2rem, 1.45vw, 1.7rem);
+  font-variant-numeric: tabular-nums;
 }
 
 .answer-panel p {
