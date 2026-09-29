@@ -8,12 +8,15 @@ import { Login } from './login/login';
 import {Quizbattle} from './quizbattle/quizbattle';
 import {Lobby} from './lobby/lobby';
 import { authenticatedGuard, teacherGuard } from './auth.guard';
+import {JustOneComponent} from './just-one/just-one';
+
 
 export const routes: Routes = [
   { path: '', component: Start },
   { path: 'login', component: Login},
   { path: 'lobby/:id', component: Lobby, canActivate: [teacherGuard]},
   { path: 'lobby', component: Lobby, canActivate: [teacherGuard]},
+  { path: 'justOne', component: JustOneComponent, canActivate: [authenticatedGuard]},
   { path: 'kwizbattle', component: Quizbattle, canActivate: [authenticatedGuard]},
   { path: 'home', component: Home, canActivate: [authenticatedGuard] },
   { path: 'games', component: Games, canActivate: [authenticatedGuard] },

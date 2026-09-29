@@ -1,0 +1,736 @@
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.just-one-page {
+  min-height: 100vh;
+  background: #f3f5f8;
+  color: #1f2937;
+  padding: 20px;
+}
+
+.game-shell {
+  width: min(1500px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 190px minmax(500px, 1fr) 230px;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.game-title-bar {
+  grid-column: 1 / -1;
+  background: #ffffff;
+  border: 1px solid #dfe4ea;
+  border-radius: 10px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.game-title-bar h1 {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.game-title-bar span {
+  display: block;
+  margin-top: 5px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.info-column,
+.teams-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-card {
+  background: #ffffff;
+  border: 1px solid #dfe4ea;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.info-card-title {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 7px;
+}
+
+.category-name {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.current-team-name {
+  border-left: 4px solid;
+  padding-left: 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.play-column {
+  min-width: 0;
+}
+
+.turn-header {
+  background: #ffffff;
+  border: 1px solid #dfe4ea;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.turn-label {
+  color: #6b7280;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.turn-team {
+  margin-top: 2px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.team-score-large {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.game-panel {
+  background: #ffffff;
+  border: 1px solid #dfe4ea;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.panel-heading h2 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.panel-heading p {
+  margin: 5px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.word-card {
+  min-height: 100px;
+  border: 1px solid #ccd3db;
+  border-radius: 9px;
+  background: #f8fafc;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  transition: 0.15s ease;
+}
+
+.word-card:hover:not(:disabled) {
+  border-color: #004b8a;
+  background: #f2f7fc;
+}
+
+.word-card.used,
+.word-card:disabled {
+  background: #e4e7eb;
+  border-color: #d1d5db;
+  color: #8a919a;
+  cursor: not-allowed;
+}
+
+.word-number {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #d6dbe1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.selected-word-box {
+  border: 1px solid #cbd5df;
+  border-radius: 9px;
+  padding: 14px 16px;
+  background: #f7f9fb;
+  margin-bottom: 12px;
+}
+
+.selected-word-box span,
+.guesser-box span,
+.decision-answer span,
+.result-word span,
+.result-guess span {
+  display: block;
+  color: #6b7280;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.selected-word-box strong {
+  font-size: 22px;
+}
+
+.guesser-box {
+  border-left: 4px solid #004b8a;
+  background: #f7f9fb;
+  padding: 10px 13px;
+  margin-bottom: 18px;
+}
+
+.guesser-box strong {
+  font-size: 16px;
+}
+
+.clue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.clue-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.clue-member {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.clue-row input,
+.guess-input-area input {
+  width: 100%;
+  border: 1px solid #cbd2da;
+  border-radius: 7px;
+  padding: 10px 11px;
+  font: inherit;
+  outline: none;
+}
+
+.clue-row input:focus,
+.guess-input-area input:focus {
+  border-color: #004b8a;
+}
+
+.clue-submitted {
+  grid-column: 2 / -1;
+  color: #137a3f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primary-button,
+.correct-button,
+.incorrect-button {
+  border: 0;
+  border-radius: 7px;
+  padding: 9px 13px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #004b8a;
+  color: #ffffff;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #003c6d;
+}
+
+.primary-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.primary-button.large {
+  padding: 11px 18px;
+  font-size: 14px;
+}
+
+.clue-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.clue-card {
+  border: 1px solid #d8dee5;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafbfc;
+  position: relative;
+}
+
+.clue-card-member {
+  display: block;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.clue-card-word {
+  font-size: 17px;
+}
+
+.clue-card.duplicate {
+  background: #fff3f3;
+  border-color: #e8aaaa;
+  opacity: 0.7;
+}
+
+.clue-card.duplicate .clue-card-word {
+  color: #b42318;
+  text-decoration: line-through;
+}
+
+.duplicate-label {
+  display: inline-block;
+  margin-left: 7px;
+  color: #b42318;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.panel-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.visible-clues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.guess-clue {
+  border: 1px solid #d8dee5;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.guess-input-area {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.guess-input-area label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.decision-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.decision-answer {
+  border: 1px solid #d8dee5;
+  border-radius: 9px;
+  background: #f8fafc;
+  padding: 15px;
+}
+
+.decision-answer strong {
+  font-size: 21px;
+}
+
+.decision-answer.original {
+  border-left: 4px solid #004b8a;
+}
+
+.decision-clues {
+  margin-top: 8px;
+}
+
+.decision-title {
+  margin-bottom: 9px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.decision-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.correct-button {
+  background: #137a3f;
+  color: #ffffff;
+  min-width: 130px;
+}
+
+.correct-button:hover {
+  background: #0e6332;
+}
+
+.incorrect-button {
+  background: #b42318;
+  color: #ffffff;
+  min-width: 130px;
+}
+
+.incorrect-button:hover {
+  background: #941d14;
+}
+
+.round-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.round-result-card {
+  border: 1px solid #d8dee5;
+  border-radius: 9px;
+  padding: 14px;
+  background: #fafbfc;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.result-header strong {
+  display: block;
+  font-size: 16px;
+}
+
+.result-header span {
+  display: block;
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.result-status {
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.result-status.success {
+  background: #e6f5eb;
+  color: #137a3f;
+}
+
+.result-status.failure {
+  background: #fbe8e7;
+  color: #b42318;
+}
+
+.result-word {
+  margin-bottom: 14px;
+}
+
+.result-word strong,
+.result-guess strong {
+  font-size: 17px;
+}
+
+.result-section-title {
+  display: block;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+.result-clue-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.result-clue {
+  border: 1px solid #dce1e6;
+  border-radius: 7px;
+  background: #ffffff;
+  padding: 8px 10px;
+}
+
+.result-clue span {
+  display: block;
+  color: #6b7280;
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+
+.result-clue strong {
+  font-size: 13px;
+}
+
+.result-clue small {
+  display: block;
+  color: #b42318;
+  font-size: 9px;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.result-clue.duplicate {
+  background: #fff3f3;
+}
+
+.result-guess {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e4e8;
+}
+
+.teams-title {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 800;
+  padding: 0 2px;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-card {
+  border: 1px solid #dfe4ea;
+  border-left: 4px solid var(--team-color);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 9px 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.team-card.active {
+  box-shadow: 0 0 0 1px var(--team-color);
+}
+
+.team-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.team-name {
+  font-size: 15px;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.team-points {
+  font-size: 23px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.team-members {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 8px;
+}
+
+.member-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.member-display-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guesser-badge {
+  flex: 0 0 auto;
+  border-radius: 4px;
+  padding: 2px 4px;
+  background: #edf2f7;
+  color: #475569;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1160px) {
+  .game-shell {
+    grid-template-columns: 170px minmax(450px, 1fr) 210px;
+  }
+
+  .team-members {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .game-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .game-title-bar,
+  .info-column,
+  .play-column,
+  .teams-column {
+    grid-column: 1;
+  }
+
+  .info-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .team-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .team-members {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .just-one-page {
+    padding: 10px;
+  }
+
+  .game-shell {
+    gap: 10px;
+  }
+
+  .game-title-bar {
+    padding: 12px 14px;
+  }
+
+  .game-title-bar h1 {
+    font-size: 21px;
+  }
+
+  .info-column {
+    grid-template-columns: 1fr;
+  }
+
+  .game-panel {
+    padding: 14px;
+  }
+
+  .word-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clue-grid,
+  .visible-clues,
+  .decision-layout,
+  .result-clue-list {
+    grid-template-columns: 1fr;
+  }
+
+  .clue-row {
+    grid-template-columns: 1fr;
+  }
+
+  .clue-submitted {
+    grid-column: auto;
+  }
+
+  .team-list {
+    grid-template-columns: 1fr;
+  }
+
+  .decision-actions {
+    flex-direction: column;
+  }
+
+  .correct-button,
+  .incorrect-button {
+    width: 100%;
+  }
+}

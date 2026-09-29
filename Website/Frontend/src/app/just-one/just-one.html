@@ -1,0 +1,392 @@
+<main class="just-one-page">
+  <div class="game-shell">
+
+    <header class="game-title-bar">
+      <div>
+        <h1>{{ gameTitle }}</h1>
+        <span>Runde {{ currentRound() }}</span>
+      </div>
+    </header>
+
+    <aside class="info-column">
+      @if (phase() !== 'guess') {
+        <section class="info-card">
+          <div class="info-card-title">Kategorie</div>
+          <div class="category-name">
+            {{ currentCategory() }}
+          </div>
+        </section>
+      }
+
+      <section class="info-card">
+        <div class="info-card-title">Aktuelles Team</div>
+        <div
+          class="current-team-name"
+          [style.border-left-color]="currentTeam().color"
+        >
+          {{ currentTeam().name }}
+        </div>
+      </section>
+    </aside>
+
+    <section class="play-column">
+
+      <div class="turn-header">
+        <div>
+          <div class="turn-label">Am Zug</div>
+          <div class="turn-team">
+            {{ currentTeam().name }}
+          </div>
+        </div>
+
+        <div class="team-score-large">
+          {{ currentTeam().points }}
+        </div>
+      </div>
+
+      @if (phase() === 'word-selection') {
+        <section class="game-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Begriff auswählen</h2>
+              <p>Wählt einen der Begriffe aus.</p>
+            </div>
+          </div>
+
+          <div class="word-grid">
+            @for (word of currentCard().words; track word; let i = $index) {
+              <button
+                class="word-card"
+                [class.used]="isWordUsed(i)"
+                [disabled]="isWordUsed(i)"
+                (click)="selectWord(i)"
+              >
+                <span class="word-number">{{ i + 1 }}</span>
+                <span>{{ word }}</span>
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      @if (phase() === 'clue-input') {
+        <section class="game-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Hinweise geben</h2>
+              <p>Gebt jeweils einen Hinweis zum Begriff.</p>
+            </div>
+          </div>
+
+          <div class="selected-word-box">
+            <span>Gesuchter Begriff</span>
+            <strong>{{ selectedWord() }}</strong>
+          </div>
+
+          <div class="guesser-box">
+            <span>Rater</span>
+            <strong>{{ currentGuesser().name }}</strong>
+          </div>
+
+          <div class="clue-list">
+            @for (member of currentTeam().members; track member.name) {
+              @if (!member.isGuesser) {
+                <div class="clue-row">
+                  <div class="clue-member">
+                    {{ member.name }}
+                  </div>
+
+                  @if (hasSubmittedClue(member.name)) {
+                    <div class="clue-submitted">
+                      Hinweis abgegeben
+                    </div>
+                  } @else {
+                    <input
+                      type="text"
+                      [(ngModel)]="currentClue"
+                      placeholder="Hinweis eingeben"
+                      (keyup.enter)="submitClue(member.name)"
+                    />
+
+                    <button
+                      class="primary-button"
+                      (click)="submitClue(member.name)"
+                    >
+                      Abgeben
+                    </button>
+                  }
+                </div>
+              }
+            }
+          </div>
+        </section>
+      }
+
+      @if (phase() === 'reveal-clues') {
+        <section class="game-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Hinweise</h2>
+            </div>
+          </div>
+
+          <div class="clue-grid">
+            @for (clue of clues(); track clue.memberName) {
+              <div
+                class="clue-card"
+                [class.duplicate]="clue.duplicate"
+              >
+                <span class="clue-card-member">
+                  {{ clue.memberName }}
+                </span>
+
+                <strong class="clue-card-word">
+                  {{ clue.word }}
+                </strong>
+
+                @if (clue.duplicate) {
+                  <span class="duplicate-label">
+                    Doppelt
+                  </span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="panel-actions">
+            <button
+              class="primary-button large"
+              (click)="startGuess()"
+            >
+              Zum Raten
+            </button>
+          </div>
+        </section>
+      }
+
+      @if (phase() === 'guess') {
+        <section class="game-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Raten</h2>
+              <p>Welcher Begriff wird gesucht?</p>
+            </div>
+          </div>
+
+          <div class="visible-clues">
+            @for (clue of visibleCluesForGuesser(); track clue.memberName) {
+              <div class="guess-clue">
+                {{ clue.word }}
+              </div>
+            }
+          </div>
+
+          <div class="guess-input-area">
+            <label for="guess">Deine Antwort</label>
+
+            <input
+              id="guess"
+              type="text"
+              [(ngModel)]="guess"
+              placeholder="Begriff eingeben"
+              (keyup.enter)="submitGuess()"
+            />
+
+            <button
+              class="primary-button large"
+              [disabled]="!guess.trim()"
+              (click)="submitGuess()"
+            >
+              Antwort abgeben
+            </button>
+          </div>
+        </section>
+      }
+
+      @if (phase() === 'decision') {
+        <section class="game-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Antwort prüfen</h2>
+              <p>Entscheidet, ob die Antwort korrekt ist.</p>
+            </div>
+          </div>
+
+          <div class="decision-layout">
+            <div class="decision-answer">
+              <span>Antwort des Raters</span>
+              <strong>{{ guess }}</strong>
+            </div>
+
+            <div class="decision-answer original">
+              <span>Originalbegriff</span>
+              <strong>{{ selectedWord() }}</strong>
+            </div>
+          </div>
+
+          <div class="decision-clues">
+            <div class="decision-title">
+              Hinweise
+            </div>
+
+            <div class="clue-grid">
+              @for (clue of clues(); track clue.memberName) {
+                <div
+                  class="clue-card"
+                  [class.duplicate]="clue.duplicate"
+                >
+                  <span class="clue-card-member">
+                    {{ clue.memberName }}
+                  </span>
+
+                  <strong class="clue-card-word">
+                    {{ clue.word }}
+                  </strong>
+
+                  @if (clue.duplicate) {
+                    <span class="duplicate-label">
+                      Doppelt
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="decision-actions">
+            <button
+              class="incorrect-button"
+              (click)="markIncorrect()"
+            >
+              Ungültig
+            </button>
+
+            <button
+              class="correct-button"
+              (click)="markCorrect()"
+            >
+              Gültig
+            </button>
+          </div>
+        </section>
+      }
+
+      @if (phase() === 'round-over') {
+        <section class="game-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Rundenübersicht</h2>
+              <p>Alle Ergebnisse dieser Runde.</p>
+            </div>
+          </div>
+
+          <div class="round-results">
+            @for (result of roundResults(); track result.teamName) {
+              <article class="round-result-card">
+
+                <div class="result-header">
+                  <div>
+                    <strong>{{ result.teamName }}</strong>
+                    <span>{{ result.category }}</span>
+                  </div>
+
+                  <div
+                    class="result-status"
+                    [class.success]="result.correct"
+                    [class.failure]="!result.correct"
+                  >
+                    {{ result.correct ? 'Richtig' : 'Falsch' }}
+                  </div>
+                </div>
+
+                <div class="result-word">
+                  <span>Begriff</span>
+                  <strong>{{ result.selectedWord }}</strong>
+                </div>
+
+                <div class="result-clues">
+                  <span class="result-section-title">
+                    Hinweise
+                  </span>
+
+                  <div class="result-clue-list">
+                    @for (clue of result.clues; track clue.memberName) {
+                      <div
+                        class="result-clue"
+                        [class.duplicate]="clue.duplicate"
+                      >
+                        <span>{{ clue.memberName }}</span>
+                        <strong>{{ clue.word }}</strong>
+
+                        @if (clue.duplicate) {
+                          <small>Doppelt</small>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="result-guess">
+                  <span>Antwort</span>
+                  <strong>{{ result.guess }}</strong>
+                </div>
+
+              </article>
+            }
+          </div>
+
+          <div class="panel-actions">
+            <button
+              class="primary-button large"
+              (click)="nextRound()"
+            >
+              Nächste Runde
+            </button>
+          </div>
+        </section>
+      }
+
+    </section>
+
+    <aside class="teams-column">
+      <div class="teams-title">Teams</div>
+
+      <div class="team-list">
+        @for (team of teams(); track team.name; let teamIndex = $index) {
+          <article
+            class="team-card"
+            [class.active]="teamIndex === currentTeamIndex()"
+            [style.--team-color]="team.color"
+          >
+            <div class="team-card-header">
+              <div class="team-name">
+                {{ team.name }}
+              </div>
+
+              <div class="team-points">
+                {{ team.points }}
+              </div>
+            </div>
+
+            <div class="team-members">
+              @for (member of team.members; track member.name) {
+                <div class="member-row">
+                  <span class="member-display-name">
+                    {{ member.name }}
+                  </span>
+
+                  @if (member.isGuesser) {
+                    <span class="guesser-badge">
+                      Rater
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </aside>
+
+  </div>
+</main>
