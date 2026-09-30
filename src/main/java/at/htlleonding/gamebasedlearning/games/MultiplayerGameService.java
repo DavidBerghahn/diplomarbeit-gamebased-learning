@@ -46,7 +46,7 @@ public class MultiplayerGameService {
         Player player = new Player(connection.id(), displayName(request), false);
         room.players.put(player.id, player);
         assignPlayer(room, player);
-        return snapshot(room);
+        return snapshotAndBroadcast(room);
     }
 
     public Map<String, Object> startRoom(WebSocketConnection connection, JsonNode request) {
@@ -71,6 +71,7 @@ public class MultiplayerGameService {
             throw new IllegalStateException("Diese Karte ist bereits aufgelöst.");
         }
         room.selectedCard = cardId;
+        room.lastAnswer = null;
         return snapshotAndBroadcast(room);
     }
 
@@ -83,6 +84,7 @@ public class MultiplayerGameService {
         JsonNode question = question(room);
         JsonNode selected = card(room, room.selectedCard);
         boolean correct = isCorrect(question.path("modus").asText("TRUE_FALSE"), selected, request.get("answer"));
+        room.lastAnswer = answerFeedback(room, team, selected, room.selectedCard, correct, connection.id());
         room.resolvedCards.put(room.selectedCard, correct);
         room.selectedCard = null;
         if (correct) {
@@ -101,6 +103,7 @@ public class MultiplayerGameService {
         Team team = currentTeam(room);
         requireLeader(room, team, connection);
         room.selectedCard = null;
+        room.lastAnswer = null;
         team.passed = true;
         advance(room);
         return snapshotAndBroadcast(room);
@@ -170,6 +173,7 @@ public class MultiplayerGameService {
             if (room.phase == Phase.PLAYING && room.questionIndex + 1 < questions(room).size() && !allTeamsEliminated(room)) {
                 room.questionIndex++;
                 room.resolvedCards.clear();
+                room.lastAnswer = null;
                 room.teams.values().forEach(team -> team.passed = false);
             } else {
                 room.phase = Phase.FINISHED;
@@ -268,7 +272,20 @@ public class MultiplayerGameService {
         snapshot.put("currentTeam", room.currentTeam);
         snapshot.put("selectedCard", room.selectedCard);
         snapshot.put("turnDeadline", room.turnDeadline == null ? null : room.turnDeadline.toEpochMilli());
+        snapshot.put("lastAnswer", room.lastAnswer);
         return snapshot;
+    }
+
+    private Map<String, Object> answerFeedback(Room room, Team team, JsonNode card, int cardId, boolean correct, String playerId) {
+        Map<String, Object> feedback = new LinkedHashMap<>();
+        feedback.put("correct", correct);
+        feedback.put("team", team.number);
+        feedback.put("cardId", cardId);
+        JsonNode solution = card.get("loesung");
+        if (solution == null) solution = card.get("ist_richtig");
+        feedback.put("solution", solution == null || solution.isNull() ? null : objectMapper.convertValue(solution, Object.class));
+        feedback.put("answeredBy", room.players.get(playerId) == null ? "Teamleader" : room.players.get(playerId).name);
+        return feedback;
     }
 
     private Map<String, Object> questionSnapshot(Room room) {
@@ -318,6 +335,7 @@ public class MultiplayerGameService {
         int currentTeam;
         Integer selectedCard;
         Instant turnDeadline;
+        Map<String, Object> lastAnswer;
 
         Room(String code, String gameId, JsonNode game, int teamCount, String assignmentMode) {
             this.code = code; this.gameId = gameId; this.game = game; this.teamCount = teamCount; this.assignmentMode = assignmentMode;

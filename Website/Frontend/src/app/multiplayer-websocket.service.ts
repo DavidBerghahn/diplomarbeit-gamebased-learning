@@ -5,6 +5,13 @@ export interface MultiplayerCard { id: number; text: string; state: 'open' | 're
 export interface MultiplayerQuestion { prompt: string; mode: 'TRUE_FALSE' | 'FREE_TEXT' | 'ORDERING'; cards: MultiplayerCard[]; }
 export interface MultiplayerPlayer { id: string; name: string; host: boolean; team: number; }
 export interface MultiplayerTeam { number: number; members: string[]; leader: string | null; points: number; eliminated: boolean; passed: boolean; }
+export interface MultiplayerAnswerFeedback {
+  correct: boolean;
+  team: number;
+  cardId: number;
+  solution: string | boolean | number | null;
+  answeredBy: string;
+}
 export interface MultiplayerRoomState {
   selfId?: string;
   code: string;
@@ -20,6 +27,7 @@ export interface MultiplayerRoomState {
   currentTeam: number;
   selectedCard: number | null;
   turnDeadline: number | null;
+  lastAnswer: MultiplayerAnswerFeedback | null;
 }
 
 @Injectable({ providedIn: 'root' })
