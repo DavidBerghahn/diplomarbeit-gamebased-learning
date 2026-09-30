@@ -55,10 +55,11 @@
     <p>Gib den vierstelligen Spiel-PIN ein und leg direkt los.</p>
 
     <div class="pin-container">
-      <input class="pin-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000">
+      <input class="pin-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000" name="joinCode" [(ngModel)]="joinCode" (keyup.enter)="joinGame()">
     </div>
 
-    <button class="join-button">Beitreten</button>
+    <button class="join-button" type="button" (click)="joinGame()">Beitreten</button>
+    @if (joinError) { <p class="join-error" role="alert">{{ joinError }}</p> }
   </div>
 
 </main>

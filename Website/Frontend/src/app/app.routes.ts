@@ -15,8 +15,8 @@ import {JustOneComponent} from './just-one/just-one';
 export const routes: Routes = [
   { path: '', component: Start },
   { path: 'login', component: Login},
-  { path: 'lobby/:id', component: Lobby, canActivate: [teacherGuard]},
-  { path: 'lobby', component: Lobby, canActivate: [teacherGuard]},
+  { path: 'lobby/:id', component: Lobby, canActivate: [authenticatedGuard]},
+  { path: 'lobby', component: Lobby, canActivate: [authenticatedGuard]},
   { path: 'justOne', component: JustOneComponent, canActivate: [authenticatedGuard]},
   { path: 'kwizbattle', component: Quizbattle, canActivate: [authenticatedGuard]},
   { path: 'solo/:id', component: Solo, canActivate: [authenticatedGuard] },

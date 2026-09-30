@@ -34,17 +34,17 @@ describe('Games', () => {
     }).compileComponents();
   });
 
-  it('shows games without a hosting trigger to students', async () => {
+  it('allows students to open the solo/multiplayer game dialog', async () => {
     await createGames('STUDENT');
 
     const card = fixture.nativeElement.querySelector('.game-card') as HTMLElement;
     card.click();
     fixture.detectChanges();
 
-    expect(card.getAttribute('role')).toBeNull();
-    expect(card.getAttribute('tabindex')).toBeNull();
-    expect(component.selectedGameForHosting).toBeNull();
-    expect(fixture.nativeElement.querySelector('.host-dialog')).toBeNull();
+    expect(card.getAttribute('role')).toBe('button');
+    expect(card.getAttribute('tabindex')).toBe('0');
+    expect(component.selectedGameForHosting?.id).toBe('game-1');
+    expect(fixture.nativeElement.querySelector('.host-dialog')?.textContent).toContain('Solo spielen');
   });
 
   it.each(['TEACHER', 'ADMIN'] as const)('allows %s users to open the hosting dialog', async (role) => {
@@ -70,8 +70,8 @@ describe('Games', () => {
 
     expect(component.profile()?.role).toBe('ADMIN');
     expect(component.canHost()).toBe(false);
-    expect(card.getAttribute('role')).toBeNull();
-    expect(component.selectedGameForHosting).toBeNull();
+    expect(card.getAttribute('role')).toBe('button');
+    expect(component.selectedGameForHosting?.id).toBe('game-1');
   });
 
   async function createGames(role: UserProfile['role']): Promise<void> {

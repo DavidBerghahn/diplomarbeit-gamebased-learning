@@ -1,85 +1,43 @@
-<main class="lobby-page">
+<main class="lobby-page multiplayer-page">
   @if (loading()) {
-    <section class="state-panel">Lobby wird geladen...</section>
-  } @else if (error()) {
+    <section class="state-panel">Spielraum wird vorbereitet...</section>
+  } @else if (error() && !room()) {
     <section class="state-panel error">{{ error() }}</section>
   } @else if (game(); as selectedGame) {
-    @if (!setupComplete()) {
+    @if (!room()) {
       <section class="setup-view">
-        <span class="eyebrow">Lobby vorbereiten</span>
+        <span class="eyebrow">Smart10 Multiplayer</span>
         <h1>{{ selectedGame.name }}</h1>
-        <p>{{ selectedGame.beschreibung || 'Keine Beschreibung vorhanden.' }}</p>
-
+        <p>{{ selectedGame.beschreibung || 'Eröffne einen flüchtigen Spielraum und spiele gemeinsam mit deinem Team.' }}</p>
         <div class="setup-options">
-          <label class="team-slider">
-            <span>Teams</span>
-            <input type="range" min="1" max="6" [value]="teamCount()" (input)="updateTeamCount($any($event.target).value)">
-            <strong>{{ teamCount() }}</strong>
-          </label>
-
-          <div class="mode-switch" aria-label="Team-Beitritt">
-            <button type="button" [class.active]="assignmentMode === 'self'" (click)="setAssignmentMode('self')">
-              Spieler wählen Team
-            </button>
-            <button type="button" [class.active]="assignmentMode === 'random'" (click)="setAssignmentMode('random')">
-              Zufällig zuweisen
-            </button>
-          </div>
+          <label class="team-slider"><span>Teams</span><input type="range" min="1" max="6" [value]="teamCount()" (input)="teamCount.set(+$any($event.target).value)"><strong>{{ teamCount() }}</strong></label>
+          <div class="mode-switch" aria-label="Teamzuordnung"><button type="button" [class.active]="assignmentMode() === 'self'" (click)="assignmentMode.set('self')">Spieler wählen Team</button><button type="button" [class.active]="assignmentMode() === 'random'" (click)="assignmentMode.set('random')">Zufällig zuweisen</button></div>
         </div>
-
-        <button type="button" class="primary-action" (click)="createLobby()">Lobby öffnen</button>
-      </section>
-    } @else {
-      <section class="live-view">
-        <span class="eyebrow">{{ selectedGame.spiel_typ }}</span>
-        <h1>{{ selectedGame.name }}</h1>
-        <p>{{ selectedGame.fach || 'Kein Fach' }} | {{ selectedGame.gespielte_runden }} Runden | {{ answerCount }} Antworten</p>
-
-        <div class="code-block">
-          <span>Spielcode</span>
-          <strong>{{ lobbyCode }}</strong>
-        </div>
-
-        <div class="lobby-meta">
-          <span>{{ participants().length }} Spieler in der Lobby</span>
-          <span>{{ assignmentMode === 'random' ? 'Teams werden zufällig vergeben' : 'Spieler wählen ihr Team selbst' }}</span>
-        </div>
-
-        <section class="teams-board" [style.gridTemplateColumns]="'repeat(' + teamCount() + ', minmax(0, 1fr))'" aria-label="Teams">
-          @for (team of visibleTeams(); track team.name) {
-            <article class="team-lane" [style.borderColor]="team.color">
-              <div>
-                <span class="team-dot" [style.background]="team.color"></span>
-                <h2>{{ team.name }}</h2>
-                <small>{{ team.members.length }} Spieler</small>
-              </div>
-
-              <div class="members">
-                @for (member of team.members; track member) {
-                  <span>{{ member }}</span>
-                } @empty {
-                  <em>Wartet auf Spieler</em>
-                }
-              </div>
-            </article>
-          }
-        </section>
-
-        <button type="button" class="primary-action" (click)="openStartDialog()">Spiel starten</button>
+        <p class="temporary-note">Der Spielraum und der Spielstand werden nur im Arbeitsspeicher gehalten und nach dem Ende verworfen.</p>
+        <button type="button" class="primary-action" (click)="createLobby()">Spielraum öffnen</button>
       </section>
     }
+  }
 
-    @if (showStartDialog) {
-      <div class="modal-backdrop" (click)="closeStartDialog()">
-        <section class="start-dialog" (click)="$event.stopPropagation()" aria-label="Spielstart bestätigen">
-          <h2>Sind alle da?</h2>
-          <p>Prüfe kurz, ob alle Teilnehmer in der Lobby sind, bevor du das Spiel startest.</p>
-          <div class="dialog-actions">
-            <button type="button" class="secondary-button" (click)="closeStartDialog()">Noch warten</button>
-            <button type="button" (click)="closeStartDialog()">Ja, starten</button>
-          </div>
+  @if (room(); as activeRoom) {
+    <section class="room-view">
+      <header class="room-header"><div><span class="eyebrow">{{ activeRoom.phase === 'LOBBY' ? 'Warteraum' : 'Smart10 Multiplayer' }}</span><h1>{{ activeRoom.gameName }}</h1><p>Code: <strong class="room-code">{{ activeRoom.code }}</strong></p></div><div class="phase-badge">{{ activeRoom.phase }}</div></header>
+
+      @if (error()) { <p class="room-error" role="alert">{{ error() }}</p> }
+
+      @if (activeRoom.phase === 'LOBBY') {
+        <section class="lobby-grid">
+          <div class="room-card"><h2>Spieler</h2><div class="player-list">@for (player of activeRoom.players; track player.id) {<span>{{ player.name }} @if (player.host) {<b>Host</b>}</span>}</div><p>{{ activeRoom.players.length }} Spieler verbunden.</p>@if (isHost()) {<button type="button" class="primary-action" (click)="startGame()">Spiel starten</button>} @else {<p class="leader-message">Warte, bis der Host das Spiel startet.</p>}</div>
+          <div class="room-card"><h2>Teams</h2><div class="teams-board">@for (team of activeRoom.teams; track team.number) {<article class="team-lane"><h3>Team {{ team.number + 1 }}</h3><small>Teamleader: {{ activeRoom.players.find((player) => player.id === team.leader)?.name || 'wird gewählt' }}</small><div class="members">@for (member of playersForTeam(team); track member) {<span>{{ member }}</span>}</div></article>}</div></div>
         </section>
-      </div>
-    }
+      } @else if (activeRoom.phase === 'FINISHED') {
+        <section class="finished-card"><span class="eyebrow">Spiel beendet</span><h2>Danke fürs Mitspielen!</h2><div class="teams-board">@for (team of activeRoom.teams; track team.number) {<article class="team-lane" [class.eliminated]="team.eliminated"><h3>Team {{ team.number + 1 }}</h3><strong>{{ team.points }} Punkte</strong><small>{{ team.eliminated ? 'ausgeschieden' : 'aktiv' }}</small></article>}</div></section>
+      } @else {
+        <section class="game-grid">
+          <div class="board-card"><div class="turn-banner"><span>Frage {{ activeRoom.questionIndex + 1 }} / {{ activeRoom.questionsTotal }}</span><strong>{{ activeRoom.currentTeam === currentPlayer()?.team ? (isCurrentLeader() ? 'Du bist dran' : 'Setze dich zu deinem Teamleader') : 'Anderes Team ist dran' }}</strong><b>{{ turnSeconds() }} s</b></div><h2>{{ activeRoom.currentQuestion.prompt }}</h2><div class="cards-grid">@for (card of activeRoom.currentQuestion.cards; track card.id) {<button type="button" class="answer-card" [class.resolved]="card.state === 'resolved'" [class.selected]="activeRoom.selectedCard === card.id" [disabled]="!isCurrentLeader() || card.state !== 'open' || activeRoom.selectedCard !== null" (click)="selectCard(card.id)"><span>{{ card.id }}</span><strong>{{ card.text }}</strong>@if (card.solution !== undefined) {<small>Lösung: {{ card.solution }}</small>}</button>}</div></div>
+          <aside class="control-card"><h2>{{ isCurrentLeader() ? 'Dein Zug' : 'Teamleader gefragt' }}</h2>@if (!isCurrentLeader()) {<p>Du kannst das Spielfeld beobachten. Die Auswahl und Antwort übernimmt dein Teamleader.</p>} @else if (activeRoom.selectedCard === null) {<p>Wähle eine offene Karte.</p>} @else if (activeRoom.currentQuestion.mode === 'TRUE_FALSE') {<p>Ist die Aussage wahr oder falsch?</p><div class="answer-actions"><button type="button" (click)="answerTrueFalse(true)">Wahr</button><button type="button" class="secondary-button" (click)="answerTrueFalse(false)">Falsch</button></div>} @else if (activeRoom.currentQuestion.mode === 'FREE_TEXT') {<label>Konkrete Antwort<input [(ngModel)]="answerDraft" (keyup.enter)="answerText()"></label><button type="button" (click)="answerText()">Antwort prüfen</button>} @else {<label>Position (1–12)<input type="number" min="1" max="12" [(ngModel)]="answerDraft" (keyup.enter)="answerOrdering()"></label><button type="button" (click)="answerOrdering()">Position prüfen</button>}@if (isCurrentLeader() && activeRoom.selectedCard === null) {<button type="button" class="pass-button" (click)="passTurn()">Team steigt für diese Runde aus</button>}</aside>
+        </section>
+      }
+    </section>
   }
 </main>

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 import { GameRestService } from '../game-rest.service';
+import { AuthService } from '../auth.service';
 import { Lobby } from './lobby';
 
 describe('Lobby', () => {
@@ -17,6 +18,7 @@ describe('Lobby', () => {
           useValue: { snapshot: { paramMap: convertToParamMap({}) } },
         },
         { provide: GameRestService, useValue: { getGame: vi.fn() } },
+        { provide: AuthService, useValue: { loadProfile: vi.fn().mockResolvedValue(null) } },
       ],
     }).compileComponents();
 

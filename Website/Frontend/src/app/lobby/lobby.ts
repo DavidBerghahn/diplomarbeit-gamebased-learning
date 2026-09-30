@@ -1,8 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../auth.service';
 import { GameRestService } from '../game-rest.service';
+import { DEMO_SMART10_GAMES } from '../model/demo-games';
 import { Game } from '../model/game.model';
+import { MultiplayerRoomState, MultiplayerTeam, MultiplayerWebSocketService } from '../multiplayer-websocket.service';
 
 @Component({
   selector: 'app-lobby',
@@ -10,89 +13,128 @@ import { Game } from '../model/game.model';
   templateUrl: './lobby.html',
   styleUrl: './lobby.css',
 })
-export class Lobby implements OnInit {
+export class Lobby implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
   private readonly gameRestService = inject(GameRestService);
+  readonly multiplayer = inject(MultiplayerWebSocketService);
 
   readonly game = signal<Game | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
-  readonly lobbyCode = '4827';
-  readonly teamColors = ['#09509d', '#6bb6dd', '#f18806', '#be1723', '#137a3f', '#6ec17d'];
-  readonly participants = signal([
-    'Teilnehmer 1',
-    'Teilnehmer 2',
-    'Teilnehmer 3',
-    'Teilnehmer 4',
-    'Teilnehmer 5',
-    'Teilnehmer 6',
-    'Teilnehmer 7',
-  ]);
-
+  readonly profileName = signal('Spieler');
   readonly teamCount = signal(4);
-  readonly teamAssignments = signal<Record<string, number>>({});
-  readonly setupComplete = signal(false);
-  assignmentMode: 'self' | 'random' = 'self';
-  showStartDialog = false;
+  readonly assignmentMode = signal<'self' | 'random'>('self');
+  readonly answerDraft = signal('');
+  readonly turnSeconds = signal(20);
+  private timer?: ReturnType<typeof setInterval>;
+  private handledDeadline?: number;
 
-  readonly visibleTeams = computed(() =>
-    Array.from({ length: this.teamCount() }, (_, index) => ({
-      name: `Team ${index + 1}`,
-      color: this.teamColors[index],
-      members: this.participants().filter((participant) => this.teamAssignments()[participant] === index),
-    })),
-  );
+  readonly room = this.multiplayer.room;
+  readonly currentPlayer = computed(() => this.room()?.players.find((player) => player.id === this.multiplayer.connectionId) ?? null);
+  readonly currentTeam = computed(() => {
+    const room = this.room();
+    return room?.teams.find((team) => team.number === room.currentTeam) ?? null;
+  });
+  readonly isHost = computed(() => this.room()?.hostId === this.multiplayer.connectionId);
+  readonly isCurrentLeader = computed(() => this.currentTeam()?.leader === this.multiplayer.connectionId);
 
   async ngOnInit(): Promise<void> {
+    try {
+      const profile = await this.authService.loadProfile();
+      this.profileName.set(profile?.displayName || profile?.username || 'Spieler');
+    } catch { /* The WebSocket still receives the login name when available. */ }
+
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
+    if (id) {
+      const localGame = DEMO_SMART10_GAMES.find((game) => game.id === id);
+      try {
+        this.game.set(localGame ?? await this.gameRestService.getGame(id));
+      } catch {
+        this.game.set(localGame ?? null);
+      }
       this.loading.set(false);
-      this.error.set('Kein Spiel ausgewählt.');
-      return;
+    } else if (this.room()) {
+      this.loading.set(false);
+    } else {
+      this.loading.set(false);
+      this.error.set('Kein Spielraum ausgewählt.');
     }
 
-    try {
-      this.game.set(await this.gameRestService.getGame(id));
-    } catch (error) {
-      this.error.set(error instanceof Error ? error.message : String(error));
-    } finally {
-      this.loading.set(false);
-    }
+    this.timer = setInterval(() => this.updateTurnTimer(), 250);
+  }
+
+  ngOnDestroy(): void {
+    if (this.timer) clearInterval(this.timer);
   }
 
   get answerCount(): number {
     return this.game()?.fragen.reduce((sum, question) => sum + question.antwortmoeglichkeiten.length, 0) ?? 0;
   }
 
-  updateTeamCount(value: string): void {
-    const nextTeamCount = Number(value);
-    const clampedTeamCount = Math.min(6, Math.max(1, nextTeamCount));
-    this.teamCount.set(clampedTeamCount);
+  async createLobby(): Promise<void> {
+    const game = this.game();
+    if (!game) return;
+    try {
+      await this.multiplayer.createRoom(game, this.profileName(), this.teamCount(), this.assignmentMode());
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'Der Spielraum konnte nicht geöffnet werden.');
+    }
   }
 
-  setAssignmentMode(mode: 'self' | 'random'): void {
-    this.assignmentMode = mode;
+  async startGame(): Promise<void> {
+    const room = this.room();
+    if (!room || !this.isHost()) return;
+    await this.run(() => this.multiplayer.startRoom(room.code));
   }
 
-  createLobby(): void {
-    this.assignPlaceholderPlayers();
-    this.setupComplete.set(true);
+  async selectCard(cardId: number): Promise<void> {
+    const room = this.room();
+    if (!room || !this.isCurrentLeader() || room.phase !== 'PLAYING') return;
+    await this.run(() => this.multiplayer.selectCard(room.code, cardId));
   }
 
-  assignPlaceholderPlayers(): void {
-    const shuffledParticipants = [...this.participants()].sort(() => Math.random() - 0.5);
-    const nextAssignments: Record<string, number> = {};
-    shuffledParticipants.forEach((participant, index) => {
-      nextAssignments[participant] = index % this.teamCount();
-    });
-    this.teamAssignments.set(nextAssignments);
+  async answerTrueFalse(answer: boolean): Promise<void> { await this.answer(answer); }
+  async answerText(): Promise<void> { await this.answer(this.answerDraft()); }
+  async answerOrdering(): Promise<void> {
+    const value = Number(this.answerDraft());
+    if (Number.isInteger(value)) await this.answer(value);
   }
 
-  openStartDialog(): void {
-    this.showStartDialog = true;
+  async passTurn(): Promise<void> {
+    const room = this.room();
+    if (room) await this.run(() => this.multiplayer.pass(room.code));
   }
 
-  closeStartDialog(): void {
-    this.showStartDialog = false;
+  playersForTeam(team: MultiplayerTeam): string[] {
+    const room = this.room();
+    return team.members.map((id) => room?.players.find((player) => player.id === id)?.name ?? 'Spieler');
+  }
+
+  isOpen(card: { state: string }): boolean { return card.state === 'open'; }
+
+  private async answer(answer: string | boolean | number): Promise<void> {
+    const room = this.room();
+    if (!room || !this.isCurrentLeader() || room.selectedCard === null) return;
+    await this.run(() => this.multiplayer.answer(room.code, answer));
+    this.answerDraft.set('');
+  }
+
+  private async run(action: () => Promise<MultiplayerRoomState>): Promise<void> {
+    try {
+      await action();
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'Der Multiplayer-Befehl ist fehlgeschlagen.');
+    }
+  }
+
+  private updateTurnTimer(): void {
+    const deadline = this.room()?.turnDeadline;
+    const seconds = deadline ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : 0;
+    this.turnSeconds.set(seconds);
+    if (seconds === 0 && deadline && this.handledDeadline !== deadline && this.isCurrentLeader() && this.room()?.phase === 'PLAYING') {
+      this.handledDeadline = deadline;
+      void this.passTurn();
+    }
   }
 }
