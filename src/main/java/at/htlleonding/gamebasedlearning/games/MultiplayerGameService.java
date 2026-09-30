@@ -62,7 +62,7 @@ public class MultiplayerGameService {
 
     public Map<String, Object> selectCard(WebSocketConnection connection, JsonNode request) {
         Room room = room(request);
-        expireTurn(room);
+        if (expireTurn(room)) return snapshotAndBroadcast(room);
         Team team = currentTeam(room);
         requireLeader(room, team, connection);
         int cardId = request.path("cardId").asInt(-1);
@@ -77,7 +77,7 @@ public class MultiplayerGameService {
 
     public Map<String, Object> answer(WebSocketConnection connection, JsonNode request) {
         Room room = room(request);
-        expireTurn(room);
+        if (expireTurn(room)) return snapshotAndBroadcast(room);
         Team team = currentTeam(room);
         requireLeader(room, team, connection);
         if (room.selectedCard == null) throw new IllegalStateException("Wähle zuerst eine Karte.");
@@ -99,7 +99,7 @@ public class MultiplayerGameService {
 
     public Map<String, Object> pass(WebSocketConnection connection, JsonNode request) {
         Room room = room(request);
-        expireTurn(room);
+        if (expireTurn(room)) return snapshotAndBroadcast(room);
         Team team = currentTeam(room);
         requireLeader(room, team, connection);
         room.selectedCard = null;
@@ -185,19 +185,23 @@ public class MultiplayerGameService {
         room.turnDeadline = Instant.now().plusSeconds(TURN_SECONDS);
     }
 
-    private void expireTurn(Room room) {
-        if (room.phase != Phase.PLAYING || room.turnDeadline == null || Instant.now().isBefore(room.turnDeadline)) return;
+    private boolean expireTurn(Room room) {
+        if (room.phase != Phase.PLAYING || room.turnDeadline == null || Instant.now().isBefore(room.turnDeadline)) return false;
         Team team = currentTeam(room);
         room.selectedCard = null;
-        team.passed = true;
+        team.points = 0;
+        team.eliminated = true;
         advance(room);
+        return true;
     }
 
     private int nextActiveTeam(Room room) {
         List<Integer> active = activeTeams(room);
         if (active.isEmpty()) return room.currentTeam;
-        int currentIndex = active.indexOf(room.currentTeam);
-        return active.get((currentIndex + 1) % active.size());
+        return active.stream()
+                .filter(teamNumber -> teamNumber > room.currentTeam)
+                .findFirst()
+                .orElse(active.getFirst());
     }
 
     private List<Integer> activeTeams(Room room) {
