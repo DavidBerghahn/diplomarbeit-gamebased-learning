@@ -12,6 +12,9 @@ interface TokenResponse {
   id_token?: string;
   expires_in: number;
   expires_at?: number;
+  refresh_token?: string;
+  refresh_expires_in?: number;
+  refresh_expires_at?: number;
 }
 
 export interface UserProfile {
@@ -44,6 +47,12 @@ export class AuthService {
   private readonly pkceStorageKey = 'gamebased.keycloak.pkce';
   private authConfig?: AuthConfig;
   private postLoginUrl = '/home';
+  private refreshPromise?: Promise<string | null>;
+  private refreshTimer?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    this.scheduleRefresh(this.readTokens());
+  }
 
   async login(returnUrl?: string): Promise<void> {
     const config = await this.config();
@@ -100,8 +109,7 @@ export class AuthService {
     }
 
     const tokens = await tokenResponse.json() as TokenResponse;
-    tokens.expires_at = Date.now() + tokens.expires_in * 1000;
-    sessionStorage.setItem(this.tokenStorageKey, JSON.stringify(tokens));
+    this.storeTokens(tokens);
     this.postLoginUrl = this.safeInternalReturnUrl(pkce.returnUrl);
     sessionStorage.removeItem(this.pkceStorageKey);
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -120,22 +128,21 @@ export class AuthService {
   }
 
   async loadProfile(): Promise<UserProfile | null> {
-    const tokens = this.readTokens();
-    if (!tokens?.access_token) {
-      return null;
-    }
-
-    if (tokens.expires_at && tokens.expires_at < Date.now()) {
-      sessionStorage.removeItem(this.tokenStorageKey);
+    const accessToken = await this.validAccessToken();
+    if (!accessToken) {
       return null;
     }
 
     const response = await fetch('/api/auth/me', {
       headers: {
-        Authorization: `Bearer ${tokens.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
+    if (response.status === 401) {
+      this.clearTokens();
+      return null;
+    }
     if (!response.ok) {
       throw new Error(`Backend-Profil konnte nicht geladen werden: HTTP ${response.status}`);
     }
@@ -159,11 +166,132 @@ export class AuthService {
     };
   }
 
-  authorizationHeaders(): HeadersInit {
-    const tokens = this.readTokens();
-    return tokens?.access_token
-      ? { Authorization: `Bearer ${tokens.access_token}` }
+  async authorizationHeaders(): Promise<HeadersInit> {
+    const accessToken = await this.validAccessToken();
+    return accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
       : {};
+  }
+
+  invalidateSession(): void {
+    this.clearTokens();
+  }
+
+  private async validAccessToken(forceRefresh = false): Promise<string | null> {
+    const tokens = this.readTokens();
+    if (!tokens) {
+      return null;
+    }
+
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    const refreshWindow = Math.min(30_000, tokens.expires_in * 250);
+    if (!forceRefresh && tokens.access_token && tokens.expires_at
+      && tokens.expires_at > Date.now() + refreshWindow) {
+      return tokens.access_token;
+    }
+
+    if (!tokens.refresh_token || (tokens.refresh_expires_at !== undefined && tokens.refresh_expires_at <= Date.now())) {
+      this.clearTokens();
+      return null;
+    }
+
+    if (!this.refreshPromise) {
+      this.refreshPromise = this.refreshAccessToken(tokens).finally(() => {
+        this.refreshPromise = undefined;
+      });
+    }
+    return this.refreshPromise;
+  }
+
+  private async refreshAccessToken(tokens: TokenResponse): Promise<string | null> {
+    let response: Response;
+    try {
+      const config = await this.config();
+      response = await fetch(`${this.realmUrl(config)}/protocol/openid-connect/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: config.keycloakClientId,
+          refresh_token: tokens.refresh_token!,
+        }),
+      });
+    } catch {
+      this.scheduleRetry();
+      throw new Error('Keycloak-Token konnte nicht erneuert werden.');
+    }
+
+    if (!response.ok) {
+      this.clearTokens();
+      return null;
+    }
+
+    try {
+      const refreshed = await response.json() as TokenResponse;
+      return this.storeTokens(refreshed, tokens);
+    } catch {
+      this.clearTokens();
+      return null;
+    }
+  }
+
+  private storeTokens(response: TokenResponse, previous?: TokenResponse): string {
+    if (typeof response.access_token !== 'string' || !response.access_token
+      || !Number.isFinite(response.expires_in) || response.expires_in <= 0) {
+      throw new Error('Keycloak lieferte keinen gültigen Access-Token.');
+    }
+
+    const now = Date.now();
+    const refreshToken = typeof response.refresh_token === 'string' && response.refresh_token
+      ? response.refresh_token : previous?.refresh_token;
+    const refreshExpiresIn = Number.isFinite(response.refresh_expires_in)
+      ? response.refresh_expires_in : undefined;
+    const refreshExpiresAt = refreshExpiresIn !== undefined
+      ? now + refreshExpiresIn * 1000
+      : refreshToken === previous?.refresh_token ? previous?.refresh_expires_at : undefined;
+    const tokens: TokenResponse = {
+      access_token: response.access_token,
+      id_token: response.id_token ?? previous?.id_token,
+      expires_in: response.expires_in,
+      expires_at: now + response.expires_in * 1000,
+      refresh_token: refreshToken,
+      refresh_expires_in: refreshExpiresIn,
+      refresh_expires_at: refreshExpiresAt,
+    };
+    sessionStorage.setItem(this.tokenStorageKey, JSON.stringify(tokens));
+    this.scheduleRefresh(tokens);
+    return tokens.access_token;
+  }
+
+  private scheduleRefresh(tokens: TokenResponse | null): void {
+    clearTimeout(this.refreshTimer);
+    if (!tokens?.refresh_token || !tokens.expires_at
+      || (tokens.refresh_expires_at !== undefined && tokens.refresh_expires_at <= Date.now())) {
+      return;
+    }
+
+    const leadTime = Math.min(60_000, tokens.expires_in * 500);
+    const delay = Math.max(1_000, tokens.expires_at - Date.now() - leadTime);
+    this.refreshTimer = setTimeout(() => {
+      if (document.visibilityState === 'visible') {
+        void this.validAccessToken(true).catch(() => undefined);
+      }
+    }, delay);
+  }
+
+  private scheduleRetry(): void {
+    clearTimeout(this.refreshTimer);
+    this.refreshTimer = setTimeout(() => {
+      void this.validAccessToken(true).catch(() => undefined);
+    }, 30_000);
+  }
+
+  private clearTokens(): void {
+    clearTimeout(this.refreshTimer);
+    sessionStorage.removeItem(this.tokenStorageKey);
   }
 
   private async config(): Promise<AuthConfig> {
@@ -202,7 +330,12 @@ export class AuthService {
   }
 
   private readTokens(): TokenResponse | null {
-    return JSON.parse(sessionStorage.getItem(this.tokenStorageKey) || 'null') as TokenResponse | null;
+    try {
+      return JSON.parse(sessionStorage.getItem(this.tokenStorageKey) || 'null') as TokenResponse | null;
+    } catch {
+      this.clearTokens();
+      return null;
+    }
   }
 
   private async sha256Base64Url(value: string): Promise<string> {

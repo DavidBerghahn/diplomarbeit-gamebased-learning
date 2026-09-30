@@ -49,15 +49,19 @@ export class GameRestService {
   }
 
   private async request<T>(url: string, init: RequestInit = {}): Promise<T> {
+    const authHeaders = await this.authService.authorizationHeaders();
     const response = await fetch(url, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
-        ...this.authService.authorizationHeaders(),
+        ...authHeaders,
         ...init.headers,
       },
     });
 
+    if (response.status === 401) {
+      this.authService.invalidateSession();
+    }
     if (!response.ok) {
       const message = await response.text();
       throw new Error(message || `Spiel-API lieferte HTTP ${response.status}`);
