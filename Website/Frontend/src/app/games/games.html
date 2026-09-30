@@ -79,8 +79,10 @@
         <h2>Spiel hosten</h2>
         <p>{{ selectedGameForHosting.name }}</p>
 
+        @if (copyMessage) { <p class="copy-message" role="status">{{ copyMessage }}</p> }
         <div class="dialog-actions">
           <button type="button" class="secondary-button" (click)="closeHostDialog()">Abbrechen</button>
+          <button type="button" class="secondary-button" (click)="copySelectedGame()">Kopie erstellen</button>
           <button type="button" (click)="hostSelectedGame()">Lobby erstellen</button>
         </div>
       </section>

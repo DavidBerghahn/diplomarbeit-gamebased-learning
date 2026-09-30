@@ -159,6 +159,13 @@ export class AuthService {
     };
   }
 
+  authorizationHeaders(): HeadersInit {
+    const tokens = this.readTokens();
+    return tokens?.access_token
+      ? { Authorization: `Bearer ${tokens.access_token}` }
+      : {};
+  }
+
   private async config(): Promise<AuthConfig> {
     if (this.authConfig) {
       return this.authConfig;

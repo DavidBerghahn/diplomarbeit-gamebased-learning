@@ -230,6 +230,12 @@ h2 {
   gap: 10px;
 }
 
+.copy-message {
+  margin: 0 0 16px;
+  color: #2e8b62;
+  font-size: 13px;
+}
+
 .secondary-button {
   background: #fff;
   color: #004b8a;

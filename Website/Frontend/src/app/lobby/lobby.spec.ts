@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
-import { GameWebSocketService } from '../game-websocket.service';
+import { GameRestService } from '../game-rest.service';
 import { Lobby } from './lobby';
 
 describe('Lobby', () => {
@@ -16,10 +16,7 @@ describe('Lobby', () => {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({}) } },
         },
-        {
-          provide: GameWebSocketService,
-          useValue: { getGame: vi.fn() },
-        },
+        { provide: GameRestService, useValue: { getGame: vi.fn() } },
       ],
     }).compileComponents();
 

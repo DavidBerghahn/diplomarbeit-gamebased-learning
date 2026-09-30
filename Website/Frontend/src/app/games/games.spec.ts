@@ -3,15 +3,15 @@ import { Router } from '@angular/router';
 
 import { AuthService, UserProfile } from '../auth.service';
 import { AdminViewService } from '../admin-view.service';
-import { GameWebSocketService } from '../game-websocket.service';
+import { GameRestService } from '../game-rest.service';
 import { Game } from '../model/game.model';
 import { Games } from './games';
 
 describe('Games', () => {
   let component: Games;
   let fixture: ComponentFixture<Games>;
-  const gameWebSocketService = {
-    getGames: vi.fn().mockResolvedValue([]),
+  const gameRestService = {
+    getPublicGames: vi.fn().mockResolvedValue([]),
   };
   const authService = {
     loadProfile: vi.fn<() => Promise<UserProfile | null>>(),
@@ -21,13 +21,13 @@ describe('Games', () => {
   };
 
   beforeEach(async () => {
-    gameWebSocketService.getGames.mockClear();
+    gameRestService.getPublicGames.mockClear();
     authService.loadProfile.mockReset();
     router.navigate.mockClear();
     await TestBed.configureTestingModule({
       imports: [Games],
       providers: [
-        { provide: GameWebSocketService, useValue: gameWebSocketService },
+        { provide: GameRestService, useValue: gameRestService },
         { provide: AuthService, useValue: authService },
         { provide: Router, useValue: router },
       ],

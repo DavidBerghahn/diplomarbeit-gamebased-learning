@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { GameWebSocketService } from '../game-websocket.service';
+import { GameRestService } from '../game-rest.service';
 import { Game } from '../model/game.model';
 
 @Component({
@@ -12,7 +12,7 @@ import { Game } from '../model/game.model';
 })
 export class Lobby implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly gameWebSocketService = inject(GameWebSocketService);
+  private readonly gameRestService = inject(GameRestService);
 
   readonly game = signal<Game | null>(null);
   readonly loading = signal(true);
@@ -52,7 +52,7 @@ export class Lobby implements OnInit {
     }
 
     try {
-      this.game.set(await this.gameWebSocketService.getGame(id));
+      this.game.set(await this.gameRestService.getGame(id));
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : String(error));
     } finally {

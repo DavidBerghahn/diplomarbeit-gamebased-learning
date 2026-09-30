@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { GameWebSocketService } from '../game-websocket.service';
+import { GameRestService } from '../game-rest.service';
 import { Game } from '../model/game.model';
 import {FormsModule} from '@angular/forms';
 import { AuthService, UserProfile } from '../auth.service';
@@ -14,7 +14,7 @@ import { AdminViewService } from '../admin-view.service';
   styleUrl: './games.css',
 })
 export class Games implements OnInit {
-  private readonly gameWebSocketService = inject(GameWebSocketService);
+  private readonly gameRestService = inject(GameRestService);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly adminViewService = inject(AdminViewService);
@@ -32,6 +32,7 @@ export class Games implements OnInit {
 
   selectedGameType: 'Quizbattle' | 'DuellUmDieWelt' | '' = '';
   selectedGameForHosting: Game | null = null;
+  copyMessage = '';
 
   selectedGames = computed(() => {
     if (this.selectedGameType === 'Quizbattle') {
@@ -86,13 +87,25 @@ export class Games implements OnInit {
     await this.router.navigate(['/lobby', game.id]);
   }
 
+  async copySelectedGame(): Promise<void> {
+    const game = this.selectedGameForHosting;
+    if (!game || !this.canHost()) return;
+
+    try {
+      await this.gameRestService.copyGame(game.id);
+      this.copyMessage = 'Eine neue Kopie wurde in „Meine Spiele“ angelegt.';
+    } catch (error) {
+      this.copyMessage = error instanceof Error ? error.message : 'Das Spiel konnte nicht kopiert werden.';
+    }
+  }
+
   ngOnInit(): void {
     void this.loadGames();
     void this.loadProfile();
   }
 
   async loadGames(): Promise<void> {
-    this.games.set(await this.gameWebSocketService.getGames());
+    this.games.set(await this.gameRestService.getPublicGames());
   }
 
   async loadProfile(): Promise<void> {

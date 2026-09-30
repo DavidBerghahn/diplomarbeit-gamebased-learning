@@ -1,1 +1,53 @@
-<p>create-game works!</p>
+<main class="create-page">
+  <header class="page-header">
+    <a routerLink="/myGames" class="back-link">← Meine Spiele</a>
+    <div class="header-copy"><span class="eyebrow">Spielstudio</span><h1>Ein neues Spiel bauen</h1><p>Erstelle ein Smart10-/Quizbattle-Spiel oder bereite schon jetzt ein Just-One-Spiel vor.</p></div>
+    <div class="header-status"><span class="status-dot"></span><span>Entwurf</span></div>
+  </header>
+
+  <form class="creation-layout" (ngSubmit)="submit()">
+    <section class="main-column">
+      <section class="panel game-type-panel" aria-labelledby="game-type-title">
+        <div class="section-heading"><div><span class="step">01</span><h2 id="game-type-title">Welches Spiel möchtest du erstellen?</h2></div><span class="required-note">Spiel auswählen</span></div>
+        <div class="game-type-grid">
+          @for (game of gameTypes; track game.id) {
+            <button type="button" class="game-type-card" [class.selected]="selectedGameType === game.id" [class.placeholder]="!game.available" [disabled]="!game.available" (click)="selectGameType(game.id)">
+              <span class="game-type-icon">{{ game.icon }}</span><span class="game-type-copy"><strong>{{ game.title }}</strong><small>{{ game.description }}</small></span>@if (!game.available) {<span class="coming-soon">Bald verfügbar</span>} @else {<span class="radio-mark"></span>}
+            </button>
+          }
+        </div>
+        @if (selectedGameType === 'smart10') {
+          <div class="mode-picker"><div class="mode-picker-heading"><div><h3>Smart10-Modus</h3><p>Ein Spiel besteht aus einer zentralen Frage und genau 12 Antwortmöglichkeiten.</p></div></div><div class="smart10-mode-grid">@for (mode of smart10Modes; track mode.id) {<button type="button" class="smart10-mode-card" [class.selected]="smart10Mode === mode.id" (click)="smart10Mode = mode.id"><span class="mode-icon">{{ mode.icon }}</span><span><strong>{{ mode.title }}</strong><small>{{ mode.description }}</small></span><span class="radio-mark"></span></button>}</div></div>
+        }
+      </section>
+
+      <section class="panel mode-panel" aria-labelledby="start-title">
+        <div class="section-heading"><div><span class="step">02</span><h2 id="start-title">Wie möchtest du starten?</h2></div><span class="required-note">Wähle einen Weg</span></div>
+        <div class="mode-grid">@for (mode of creationModes; track mode.id) {<button type="button" class="mode-card" [class.selected]="creationMode === mode.id" (click)="selectMode(mode.id)"><span class="mode-icon">{{ mode.icon }}</span><span class="mode-card-copy"><strong>{{ mode.title }}</strong><small>{{ mode.description }}</small></span><span class="radio-mark"></span></button>}</div>
+        @if (creationMode === 'reuse-game') {<div class="inline-selection"><label for="existing-game">Vorhandenes Spiel auswählen</label><select id="existing-game" name="existingGame" [(ngModel)]="selectedGameId">@for (game of existingGames; track game.id) {<option [value]="game.id">{{ game.name }} · {{ game.questions }} Fragen · {{ game.author }}</option>}</select><p class="selection-hint">{{ selectedGame.type }} mit {{ selectedGame.questions }} Fragen von {{ selectedGame.author }}.</p></div>}
+        @if (creationMode === 'reuse-questions') {<div class="library-picker"><div class="library-heading"><div><h3>Fragenbibliothek</h3><p>Eigene und freigegebene zentrale Fragen können in deinem neuen Spiel angepasst werden.</p></div><span class="selection-count">{{ selectedQuestionCount }} ausgewählt</span></div><div class="library-list">@for (question of questionLibrary; track question.id) {<label class="library-item" [class.selected]="isQuestionSelected(question.id)"><input type="checkbox" [checked]="isQuestionSelected(question.id)" (change)="toggleLibraryQuestion(question.id)"><span class="checkmark">✓</span><span class="library-item-copy"><strong>{{ question.prompt }}</strong><small>{{ question.author }}</small></span><span class="tag-row">@for (tag of question.tags; track tag) {<em>{{ tag }}</em>}</span></label>}</div></div>}
+      </section>
+
+      <section class="panel details-panel" aria-labelledby="details-title">
+        <div class="section-heading"><div><span class="step">03</span><h2 id="details-title">Grunddaten</h2></div><span class="required-note">* Pflichtfeld</span></div>
+        <div class="form-grid"><label class="field field-wide"><span>Spieltitel <b>*</b></span><input name="gameName" [(ngModel)]="gameName" required placeholder="z. B. Web-Technologien kompakt"></label><div class="field"><span>Spieltyp</span><div class="game-type-value"><strong>{{ selectedGameType === 'smart10' ? 'Smart10 / Quizbattle' : 'Just One' }}</strong><small>{{ selectedGameType === 'smart10' ? smart10ModeDetails.title : 'Platzhalter' }}</small></div></div><label class="field"><span>Fach</span><select name="subject" [(ngModel)]="subject"><option value="">Fach auswählen</option><option value="SEW">SEW</option><option value="Informatik">Informatik</option><option value="Physik">Physik</option><option value="Mathematik">Mathematik</option></select></label><label class="field field-wide"><span>Kurzbeschreibung</span><textarea name="description" [(ngModel)]="description" rows="3" placeholder="Worum geht es in deinem Spiel?"></textarea></label><label class="field field-wide"><span>Tags <button type="button" class="info-button" (click)="showTagHelp = !showTagHelp" aria-label="Informationen zu Tags">i</button></span><input name="tags" [(ngModel)]="tags" placeholder="z. B. Web, Grundlagen, Prüfungsvorbereitung">@if (showTagHelp) {<small class="field-help">Trenne mehrere Tags mit Kommas. Sie helfen Lehrkräften, passende Schülerfragen zur Review zu finden.</small>}</label></div>
+        <div class="visibility-row"><div class="visibility-copy"><span class="visibility-icon">◉</span><div><strong>Spiel öffentlich machen</strong><small>{{ isPublic ? 'Andere können das Spiel finden und spielen.' : 'Nur du kannst das Spiel sehen.' }}</small></div></div><button type="button" class="toggle" [class.active]="isPublic" (click)="isPublic = !isPublic" [attr.aria-pressed]="isPublic"><span></span></button></div>
+      </section>
+
+      @if (selectedGameType === 'smart10' && creationMode !== 'reuse-game') {
+        <section class="panel questions-panel" aria-labelledby="questions-title">
+          <div class="section-heading questions-heading"><div><span class="step">04</span><h2 id="questions-title">Zentrale Frage und 12 Antworten</h2></div><span class="question-count">Immer 12 Karten</span></div>
+          <div class="mode-explanation"><strong>{{ smart10ModeDetails.title }}</strong><span>{{ smart10ModeDetails.description }}</span></div>
+          <div class="question-list">@for (question of questions; track question.id; let questionIndex = $index) {<article class="question-card">
+            <div class="question-card-header"><div class="question-number">01</div><div class="question-card-title"><strong>Zentrale Frage</strong><span>Autor: Du · erstellt: heute · geändert: heute</span></div></div>
+            <div class="question-form"><label class="field field-wide"><span>Zentrale Frage <b>*</b></span><textarea [(ngModel)]="question.prompt" [name]="'prompt-' + question.id" rows="2" placeholder="z. B. Aus welchem Land kommt diese Programmiersprache?"></textarea></label><label class="field field-wide"><span>Fragentags</span><input [(ngModel)]="question.tags" [name]="'tags-' + question.id" placeholder="SEW, Web"></label></div>
+            <div class="answer-grid">@for (card of question.answerCards; track card.id; let cardIndex = $index) {<div class="answer-card"><div class="answer-card-top"><span class="answer-number">{{ cardIndex + 1 }}</span><span>Antwortkarte</span></div><input [(ngModel)]="card.text" [name]="'card-text-' + question.id + '-' + card.id" [placeholder]="smart10Mode === 'ordering' ? 'Element, z. B. Java' : 'Antwortmöglichkeit'"><div class="answer-value">@if (smart10Mode === 'true-false') {<label class="truth-option"><input type="radio" [name]="'truth-' + question.id + '-' + card.id" value="wahr" [(ngModel)]="card.answer"><span>Wahr</span></label><label class="truth-option"><input type="radio" [name]="'truth-' + question.id + '-' + card.id" value="falsch" [(ngModel)]="card.answer"><span>Falsch</span></label>} @else if (smart10Mode === 'free-text') {<label class="answer-label">Konkrete Lösung<input [(ngModel)]="card.answer" [name]="'answer-' + question.id + '-' + card.id" placeholder="z. B. Indien"></label>} @else {<label class="answer-label">Richtige Position (1–12)<input type="number" min="1" max="12" [(ngModel)]="card.answer" [name]="'order-' + question.id + '-' + card.id" placeholder="z. B. 3"></label>}</div></div>}</div>
+          </article>}</div>
+        </section>
+      }
+
+      <div class="bottom-actions"><a routerLink="/myGames" class="cancel-button">Abbrechen</a><button type="submit" class="save-button" [disabled]="selectedGameType === 'just-one'">{{ isPublic ? 'Spiel vorbereiten' : 'Entwurf vorbereiten' }} <span>→</span></button></div>@if (submitted) {<p class="submit-note" role="status">Das Spiel wurde frontendseitig vorbereitet. Eine Speicherung ist noch nicht angebunden.</p>} @if (saveError) {<p class="submit-error" role="alert">{{ saveError }}</p>}
+    </section>
+    <aside class="side-column"><section class="tip-card"><span class="tip-icon">✦</span><h2>Smart10 wie im Original</h2><p>Eine zentrale Frage, zwölf Karten und genau eine Lösung pro Karte. Die Mitspieler wählen oder beantworten die Karten reihum.</p><a href="#questions-title">Zur Fragenhilfe →</a></section><section class="review-card"><span class="eyebrow">Review im Team</span><h2>Fragen von Schülern</h2><p>Schülerfragen werden erst nach der Freigabe durch eine passende Lehrkraft öffentlich.</p><div class="review-tags"><span>SEW</span><span>Web</span><span>Informatik</span></div><small>Du bekommst passende Vorschläge anhand deiner Fach- und Spieltags.</small></section></aside>
+  </form>
+</main>
