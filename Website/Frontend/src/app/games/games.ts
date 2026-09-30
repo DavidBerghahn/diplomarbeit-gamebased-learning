@@ -6,6 +6,7 @@ import { Game } from '../model/game.model';
 import {FormsModule} from '@angular/forms';
 import { AuthService, UserProfile } from '../auth.service';
 import { AdminViewService } from '../admin-view.service';
+import { DEMO_SMART10_GAMES } from '../model/demo-games';
 
 @Component({
   selector: 'app-games',
@@ -24,7 +25,7 @@ export class Games implements OnInit {
   canHost = computed(() => this.profile()?.role === 'TEACHER' ||
     (this.profile()?.role === 'ADMIN' && this.adminViewService.view() === 'TEACHER'));
   quizbattleGames = computed(() =>
-    this.games().filter((game) => game.spiel_typ === 'Quizbattle'),
+    this.games().filter((game) => ['Quizbattle', 'Smart10', 'Smart10 / Quizbattle'].includes(game.spiel_typ)),
   );
   duellUmDieWeltGames = computed(() =>
     this.games().filter((game) => game.spiel_typ === 'DuellUmDieWelt'),
@@ -48,7 +49,7 @@ export class Games implements OnInit {
 
   selectedGameTypeTitle = computed(() => {
     if (this.selectedGameType === 'Quizbattle') {
-      return 'Quizbattle';
+      return 'Smart10 / Quizbattle';
     }
 
     if (this.selectedGameType === 'DuellUmDieWelt') {
@@ -68,10 +69,13 @@ export class Games implements OnInit {
 
   openHostDialog(event: Event, game: Game): void {
     event.stopPropagation();
-    if (!this.canHost()) {
-      return;
-    }
     this.selectedGameForHosting = game;
+  }
+
+  async playSolo(): Promise<void> {
+    const game = this.selectedGameForHosting;
+    if (!game) return;
+    await this.router.navigate(['/solo', game.id]);
   }
 
   closeHostDialog(): void {
@@ -105,7 +109,17 @@ export class Games implements OnInit {
   }
 
   async loadGames(): Promise<void> {
-    this.games.set(await this.gameRestService.getPublicGames());
+    try {
+      const remoteGames = await this.gameRestService.getPublicGames();
+      this.games.set(this.withDemoGames(remoteGames));
+    } catch {
+      this.games.set(DEMO_SMART10_GAMES);
+    }
+  }
+
+  private withDemoGames(games: Game[]): Game[] {
+    const existingIds = new Set(games.map((game) => game.id));
+    return [...games, ...DEMO_SMART10_GAMES.filter((game) => !existingIds.has(game.id))];
   }
 
   async loadProfile(): Promise<void> {

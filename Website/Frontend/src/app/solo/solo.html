@@ -1,0 +1,58 @@
+<main class="solo-page">
+  @if (loading()) {
+    <section class="state-panel">Solo-Spiel wird vorbereitet...</section>
+  } @else if (finished()) {
+    <section class="result-panel">
+      <span class="eyebrow">Solo-Ergebnis</span>
+      <h1>{{ game().name }}</h1>
+      <p>Dein persönlicher Spielstand bleibt nur für diese Sitzung erhalten.</p>
+      <div class="result-grid">
+        <div><strong>{{ score() }}</strong><span>Gesamtscore</span></div>
+        <div><strong>{{ correctCards() }}</strong><span>Richtige Karten</span></div>
+        <div><strong>{{ completedQuestions() }}</strong><span>Fragen abgeschlossen</span></div>
+        <div><strong>{{ bestStreak() }}</strong><span>Beste Serie</span></div>
+      </div>
+      <div class="result-actions"><button type="button" (click)="restart()">Nochmal spielen</button><a routerLink="/games">Zurück zu allen Spielen</a></div>
+    </section>
+  } @else if (currentQuestion(); as question) {
+    <header class="solo-header">
+      <div><a routerLink="/games" class="back-link">← Alle Spiele</a><span class="eyebrow">Solo spielen</span><h1>{{ game().name }}</h1><p>{{ question.prompt }}</p></div>
+      <div class="header-score"><span>Score</span><strong>{{ score() }}</strong></div>
+    </header>
+
+    @if (loadMessage()) { <p class="demo-note" role="status">{{ loadMessage() }}</p> }
+
+    <section class="stats-grid" aria-label="Solo-Statistik">
+      <div><span>Fortschritt</span><strong>{{ progress() }}%</strong></div>
+      <div><span>Richtige Karten</span><strong>{{ correctCards() }} / {{ answeredCards() }}</strong></div>
+      <div><span>Aktuelle Serie</span><strong>{{ currentStreak() }}</strong></div>
+      <div><span>Beste Serie</span><strong>{{ bestStreak() }}</strong></div>
+    </section>
+
+    <main class="play-layout">
+      <section class="cards-panel" aria-label="Antwortkarten">
+        <div class="panel-heading"><div><span class="eyebrow">Frage {{ currentQuestionIndex() + 1 }} von {{ questions().length }}</span><h2>Wähle eine Antwortkarte</h2></div><span class="mode-label">{{ question.mode }}</span></div>
+        <div class="cards-grid">
+          @for (card of question.cards; track card.id) {
+            <button type="button" class="answer-card" [class.selected]="selectedCardId() === card.id" [class.correct]="card.state === 'correct'" [class.incorrect]="card.state === 'incorrect'" [disabled]="card.state !== 'open'" (click)="selectCard(card)">
+              <span class="card-number">{{ card.id }}</span><strong>{{ card.text }}</strong>
+              @if (card.state === 'correct') { <small>Richtig</small> } @else if (card.state === 'incorrect') { <small>Richtig: {{ revealedSolution(card, question.mode) }}</small> }
+            </button>
+          }
+        </div>
+      </section>
+
+      <aside class="answer-panel" aria-label="Antwort abgeben">
+        @if (selectedCard(); as card) {
+          <span class="eyebrow">Karte {{ card.id }}</span><h2>{{ card.text }}</h2>
+          @if (isTrueFalseMode()) { <p>Ist die Aussage wahr oder falsch?</p><div class="answer-actions"><button type="button" (click)="answerTrueFalse(true)">Wahr</button><button type="button" class="secondary" (click)="answerTrueFalse(false)">Falsch</button></div> }
+          @else if (isFreeTextMode()) { <label>Deine konkrete Antwort<input [(ngModel)]="answerDraft" placeholder="Antwort eingeben" (keyup.enter)="submitTextAnswer()"></label><button type="button" (click)="submitTextAnswer()">Antwort prüfen</button> }
+          @else { <label>Position in der Reihenfolge (1–12)<input type="number" min="1" max="12" [(ngModel)]="answerDraft" (keyup.enter)="submitOrderingAnswer()"></label><button type="button" (click)="submitOrderingAnswer()">Position prüfen</button> }
+        } @else { <span class="eyebrow">Dein Zug</span><h2>Wähle eine offene Karte</h2><p>Nach deiner Antwort wird die Lösung direkt angezeigt. Falsche Antworten beenden deinen Zug nicht.</p> }
+
+        @if (feedback()) { <p class="feedback" [class.correct-feedback]="feedbackCorrect() === true">{{ feedback() }}</p> }
+        @if (questionComplete()) { <button type="button" class="next-button" (click)="nextQuestion()">{{ currentQuestionIndex() === questions().length - 1 ? 'Ergebnis anzeigen' : 'Nächste Frage' }} →</button> }
+      </aside>
+    </main>
+  }
+</main>

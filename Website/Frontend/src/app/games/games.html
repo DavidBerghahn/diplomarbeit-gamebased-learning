@@ -12,7 +12,7 @@
 
       <div class="type-options">
         <button type="button" class="type-option" (click)="setSelectedGameType('Quizbattle')">
-          <span>Quizbattle</span>
+          <span>Smart10 / Quizbattle</span>
           <strong>{{ quizbattleGames().length }} Spiele</strong>
         </button>
 
@@ -30,21 +30,16 @@
 
       <span class="eyebrow">Alle Spiele</span>
       <h1>{{ selectedGameTypeTitle() }}</h1>
-      @if (canHost()) {
-        <p>Klicke auf ein Spiel, um dafür eine Lobby vorzubereiten.</p>
-      } @else {
-        <p>Hier findest du die verfügbaren Spiele. Beitreten kannst du auf der Startseite mit einem Spiel-PIN.</p>
-      }
+      <p>Klicke auf ein Spiel, um es alleine zu spielen{{ canHost() ? ' oder eine Lobby dafür vorzubereiten' : '' }}.</p>
 
       <div class="games-list">
         @for (game of selectedGames(); track game.id) {
           <article
-            class="game-card"
-            [class.hostable]="canHost()"
+            class="game-card hostable"
             (click)="openHostDialog($event, game)"
             (keydown.enter)="openHostDialog($event, game)"
-            [attr.tabindex]="canHost() ? 0 : null"
-            [attr.role]="canHost() ? 'button' : null"
+            tabindex="0"
+            role="button"
           >
             <div class="card-header">
               <h2>{{ game.name }}</h2>
@@ -76,14 +71,17 @@
     <div class="modal-backdrop" (click)="closeHostDialog()">
       <section class="host-dialog" (click)="$event.stopPropagation()" aria-label="Spiel hosten">
         <span class="dialog-label">{{ selectedGameForHosting.spiel_typ }}</span>
-        <h2>Spiel hosten</h2>
+          <h2>Spiel starten</h2>
         <p>{{ selectedGameForHosting.name }}</p>
 
         @if (copyMessage) { <p class="copy-message" role="status">{{ copyMessage }}</p> }
         <div class="dialog-actions">
           <button type="button" class="secondary-button" (click)="closeHostDialog()">Abbrechen</button>
-          <button type="button" class="secondary-button" (click)="copySelectedGame()">Kopie erstellen</button>
-          <button type="button" (click)="hostSelectedGame()">Lobby erstellen</button>
+          <button type="button" (click)="playSolo()">Solo spielen</button>
+          @if (canHost()) {
+            <button type="button" class="secondary-button" (click)="copySelectedGame()">Kopie erstellen</button>
+            <button type="button" (click)="hostSelectedGame()">Lobby erstellen</button>
+          }
         </div>
       </section>
     </div>
