@@ -1,3 +1,10 @@
+# Datenmodell Version 1 – Mermaid-Entwurf
+
+Stand: 30. September 2026. Fachlicher Entwurf, keine bereits implementierte
+Datenbank. Die Tabellen zu Sessions, Teams, Teilnehmern und Antworten zeigen
+ausschließlich dauerhaft gespeicherte, vollständig abgeschlossene Runden.
+Lobby, laufende und abgebrochene Runden haben hier keinen Datensatz.
+
 ```mermaid
 erDiagram
 
@@ -29,7 +36,7 @@ erDiagram
         uuid id PK
         uuid family_id FK
         uuid copied_from_game_id FK "nullable"
-        uuid creator_user_id FK
+        uuid creator_user_id FK "nur fuer besitzerlose Altspiele nullable"
         varchar visibility "PRIVATE oder PUBLIC"
         uuid current_version_id FK
         timestamp deleted_at "nullable"
@@ -94,12 +101,10 @@ erDiagram
         uuid id PK
         uuid game_id FK
         uuid game_version_id FK
-        uuid host_user_id FK
+        uuid host_user_id FK "aktives Solo-Spiel nullable"
         varchar mode "SINGLEPLAYER oder MULTIPLAYER"
-        varchar join_code "nullable"
-        varchar status "LOBBY, RUNNING, FINISHED oder CANCELLED"
-        timestamp started_at "nullable"
-        timestamp finished_at "nullable"
+        timestamp started_at
+        timestamp finished_at
         timestamp created_at
     }
 
@@ -120,7 +125,6 @@ erDiagram
         integer score
         integer placement "nullable"
         boolean winner
-        boolean completed
         timestamp joined_at
     }
 
@@ -142,14 +146,14 @@ erDiagram
         uuid reporter_user_id FK
         uuid resolved_by_user_id FK "nullable"
         text comment
-        varchar status "OPEN, IN_REVIEW, RESOLVED oder REJECTED"
+        varchar status "Workflow-Vorschlag"
         text resolution_comment "nullable"
         timestamp created_at
         timestamp resolved_at "nullable"
     }
 
 
-    users ||--o{ games : erstellt
+    users |o--o{ games : erstellt
 
     subjects ||--o{ game_versions : kategorisiert
 
@@ -185,11 +189,11 @@ erDiagram
 
     game_versions ||--o{ game_sessions : Snapshot
 
-    users ||--o{ game_sessions : hostet
+    users |o--o{ game_sessions : hostet
 
     game_sessions ||--o{ teams : bildet
 
-    game_sessions ||--o{ session_participants : hat
+    game_sessions ||--|{ session_participants : hat
 
     users ||--o{ session_participants : spielt
 
@@ -208,3 +212,30 @@ erDiagram
 
     users |o--o{ question_reports : bearbeitet
 ```
+
+Modellannahme: Beim aktiven Solo-Spiel ist `host_user_id` leer; die allein spielende
+Person steht als Teilnehmer in `session_participants`. In einer gehosteten
+Mehrspieler-Runde darf der Host nicht zugleich Teilnehmer sein. Nur aktive
+Teilnehmer erhalten Fortschritt: Schüler, Lehrkräfte im Singleplayer und
+mitspielende Administratoren. Alle Teilnehmer einer abgeschlossenen Runde
+erhalten Punkte; Plätze 1 bis 3 deutlich mehr. Punkteformel und Bonus bei einem
+Gleichstand an der Grenze zu Platz 3 sind offen. Ein Lobbycode gehört nur zum
+flüchtigen Rundenzustand. Ob Lehrkräfte im Mehrspieler-Modus aktiv teilnehmen
+dürfen, ist weiterhin offen. Ebenso offen ist, ob ein privates Spiel ohne
+Mitspieler gehostet und als Runde abgeschlossen werden kann. Das gezeigte
+Ergebnismodell setzt mindestens einen aktiven Teilnehmer voraus; der Host
+würde auch in einer reinen Host-Runde nicht selbst mitspielen.
+
+Neue Spiele sind standardmäßig privat. Vorhandene Spiele werden bei der
+Migration öffentlich, auch wenn `creator_user_id` mangels belegbarem Ersteller
+leer bleibt. Die feste Prüfung der drei Schul-Keycloak-IT-Benutzernamen
+`it220269`, `it220240` und `it220265` für `ADMIN` ist geplant; das genaue
+Token-Feld ist technisch noch zu verifizieren. Es gibt keine separate
+Admin-Anmeldung oder Datenbankvergabe.
+
+Die Sichtbarkeit von Meldungsdetails ist offen. Bestätigt ist nur, dass
+Ersteller und Administratoren die Frage ändern dürfen. Status,
+Bearbeitungsweg und Empfänger der Meldung sind Vorschläge. Beim Löschen einer
+gemeldeten Frage wird auch ihre Meldung gelöscht; wie dabei historische
+Antworten trotz `question_versions.question_id` erhalten bleiben, ist technisch
+noch zu klären. `questions.deleted_at` ist dafür nur ein Modellvorschlag.

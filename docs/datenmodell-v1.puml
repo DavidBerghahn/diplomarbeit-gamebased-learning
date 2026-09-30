@@ -1,6 +1,6 @@
 @startuml Datenmodell_V1
 
-title Game-based Learning – Datenmodell Version 1
+title Game-based Learning – Datenmodell Version 1 (Entwurf, nicht implementiert)
 
 hide circle
 hide methods
@@ -48,7 +48,7 @@ package "Spiele und Versionen" #F2FCEB {
     --
     family_id : UUID <<FK>>
     copied_from_game_id : UUID? <<FK>>
-    creator_user_id : UUID <<FK>>
+    creator_user_id : UUID? <<FK>>
     visibility : VARCHAR
     current_version_id : UUID <<FK>>
     deleted_at : TIMESTAMP?
@@ -129,12 +129,11 @@ package "Sessions und Ergebnisse" #F5F0FF {
     --
     game_id : UUID <<FK>>
     game_version_id : UUID <<FK>>
-    host_user_id : UUID <<FK>>
+    host_user_id : UUID? <<FK>>
     mode : VARCHAR
-    join_code : VARCHAR?
-    status : VARCHAR
-    started_at : TIMESTAMP?
-    finished_at : TIMESTAMP?
+    started_at : TIMESTAMP
+    finished_at : TIMESTAMP
+    created_at : TIMESTAMP
   }
 
   entity teams {
@@ -158,7 +157,7 @@ package "Sessions und Ergebnisse" #F5F0FF {
     score : INTEGER
     placement : INTEGER?
     winner : BOOLEAN
-    completed : BOOLEAN
+    joined_at : TIMESTAMP
     --
     UQ(session_id, user_id)
   }
@@ -192,7 +191,7 @@ package "Qualitätssicherung" #FFF0F3 {
   }
 }
 
-users ||--o{ games : erstellt
+users |o--o{ games : erstellt
 subjects ||--o{ game_versions : kategorisiert
 game_families ||--|{ games : gruppiert
 games ||--|{ game_versions : versioniert
@@ -209,9 +208,9 @@ question_versions ||--o{ accepted_text_answers : Freitext
 
 games ||--o{ game_sessions : wird_gespielt
 game_versions ||--o{ game_sessions : Snapshot
-users ||--o{ game_sessions : hostet
+users |o--o{ game_sessions : hostet
 game_sessions ||--o{ teams : bildet
-game_sessions ||--o{ session_participants : hat
+game_sessions ||--|{ session_participants : hat
 users ||--o{ session_participants : spielt
 teams |o--o{ session_participants : gruppiert
 session_participants ||--o{ player_answers : beantwortet
@@ -223,26 +222,55 @@ users ||--o{ question_reports : meldet
 users |o--o{ question_reports : bearbeitet
 
 note right of games
-  Nur Lehrkräfte erstellen und kopieren.
-  Nur der Ersteller bearbeitet oder löscht.
-  Private Spiele sieht nur der Ersteller.
+  Neue Spiele: Ersteller Pflicht, Standard PRIVATE.
+  Besitzerlose Altspiele: Ersteller optional, PUBLIC.
+  Ersteller oder Admin bearbeitet und löscht.
+  Private Bibliothek: Ersteller und Admin.
 end note
 
 note right of game_versions
   Änderungen erzeugen atomar einen neuen Snapshot.
-  Neue Sessions verwenden die aktuelle Version.
-  Laufende Sessions behalten ihre alte Version.
+  Neue Runden verwenden die aktuelle Version.
+  Laufende Runden behalten ihren Snapshot flüchtig.
 end note
 
 note bottom of game_sessions
-  Schüler und Lehrkräfte dürfen öffentliche Spiele hosten.
-  Nur Schüler werden als fortschrittsrelevante Teilnehmer gespeichert.
-  join_code ist innerhalb aktiver Lobbys eindeutig.
+  Nur vollständig abgeschlossene Runden dauerhaft speichern.
+  Lobby, laufende und abgebrochene Runden bleiben flüchtig.
+  Host spielt nicht mit und erhält keinen Fortschritt.
+  Singleplayer: host_user_id NULL (Modellannahme).
+  Private Host-Runde ohne Mitspieler: noch offen.
+  Gespeicherter Ergebnisentwurf hat mind. 1 Teilnehmer.
 end note
 
 note bottom of session_participants
-  score ist die verbindliche Quelle für Fortschritt und Gesamtlevel.
+  Aktive Schüler, Singleplayer-Lehrkräfte und Admins:
+  score ist die Quelle für Fortschritt und Gesamtlevel.
+  Alle Teilnehmer erhalten Punkte, Plätze 1 bis 3 deutlich mehr.
+  Formel und Bonus bei Gleichstand an Platz 3 sind offen.
+  Lehrer-Teilnahme im Multiplayer ist noch offen.
   team_id muss zu einem Team derselben Session gehören.
+end note
+
+note right of users
+  ADMIN geplant: Backend prüft fest die Schul-Keycloak-
+  Benutzernamen it220269, it220240 und it220265.
+  Token-Feld technisch noch zu verifizieren.
+  Kein eigener Admin-Login oder DB-Vergabeweg.
+end note
+
+note right of question_reports
+  Melden mit Kommentar; Kopien übernehmen keine Meldung.
+  Beim Löschen der Frage wird ihre Meldung gelöscht.
+  Wer Meldungsdetails sieht, ist offen.
+  Status und Bearbeitungsablauf sind Entwurfsvorschläge.
+end note
+
+note right of question_versions
+  Historische Antwortversionen sollen erhalten bleiben.
+  Frage/Meldung löschen kollidiert mit question_id-FK.
+  Entkopplung oder Löschmodell ist noch offen.
+  questions.deleted_at ist nur ein technischer Vorschlag.
 end note
 
 note bottom of player_answers
