@@ -4,11 +4,11 @@ Stand: 4. November 2026
 
 ## Team-Einstieg: veröffentlichter Arbeitsstand vom 4. November
 
-**Zielbranch: `codex/smart10-db-integration-wip`. Dies ist ein unvollständiger Entwicklungsstand, keine fertige Smart10-Anbindung und keine Rollout-Freigabe.** Ausgangspunkt ist `106209b` auf `main`. Der Branch enthält die bisher lokale Datenmodell-/Flyway-Foundation, den geprüften Smart10-Plan sowie die bis zum Nutzungslimit entstandene Backend-Teilimplementierung. Die nachfolgenden Abschnitte dokumentieren frühere Meilensteine; diese Team-Zusammenfassung ist der aktuelle Einstieg.
+**Zielbranch: `main`. Dies ist ein unvollständiger Entwicklungsstand, keine fertige Smart10-Anbindung und keine Rollout-Freigabe.** David hat ausdrücklich beauftragt, den zunächst unter `codex/smart10-db-integration-wip` veröffentlichten Commit `eb3c4d5` auf `main` zu übernehmen, damit das Team ihn direkt abrufen kann. Ausgangspunkt war `106209b`. Enthalten sind die Datenmodell-/Flyway-Foundation, der geprüfte Smart10-Plan sowie die bis zum Nutzungslimit entstandene Backend-Teilimplementierung. Der Push auf `main` löst den vorhandenen Build-/Image-Workflow aus; ein erfolgreicher Workflow oder LeoCloud-Rollout ist damit nicht nachgewiesen. Die nachfolgenden Abschnitte dokumentieren frühere Meilensteine; diese Team-Zusammenfassung ist der aktuelle Einstieg.
 
 ### Einstieg für den Codex-Chat eines Teamkollegen
 
-1. Eigenen Arbeitsstand sichern und prüfen, dann `git fetch origin` und den Remote-Branch `origin/codex/smart10-db-integration-wip` in einem geeigneten Checkout öffnen. Keine eigenen Änderungen überschreiben. `git status --short --branch` und `git log -1` prüfen.
+1. Eigenen Arbeitsstand sichern und prüfen, dann `git fetch origin` und den aktuellen Stand von `origin/main` in einem geeigneten Checkout übernehmen. Bei einem unveränderten lokalen `main` genügt `git pull --ff-only origin main`. Keine eigenen Änderungen überschreiben. `git status --short --branch` und `git log -1` prüfen.
 2. `AGENTS.md`, diese Übergabe, `docs/datenmodell-entscheidungen.md` und alle Artefakte in `openspec/changes/smart10-session-persistence/` lesen. Die persönlichen Rollen-Chats und lokalen Pfade von David sind auf anderen Rechnern nicht automatisch verfügbar; siehe `docs/codex-team-setup.md`.
 3. Erst den tatsächlichen Zwischenstand abgleichen, dann den freigegebenen Smart10-Change fortsetzen. Keine produktiven Daten verwenden, keine V1/V2-Migrationsdateien umschreiben. Ein Push ist keine Freigabe zum Merge oder LeoCloud-Rollout.
 
