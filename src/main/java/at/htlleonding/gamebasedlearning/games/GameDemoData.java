@@ -51,7 +51,7 @@ public class GameDemoData {
         question.answerOptions = List.of(correct, wrong);
         quiz.questions = List.of(question);
         quiz.prepareCollections();
-        quiz.persist();
+        gameRepository.create(quiz, null);
 
         Game duel = new Game();
         duel.id = "duell-um-die-welt-001";
@@ -64,6 +64,6 @@ public class GameDemoData {
         duel.branches = List.of("CSI", "SSE");
         duel.playedRounds = 0;
         duel.prepareCollections();
-        duel.persist();
+        gameRepository.create(duel, null);
     }
 }

@@ -1,0 +1,79 @@
+# Design
+
+## Context
+
+Siehe `proposal.md` und `specs/smart10-session-persistence/spec.md`. Der Hauptcheckout steht auf `106209b` mit uncommitteter Flyway-Foundation: V1 bildet das bisherige ORM-Schema ab, V2 ergänzt Versionen, Tags und abgeschlossene Runden. `database-model-foundation` steht bei 22/23 Aufgaben; das ist kein produktiver Smart10-Nachweis. Der Access-Change `game-visibility-and-ownership` steht bei 0/13. Die V2-Tabelle `player_answers` hat `UNIQUE(participant_id, question_version_id)`. `CompletedRoundStore` prüft aktive `app_user`, Snapshot-Zugehörigkeit, Host-Ausschluss und `score > 0`, nutzt `completion_key` plus `payload_hash` und speichert atomar. Seine aktuellen Antworten können noch keine einzelnen Smart10-Karten unterscheiden.
+
+`GameSocket` lässt anonyme `mp_`-Nachrichten zu; `MultiplayerGameService.createRoom` übernimmt das vollständige Clientspiel und ordnet den Host als Spieler einem Team zu. Beim regulären Zug sind +1 für richtige Antwort, Nullsetzen und Eliminieren bei Falschantwort oder Zugtimeout und kein Punktereset beim Fragenwechsel vorhanden. `FINISHED` bleibt im Speicher. Angular-Solo berechnet `correctCards + completedQuestions * 10 + bestStreak * 2` lokal und fällt bei ungültigen gespeicherten Karten auf Demodaten zurück. Die drei Modi sind `TRUE_FALSE`, `FREE_TEXT`, `ORDERING`, mit zwölf Karten je Gruppenfrage. Diese Ist-Befunde sind keine fertige Persistenz- oder Autorisierungsfunktion.
+
+## Goals / Non-Goals
+
+**Goals:**
+
+- Verlustfreie Versionierung der zwölf Smart10-Karten samt typisierter Lösung und eindeutiger historischer Kartenantworten.
+- Vertrauenswürdige Identitäts-, Snapshot- und Bewertungsgrenze für Solo und Multiplayer auf Basis der bestehenden Keycloak-/AppUser-Anbindung.
+- Einmalige atomare Speicherung regulär abgeschlossener Runden, auch wenn Team- und Teilnehmerendwert null sind; bestehende generische Store-Invarianten bleiben für andere Spieltypen erhalten.
+- Lokale H2- und PostgreSQL-Prüfung auf leerer und bereits nach V2 befüllter Datenbank sowie Frontend-Vertragsprüfung vor einer separaten Produktiventscheidung.
+
+**Non-Goals:**
+
+- Keine neue allgemeine Spieltypen-Metatabellenarchitektur, Punkte- oder Levelkurve, Top-3-Bonus, Leaderboard- oder KI-Funktion.
+- Keine private Schüler-Einladung, aktive Lehrerrolle im Multiplayer, Lobby-Wiederaufnahme nach Verbindungsabbruch oder Änderung des offenen Access-Changes.
+- Keine automatische produktive Demo-Saat, keine rückwirkende Erfindung historischer Smart10-Karten aus untypisierten Legacy-Optionen und keine produktive Migration durch diesen Planungsauftrag.
+
+## Decisions
+
+### V3-Karten und Antwortschlüssel
+
+V1/V2 bleiben unverändert. Eine additive V3-Migration je H2 und PostgreSQL ergänzt `smart10_cards(id UUID, question_version_id UUID, position INTEGER, text, solution_boolean, solution_text, solution_rank)` sowie `player_answers.smart10_card_id UUID NULL` und `answer_slot_key VARCHAR NOT NULL`. `question_versions.type` trägt für diese Smart10-Gruppenfrage einen der bestehenden Modi; zusätzliche Spieltyp-Metatabellen sind nicht nötig. Pro Karte ist genau eine Lösungs-Spalte belegt, passend zum Modus der Frage. Zeilenbezogene SQL-`CHECK`s sichern die Belegung und, sofern `solution_rank` gesetzt ist, dessen Bereich 1–12 in H2 und PostgreSQL. Die Übereinstimmung mit `question_versions.type`, **genau zwölf** Positionen 1–12 und bei `ORDERING` exakt zwölf verschiedene Lösungsränge als Permutation 1–12 prüfen der versionierte Schreibadapter und erneut der Startdienst. Dabei werden Rang 0/13, Duplikate und fehlende Ränge ausdrücklich abgelehnt. `UNIQUE(question_version_id, position)` und `UNIQUE(question_version_id, id)` sichern Position und zusammengesetzte Referenz; `UNIQUE(question_version_id, solution_rank)` verhindert doppelte nicht-null Ränge zusätzlich auf Datenbankebene. Beim Bearbeiten entsteht eine neue Frageversion mit zwölf neuen Karten-IDs; Kopien erhalten ebenfalls eigene Identitäten. Historisch referenzierte Karten und Frageversionen werden nicht durch das Löschen aktiver Inhalte entfernt.
+
+Für bestehende `player_answers` setzt V3 `answer_slot_key = 'question'` und `smart10_card_id = NULL`. Für eine Smart10-Karte bildet ausschließlich der interne Speicherdienst `answer_slot_key = 'card:' + smart10_card_id` und speichert `smart10_card_id`. Ein `CHECK` begrenzt `NULL` auf `question` und nicht-`NULL` auf das Kartenpräfix; `UNIQUE(participant_id, question_version_id, answer_slot_key)` ersetzt die alte Eindeutigkeit. Der genaue Suffixwert wird im Dienst aus der UUID gebildet und validiert, weil eine portable SQL-Cast-Regel dafür nicht vorausgesetzt wird. Ein zusammengesetzter FK `(question_version_id, smart10_card_id)` auf `smart10_cards(question_version_id, id)` verhindert eine Karte aus einer anderen Frageversion. Der Dienst lehnt kartenlose Antworten zu Smart10-Fragen und Kartenantworten zu anderen Spieltypen ab. Für Nicht-Smart10 bleibt der `question`-Slot und damit eine Antwort pro Frage. Die serverseitige Snapshot-Prüfung schließt zusätzlich Karten außerhalb der gespielten Spielversion aus. Das kanonische `payload_hash` enthält Karten-ID und Slot, damit ein Retry mit geänderter Karte nicht als identisch gilt. Die Alternative, zwölf Antworten in einer JSON-Antwort pro Gruppenfrage zusammenzufassen, würde Kartenidentität und individuelle Antwortzeiten unzugänglich machen und wird verworfen.
+
+Vorhandene `answer_options` und `single_choice`-Bestände werden nicht in Smart10-Karten umgedeutet. Eine gespeicherte Smart10-Version ohne vollständige und passende zwölf Karten je Frage wird beim Start abgelehnt. Demodaten bleiben im Frontend explizit lokal und ungespeichert. Produktive automatische Demo-Saat ist ausgeschlossen.
+
+### Server als Quelle von Inhalt und Bewertung
+
+Ein interner Smart10-Loader nimmt nur eine Spiel-ID entgegen, prüft den berechtigten Leseweg und lädt `games.current_version_id`, die zugehörige unveränderliche `game_version`, geordnete `question_versions` und je zwölf Karten samt Lösungen. Die Runde pinnt diese IDs und kanonischen Lösungen im flüchtigen Serverzustand. Neue Bearbeitungen beeinflussen nur später gestartete Runden. Clientbefehle enthalten Karten-ID und Antwort, nicht ein autoritatives Spielobjekt, `loesung`, `correct` oder `score`. Der Server sendet vor Kartenauflösung nur Anzeigeinhalt und gibt eine Lösung frühestens im Feedback zu einer bereits beantworteten Karte frei. Ein getrennter, klar als Demo markierter Frontendpfad darf lokal weiterlaufen, erzeugt aber keine Session.
+
+Für Solo wird eine serverseitige Rundeninstanz mit Start, Kartenantwort und regulärem Finish über authentifizierte HTTP-Aufrufe verwaltet; sie enthält den gepinnten Snapshot und den stabilen Abschluss-Schlüssel. Das Backend bewertet `TRUE_FALSE` als Boolean, `ORDERING` als Rang und `FREE_TEXT` mit den bestehenden Vergleichsregeln. Zähler für korrekte Karten, abgeschlossene Gruppenfragen und beste Folge werden serverseitig geführt und ergeben exakt die bisherige Formel. Eine reine Clientanzeige des Scores ist kein Speicherwert. Die Alternative, den vom Client berechneten Solo-Score am Ende zu übernehmen, würde die neue Vertrauensgrenze umgehen.
+
+Für Multiplayer werden `GameSocket` und `MultiplayerGameService` gezielt angepasst. `mp_create` nimmt auf dem persistenten Pfad nur Spiel-ID und zulässige Raumoptionen; der Host wird separat vom Teilnehmerverzeichnis geführt. Start verlangt mindestens einen anderen verifizierten Benutzer und besetzte Teams. Teamzuordnung und Doppelbeitritt werden anhand `app_user.id` geprüft, nicht anhand Verbindung oder Anzeigename. Spielzugtimeout ist eine normale Regel: Teamwert null und Elimination für die restliche Runde. Ein Verbindungsverlust vor regulärem `FINISHED` oder Serverneustart bricht dagegen die ganze Runde ohne Speicherung ab; Reconnect-Fortsetzung wird nicht eingeführt. Beim Fragenwechsel wird nur `passed` zurückgesetzt; `eliminated` und Teamwert bleiben bestehen. Sind alle Teams eliminiert, beendet die bestehende Regel die Runde regulär auch vor der letzten Gruppenfrage. Beim regulären Ende werden Teams nach Endwert absteigend mit Competition Ranking (`1, 1, 3`) platziert; jedes aktive Mitglied erhält genau den finalen Teamwert und Teamplatz. Top-3-Bonus und Mindestpunktwert bleiben aus. Die Alternative, null künstlich auf eins anzuheben, widerspräche dem bestätigten Endwert.
+
+### Verifizierte WebSocket-Identität
+
+Authentifizierte HTTP-Anfrage über den bestehenden `AuthProvider` und `UserService` stellt für den aktuellen `AppUser` ein kurzlebiges, opakes, einmalig einlösbares Ticket aus. Die erste WebSocket-Nachricht bindet das Ticket atomar an die Verbindung; alle persistierenden `mp_`-Befehle vor dieser Bindung sowie anonyme, abgelaufene oder wiederholte Tickets werden verworfen. Tickets enthalten keine Bearer-Tokens, stehen weder in WebSocket-URLs noch in Logs und werden serverseitig mit Ablauf und Verbrauchszustand gehalten. Für eine neue Verbindung kann das Frontend den bestehenden Login-Refresh nutzen und anschließend ein neues Ticket anfordern. `connection.id()` bleibt Transportkennung, `app_user.id` ist Spiel- und Ergebnisidentität. Die bisherige anonyme Katalogverbindung darf keine Abkürzung zum persistenten Spielpfad sein.
+
+Auf dem persistenten Mehrspielerpfad folgt nach der Identitätsbindung eine eigenständige serverseitige Rollenprüfung: `mp_join` und jede andere Bindung als aktiver Teilnehmer weisen `TEACHER` bis zum fachlichen Beschluss ab, selbst mit gültigem Ticket. `STUDENT` und `ADMIN` bleiben nach den übrigen Teilnahme- und Zugriffsregeln zulässig; Lehrer-Solo und Hosting ohne aktive Teilnahme bleiben möglich. Das ist eine vorläufige technische Sperre für eine noch nicht autorisierte Rolle, keine dauerhafte fachliche Entscheidung. Die Prüfung greift auch bei direkten WebSocket-Befehlen und nicht nur in der Oberfläche. Ticketzustand und Runden sind zunächst flüchtig. In Dev/Test kann eine Instanz verwendet werden; vor produktiver Aktivierung muss bei mehreren Instanzen eine gemeinsam gültige Ticket-Einlösung oder nachweisbar konsistentes Routing feststehen. Ein Ticket in URL oder ein Client-`userId` wären leichter zu missbrauchen und werden verworfen.
+
+### Abschluss, Nullpunkte und Rückmeldung
+
+Der Server erzeugt `completion_key` bereits beim Start einer logischen Runde, ohne eine Sessionzeile anzulegen. Erst ein reguläres Spielende friert den finalen Payload samt Schlüssel im Arbeitsspeicher ein. Der Store bekommt ausschließlich diesen serverseitig abgeleiteten Payload und speichert in einer Transaktion. Die bestehende `score > 0`-Regel bleibt für generische Ergebnisse. Ein interner Smart10-Pfad erlaubt `score = 0` nur für verifizierte Smart10-Snapshots mit serverseitig finalisierten Teamwerten; negative Werte bleiben ungültig. Der gewöhnliche Store-Aufruf mit frei behauptetem Modus oder Client-Score erhält keine Nullpunkt-Ausnahme. Die Änderung umfasst auch die Karten- und Slot-Prüfung und die erweiterte Idempotenz-Fingerprint-Bildung.
+
+Bei Speicherfehler bleibt der eingefrorene finale Payload samt Schlüssel für einen begrenzten erneuten Versuch in derselben Serverinstanz verfügbar. Identischer Retry liefert die vorhandene Session-ID, abweichender Payload wird abgewiesen; konkurrierende Abschlüsse folgen dem bestehenden eindeutigen `completion_key`. Die UI zeigt `FINISHED` als Spielzustand, aber „gespeichert“ erst nach erfolgreichem Commit mit Session-ID. Falls die Instanz vor dem Commit endet, ist kein abgeschlossenes Ergebnis bestätigt und ein flüchtiger Retry-Payload geht verloren; ein neues Reconnect-/Recovery-Protokoll ist nicht Teil dieses Changes. Andere Spieltypen behalten ihre bisherige Speichersemantik.
+
+### Produktive Freischaltung und Access-Abhängigkeit
+
+Ein serverseitiges, standardmäßig für Prod ausgeschaltetes Smart10-Persistenz-Flag begrenzt neue Start-/Speicherpfade; Dev/Test können es gezielt aktivieren. Ein Frontend-Hinweis allein reicht nicht als Sperre. Vor Freischaltung müssen `game-visibility-and-ownership` mit serverseitigem Lese-/Besitzschutz, die abgestimmte Migration und der Rollout mit Datenbankprüfung nachgewiesen sein. Private Schüler-Einladungen und aktive Lehrkräfte in Mehrspieler-Runden werden nicht aus der vorhandenen Hosting-Erlaubnis hergeleitet. Solospiel für Lehrkräfte, Hosting ohne aktive Teilnahme und die bestehende Admin-Identität bleiben fachliche Grenzen. Die Alternative, den derzeit anonymen `get_game`-/WebSocket-Pfad für persistente Smart10-Runden freizugeben, verletzt die geplanten Zugriffsregeln.
+
+## Risks / Trade-offs
+
+- [Alte Smart10-Daten enthalten keine eindeutig typisierten zwölf Karten] → beim Start exakt validieren und ablehnen; keine automatische Umdeutung oder Demo-Fallback für persistierte Runden.
+- [Eine neue UNIQUE-Regel beschädigt historische Nicht-Smart10-Antworten] → V2-Bestand vor Umstellung mit `question`-Slot übernehmen und H2/PostgreSQL mit befüllter V2-Datenbank vergleichen.
+- [Kartenlösung oder Identität kommt doch aus dem Client] → Start/Grading ausschließlich aus geladenem Snapshot und gebundener `AppUser`-Identität; Manipulations- und Ticket-Replay-Tests.
+- [Transportabbruch wird mit regulärem Timeout verwechselt] → getrennte Zustandsübergänge und Tests für beide Ereignisse, auch bei Teamwert null.
+- [Speicherfehler wird als Erfolg angezeigt oder doppelt gezählt] → eingefrorener Payload, stabiler Schlüssel und Commit-gebundene Session-ID; Retry-, Konkurrenz- und Abweichungstests.
+- [Nullpunkt-Ausnahme öffnet generischen Store] → nur intern verifizierter Smart10-Snapshot, negative/generische Nullwerte und fremde Karten ausdrücklich testen.
+- [Mehrere Instanzen teilen Ticket- oder Rundenstatus nicht] → Produktivflag erst nach geprüftem Routing/Ticketverbrauch und festgelegtem Rollout aktivieren; laufende Runden nach Neustart als abgebrochen behandeln.
+- [Privater Inhalt wird vor dem Access-Change über neue Pfade sichtbar] → produktive Sperre und unabhängige serverseitige Autorisierungsprüfung vor Aktivierung.
+
+## Migration Plan
+
+1. V1/V2 unverändert lassen. V3 für H2 und PostgreSQL auf leeren Datenbanken sowie auf Kopien befüllter V2-Datenbanken prüfen. `smart10_cards` additiv anlegen; vorhandene `player_answers` mit `answer_slot_key='question'` backfillen, dann Nicht-NULL, CHECK, neue UNIQUE- und zusammengesetzte FK-Regeln aktivieren. Alte Antwort-IDs, Inhalte und Zeitpunkte vor/nach Migration vergleichen.
+2. Server-Lese-/Schreibpfade, Kartenvalidierung und Testdaten für gespeicherte Smart10-Versionen ergänzen. Keine produktive Demo-Saat und keine Ableitung typisierter Lösungen aus unklaren Bestandsoptionen. Kopie, Versionierung, Löschung und historische Antworten auf beiden Datenbanken prüfen.
+3. Solo- und Multiplayer-Transport zusammen mit dem Frontend umstellen, Ticketbindung und Serverbewertung integrieren. Unter Dev/Test-Flag regulären Abschluss, Nullpunkte, Fehler/Retry und Abbruch auf einer echten Wegwerf-PostgreSQL-Datenbank sowie H2 prüfen; Frontend-Tests und Build ausführen.
+4. Für eine spätere produktive Freischaltung den separaten Access-Change, die tatsächlich laufenden Migrationen, Rollout-Reihenfolge, Sicherung/Restore, Ticket-/Instanzrouting und Nutzerzugriff nachweisen. Bis dahin bleibt das Prod-Flag aus. Ein Rollback nach V3 belässt additive Daten zunächst bestehen; alten Code nur nach geprüftem Schema- und Zugriffszustand starten. Diese Planung führt keinen Rollout aus.
+
+## Open Questions
+
+- Fachlich für spätere Changes: aktive Lehrer-Teilnahme im Multiplayer, Beitritt und Sichtbarkeit eingeladener Schüler bei privaten Runden, Hosting ohne Mitspieler, genaue Top-3-Punkteformel, Levelkurve, Leaderboard und KI.
+- Die konkrete Infrastruktur für Ticketverbrauch bei mehreren Produktivinstanzen wird vor der getrennten Freischaltung entschieden; die Anforderung an einmalige, kurzlebige und verbindungsgebundene Tickets bleibt davon unberührt.

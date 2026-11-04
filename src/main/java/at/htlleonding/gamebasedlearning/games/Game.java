@@ -4,22 +4,17 @@ import at.htlleonding.gamebasedlearning.users.AppUser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "games")
@@ -36,9 +31,25 @@ public class Game extends PanacheEntityBase {
     public String teacher;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_id")
+    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.JoinColumn(name = "created_by_id")
     public AppUser createdBy;
+
+    @JsonIgnore
+    @Column(name = "family_id", nullable = false)
+    public UUID familyId;
+
+    @JsonIgnore
+    @Column(name = "copied_from_game_id")
+    public String copiedFromGameId;
+
+    @JsonIgnore
+    @Column(name = "current_version_id")
+    public UUID currentVersionId;
+
+    @JsonIgnore
+    @Column(name = "deleted_at")
+    public Instant deletedAt;
 
     @Column(nullable = false, length = 160)
     public String name;
@@ -52,10 +63,7 @@ public class Game extends PanacheEntityBase {
     public String subject;
 
     @JsonProperty("zweige")
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "game_branches", joinColumns = @JoinColumn(name = "game_id"))
-    @Column(name = "branch", length = 200)
-    @OrderColumn(name = "branch_order")
+    @Transient
     public List<String> branches = new ArrayList<>();
 
     @JsonProperty("erstellungsdatum")
@@ -67,10 +75,12 @@ public class Game extends PanacheEntityBase {
     public int playedRounds;
 
     @JsonProperty("fragen")
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "game_id")
-    @OrderColumn(name = "question_order")
+    @Transient
     public List<Question> questions = new ArrayList<>();
+
+    @JsonIgnore
+    @Transient
+    public List<String> tags;
 
     public void prepareCollections() {
         if (branches == null) {
@@ -78,6 +88,9 @@ public class Game extends PanacheEntityBase {
         }
         if (questions == null) {
             questions = new ArrayList<>();
+        }
+        if (tags == null) {
+            tags = new ArrayList<>();
         }
         questions.forEach(Question::prepareCollections);
     }

@@ -1,6 +1,6 @@
 @startuml Datenmodell_V1
 
-title Game-based Learning – Datenmodell Version 1 (Entwurf, nicht implementiert)
+title Game-based Learning – Datenmodell Version 1 (aktualisierter Entwurf)
 
 hide circle
 hide methods
@@ -16,23 +16,21 @@ skinparam entity {
 }
 
 package "Identität und Katalog" #EEF6FF {
-  entity users {
+  entity app_user {
     * id : UUID <<PK>>
     --
     external_subject : VARCHAR <<UQ>>
-    username : VARCHAR <<UQ>>
+    username : VARCHAR
     display_name : VARCHAR
     role : VARCHAR
-    current_class_code : VARCHAR?
+    school_class : VARCHAR?
     active : BOOLEAN
   }
 
-  entity subjects {
+  entity tags {
     * id : UUID <<PK>>
     --
     name : VARCHAR <<UQ>>
-    short_name : VARCHAR?
-    active : BOOLEAN
   }
 }
 
@@ -44,45 +42,56 @@ package "Spiele und Versionen" #F2FCEB {
   }
 
   entity games {
-    * id : UUID <<PK>>
+    * id : STRING <<PK>>
     --
     family_id : UUID <<FK>>
-    copied_from_game_id : UUID? <<FK>>
-    creator_user_id : UUID? <<FK>>
+    copied_from_game_id : STRING? <<FK>>
+    created_by_id : UUID? <<FK>>
     visibility : VARCHAR
     current_version_id : UUID <<FK>>
+    game_type : VARCHAR
+    subject : VARCHAR? <<Legacy>>
     deleted_at : TIMESTAMP?
   }
 
   entity game_versions {
     * id : UUID <<PK>>
     --
-    game_id : UUID <<FK>>
+    game_id : STRING <<FK>>
     version_number : INTEGER
     title : VARCHAR
     description : TEXT
-    game_mode : VARCHAR
-    subject_id : UUID <<FK>>
+    game_type : VARCHAR
     created_at : TIMESTAMP
     --
     UQ(game_id, version_number)
+  }
+
+  entity game_version_tags {
+    * game_version_id : UUID <<PK,FK>>
+    * tag_id : UUID <<PK,FK>>
+  }
+
+  entity game_version_branches {
+    * game_version_id : UUID <<PK,FK>>
+    * position : INTEGER <<PK>>
+    --
+    branch : VARCHAR
   }
 }
 
 package "Fragen" #FFF8E7 {
   entity questions {
-    * id : UUID <<PK>>
+    * id : LONG <<PK>>
     --
-    game_id : UUID <<FK>>
-    copied_from_question_id : UUID? <<FK>>
+    game_id : STRING <<FK>>
     current_version_id : UUID <<FK>>
-    deleted_at : TIMESTAMP?
   }
 
   entity question_versions {
     * id : UUID <<PK>>
     --
-    question_id : UUID <<FK>>
+    question_id : LONG? <<FK>>
     version_number : INTEGER
     type : VARCHAR
     text : TEXT
@@ -97,6 +106,16 @@ package "Fragen" #FFF8E7 {
     --
     position : INTEGER
     UQ(game_version_id, position)
+  }
+
+  entity answer_options {
+    * id : LONG <<PK>>
+    --
+    question_version_id : UUID <<FK>>
+    question_id : LONG? <<Legacy>>
+    text : VARCHAR
+    is_correct : BOOLEAN
+    answer_order : INTEGER
   }
 
   entity true_false_configs {
@@ -127,7 +146,8 @@ package "Sessions und Ergebnisse" #F5F0FF {
   entity game_sessions {
     * id : UUID <<PK>>
     --
-    game_id : UUID <<FK>>
+    completion_key : UUID <<UQ>>
+    game_id : STRING <<FK>>
     game_version_id : UUID <<FK>>
     host_user_id : UUID? <<FK>>
     mode : VARCHAR
@@ -156,7 +176,6 @@ package "Sessions und Ergebnisse" #F5F0FF {
     team_id : UUID? <<FK>>
     score : INTEGER
     placement : INTEGER?
-    winner : BOOLEAN
     joined_at : TIMESTAMP
     --
     UQ(session_id, user_id)
@@ -169,8 +188,6 @@ package "Sessions und Ergebnisse" #F5F0FF {
     question_version_id : UUID <<FK>>
     answer_data : JSON/TEXT
     correct : BOOLEAN
-    score : INTEGER
-    response_time_ms : BIGINT?
     answered_at : TIMESTAMP
     --
     UQ(participant_id, question_version_id)
@@ -181,57 +198,59 @@ package "Qualitätssicherung" #FFF0F3 {
   entity question_reports {
     * id : UUID <<PK>>
     --
-    question_id : UUID <<FK>>
     question_version_id : UUID <<FK>>
     reporter_user_id : UUID <<FK>>
-    resolved_by_user_id : UUID? <<FK>>
     comment : TEXT
-    status : VARCHAR
-    resolution_comment : TEXT?
+    created_at : TIMESTAMP
   }
 }
 
-users |o--o{ games : erstellt
-subjects ||--o{ game_versions : kategorisiert
+app_user |o--o{ games : erstellt
+tags ||--o{ game_version_tags : zugeordnet
+game_versions ||--o{ game_version_tags : traegt
 game_families ||--|{ games : gruppiert
+games |o--o{ games : kopiert_von
 games ||--|{ game_versions : versioniert
 games |o--|| game_versions : aktuelle_Version
+game_versions ||--o{ game_version_branches : Branches
 
 games ||--o{ questions : enthaelt
-questions ||--|{ question_versions : versioniert
+questions o|--|{ question_versions : versioniert
 questions |o--|| question_versions : aktuelle_Version
-game_versions ||--|{ game_version_questions : ordnet
+game_versions ||--o{ game_version_questions : ordnet
 question_versions ||--o{ game_version_questions : verwendet
+question_versions ||--o{ answer_options : Optionen
 question_versions ||--o| true_false_configs : Wahr_Falsch
 question_versions ||--o{ ordering_items : Reihenfolge
 question_versions ||--o{ accepted_text_answers : Freitext
 
 games ||--o{ game_sessions : wird_gespielt
 game_versions ||--o{ game_sessions : Snapshot
-users |o--o{ game_sessions : hostet
+app_user |o--o{ game_sessions : hostet
 game_sessions ||--o{ teams : bildet
 game_sessions ||--|{ session_participants : hat
-users ||--o{ session_participants : spielt
+app_user ||--o{ session_participants : spielt
 teams |o--o{ session_participants : gruppiert
 session_participants ||--o{ player_answers : beantwortet
 question_versions ||--o{ player_answers : bewertet
 
-questions ||--o{ question_reports : betrifft
 question_versions ||--o{ question_reports : gemeldete_Version
-users ||--o{ question_reports : meldet
-users |o--o{ question_reports : bearbeitet
+app_user ||--o{ question_reports : meldet
 
 note right of games
   Neue Spiele: Ersteller Pflicht, Standard PRIVATE.
   Besitzerlose Altspiele: Ersteller optional, PUBLIC.
   Ersteller oder Admin bearbeitet und löscht.
   Private Bibliothek: Ersteller und Admin.
+  Kopiervorlage bleibt bei Loeschung logisch erhalten.
 end note
 
 note right of game_versions
   Änderungen erzeugen atomar einen neuen Snapshot.
   Neue Runden verwenden die aktuelle Version.
   Laufende Runden behalten ihren Snapshot flüchtig.
+  Branch-Werte und Reihenfolge sind Teil des Snapshots.
+  Tags sind m:n; Spieltyp bleibt getrennt.
 end note
 
 note bottom of game_sessions
@@ -241,6 +260,7 @@ note bottom of game_sessions
   Singleplayer: host_user_id NULL (Modellannahme).
   Private Host-Runde ohne Mitspieler: noch offen.
   Gespeicherter Ergebnisentwurf hat mind. 1 Teilnehmer.
+  completion_key verhindert doppelte Abschluesse.
 end note
 
 note bottom of session_participants
@@ -252,7 +272,7 @@ note bottom of session_participants
   team_id muss zu einem Team derselben Session gehören.
 end note
 
-note right of users
+note right of app_user
   ADMIN geplant: Backend prüft fest die Schul-Keycloak-
   Benutzernamen it220269, it220240 und it220265.
   Token-Feld technisch noch zu verifizieren.
@@ -263,14 +283,15 @@ note right of question_reports
   Melden mit Kommentar; Kopien übernehmen keine Meldung.
   Beim Löschen der Frage wird ihre Meldung gelöscht.
   Wer Meldungsdetails sieht, ist offen.
-  Status und Bearbeitungsablauf sind Entwurfsvorschläge.
+  Status und Bearbeitungsablauf sind offen.
 end note
 
 note right of question_versions
   Historische Antwortversionen sollen erhalten bleiben.
-  Frage/Meldung löschen kollidiert mit question_id-FK.
-  Entkopplung oder Löschmodell ist noch offen.
-  questions.deleted_at ist nur ein technischer Vorschlag.
+  Nach Loeschung der aktiven Frage wird question_id
+  bei benoetigten historischen Versionen NULL.
+  single_choice bleibt; TRUE_FALSE, ORDERING und
+  FREE_TEXT kommen als weitere Typen hinzu.
 end note
 
 note bottom of player_answers

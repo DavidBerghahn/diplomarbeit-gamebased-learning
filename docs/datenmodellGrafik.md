@@ -1,30 +1,28 @@
 # Datenmodell Version 1 – Mermaid-Entwurf
 
-Stand: 30. September 2026. Fachlicher Entwurf, keine bereits implementierte
-Datenbank. Die Tabellen zu Sessions, Teams, Teilnehmern und Antworten zeigen
+Stand: 3. November 2026. Aktualisierter fachlicher Entwurf; eine fertige
+Datenbank ist damit nicht nachgewiesen. Die Tabellen zu Sessions, Teams, Teilnehmern und Antworten zeigen
 ausschließlich dauerhaft gespeicherte, vollständig abgeschlossene Runden.
 Lobby, laufende und abgebrochene Runden haben hier keinen Datensatz.
 
 ```mermaid
 erDiagram
 
-    users {
+    app_user {
         uuid id PK
         varchar external_subject UK
-        varchar username UK
+        varchar username
         varchar display_name
         varchar role "STUDENT, TEACHER oder ADMIN"
-        varchar current_class_code "nullable"
+        varchar school_class "nullable"
         boolean active
         timestamp created_at
         timestamp updated_at
     }
 
-    subjects {
+    tags {
         uuid id PK
         varchar name UK
-        varchar short_name "nullable"
-        boolean active
     }
 
     game_families {
@@ -33,12 +31,14 @@ erDiagram
     }
 
     games {
-        uuid id PK
+        varchar id PK "bestehende String-ID"
         uuid family_id FK
-        uuid copied_from_game_id FK "nullable"
-        uuid creator_user_id FK "nur fuer besitzerlose Altspiele nullable"
+        varchar copied_from_game_id FK "nullable"
+        uuid created_by_id FK "bei besitzerlosen Altspielen nullable"
         varchar visibility "PRIVATE oder PUBLIC"
         uuid current_version_id FK
+        varchar game_type "Spieltyp; Bestandswerte behalten"
+        varchar subject "Legacy-Fach, nullable"
         timestamp deleted_at "nullable"
         timestamp created_at
         timestamp updated_at
@@ -46,29 +46,37 @@ erDiagram
 
     game_versions {
         uuid id PK
-        uuid game_id FK "UQ mit version_number"
+        varchar game_id FK "UQ mit version_number"
         integer version_number "UQ mit game_id"
         varchar title
         text description
-        varchar game_mode
-        uuid subject_id FK
+        varchar game_type
         timestamp created_at
     }
 
+    game_version_tags {
+        uuid game_version_id PK, FK
+        uuid tag_id PK, FK
+    }
+
+    game_version_branches {
+        uuid game_version_id PK, FK
+        integer position PK
+        varchar branch
+    }
+
     questions {
-        uuid id PK
-        uuid game_id FK
-        uuid copied_from_question_id FK "nullable"
+        bigint id PK "bestehende Long-ID"
+        varchar game_id FK
         uuid current_version_id FK
-        timestamp deleted_at "nullable"
         timestamp created_at
     }
 
     question_versions {
         uuid id PK
-        uuid question_id FK "UQ mit version_number"
+        bigint question_id FK "nullable fuer historische Version"
         integer version_number "UQ mit question_id"
-        varchar type "TRUE_FALSE, ORDERING oder FREE_TEXT"
+        varchar type "single_choice; TRUE_FALSE, ORDERING, FREE_TEXT"
         text text
         timestamp created_at
     }
@@ -77,6 +85,15 @@ erDiagram
         uuid game_version_id PK, FK
         uuid question_version_id PK, FK
         integer position "UQ mit game_version_id"
+    }
+
+    answer_options {
+        bigint id PK "bestehende Long-ID"
+        uuid question_version_id FK
+        bigint question_id "Legacy, nullable"
+        varchar text
+        boolean is_correct
+        integer answer_order
     }
 
     true_false_configs {
@@ -99,7 +116,8 @@ erDiagram
 
     game_sessions {
         uuid id PK
-        uuid game_id FK
+        uuid completion_key UK "stabiler serverseitiger Abschluss"
+        varchar game_id FK
         uuid game_version_id FK
         uuid host_user_id FK "aktives Solo-Spiel nullable"
         varchar mode "SINGLEPLAYER oder MULTIPLAYER"
@@ -124,7 +142,6 @@ erDiagram
         uuid team_id FK "nullable"
         integer score
         integer placement "nullable"
-        boolean winner
         timestamp joined_at
     }
 
@@ -134,28 +151,23 @@ erDiagram
         uuid question_version_id FK "UQ mit participant_id"
         text answer_data "JSON oder TEXT"
         boolean correct
-        integer score
-        bigint response_time_ms "nullable"
         timestamp answered_at
     }
 
     question_reports {
         uuid id PK
-        uuid question_id FK
         uuid question_version_id FK
         uuid reporter_user_id FK
-        uuid resolved_by_user_id FK "nullable"
         text comment
-        varchar status "Workflow-Vorschlag"
-        text resolution_comment "nullable"
         timestamp created_at
-        timestamp resolved_at "nullable"
     }
 
 
-    users |o--o{ games : erstellt
+    app_user |o--o{ games : erstellt
 
-    subjects ||--o{ game_versions : kategorisiert
+    tags ||--o{ game_version_tags : zugeordnet
+
+    game_versions ||--o{ game_version_tags : traegt
 
     game_families ||--|{ games : gruppiert
 
@@ -165,18 +177,20 @@ erDiagram
 
     games |o--|| game_versions : "aktuelle Version"
 
+    game_versions ||--o{ game_version_branches : Branches
+
 
     games ||--o{ questions : enthaelt
 
-    questions |o--o{ questions : "kopiert von"
-
-    questions ||--|{ question_versions : versioniert
+    questions o|--|{ question_versions : versioniert
 
     questions |o--|| question_versions : "aktuelle Version"
 
-    game_versions ||--|{ game_version_questions : ordnet
+    game_versions ||--o{ game_version_questions : ordnet
 
     question_versions ||--o{ game_version_questions : verwendet
+
+    question_versions ||--o{ answer_options : Optionen
 
     question_versions ||--o| true_false_configs : Wahr_Falsch
 
@@ -189,13 +203,13 @@ erDiagram
 
     game_versions ||--o{ game_sessions : Snapshot
 
-    users |o--o{ game_sessions : hostet
+    app_user |o--o{ game_sessions : hostet
 
     game_sessions ||--o{ teams : bildet
 
     game_sessions ||--|{ session_participants : hat
 
-    users ||--o{ session_participants : spielt
+    app_user ||--o{ session_participants : spielt
 
     teams |o--o{ session_participants : gruppiert
 
@@ -204,13 +218,9 @@ erDiagram
     question_versions ||--o{ player_answers : bewertet
 
 
-    questions ||--o{ question_reports : betrifft
-
     question_versions ||--o{ question_reports : gemeldete_Version
 
-    users ||--o{ question_reports : meldet
-
-    users |o--o{ question_reports : bearbeitet
+    app_user ||--o{ question_reports : meldet
 ```
 
 Modellannahme: Beim aktiven Solo-Spiel ist `host_user_id` leer; die allein spielende
@@ -226,35 +236,45 @@ Mitspieler gehostet und als Runde abgeschlossen werden kann. Das gezeigte
 Ergebnismodell setzt mindestens einen aktiven Teilnehmer voraus; der Host
 würde auch in einer reinen Host-Runde nicht selbst mitspielen.
 
+`completion_key` wird serverseitig stabil pro logischer Runde vergeben. Ein
+identischer Abschluss-Retry liefert dasselbe Ergebnis, ein abweichender wird
+abgewiesen. Finale Teilnehmer- und Teamwerte bleiben gespeichert; Siegerstatus
+wird aus Einzel- beziehungsweise Teamplatzierung abgeleitet. Antwortpunkte,
+Antwortdauer und eine separate Fortschrittstabelle entfallen.
+
 Neue Spiele sind standardmäßig privat. Vorhandene Spiele werden bei der
-Migration öffentlich, auch wenn `creator_user_id` mangels belegbarem Ersteller
+Migration öffentlich, auch wenn `created_by_id` mangels belegbarem Ersteller
 leer bleibt. Die feste Prüfung der drei Schul-Keycloak-IT-Benutzernamen
 `it220269`, `it220240` und `it220265` für `ADMIN` ist geplant; das genaue
 Token-Feld ist technisch noch zu verifizieren. Es gibt keine separate
 Admin-Anmeldung oder Datenbankvergabe.
 
-Die Sichtbarkeit von Meldungsdetails ist offen. Bestätigt ist nur, dass
-Ersteller und Administratoren die Frage ändern dürfen. Status,
-Bearbeitungsweg und Empfänger der Meldung sind Vorschläge. Beim Löschen einer
-gemeldeten Frage wird auch ihre Meldung gelöscht; wie dabei historische
-Antworten trotz `question_versions.question_id` erhalten bleiben, ist technisch
-noch zu klären. `questions.deleted_at` ist dafür nur ein Modellvorschlag.
+Die Sichtbarkeit von Meldungsdetails, Status, Bearbeitungsweg und Empfänger
+bleiben offen. Ersteller und Administratoren dürfen die Frage ändern. Beim
+Löschen einer gemeldeten Frage verschwinden die aktive Frage und die Meldung;
+historische `question_versions` bleiben mit entkoppelbarem `question_id` für
+damalige Antworten erhalten. Eine bereits kopierte Spielvorlage bleibt auch
+ohne abgeschlossene Session logisch erhalten, damit ihre Herkunftsreferenz
+gültig bleibt. Kopierte Fragen benötigen keine Herkunftskette.
 
 | Entity | Aufgabe und Zusammenhang |
 |---|---|
-| `users` | Speichert die Benutzer und ihre Rolle. Ein Benutzer kann Spiele erstellen, Runden hosten, aktiv an Runden teilnehmen oder Fragen melden. Die aktuelle Schulklasse eines Schülers steht ebenfalls hier. |
-| `subjects` | Speichert Schulfächer. Jede Spielversion ist genau einem Fach zugeordnet. |
+| `app_user` | Bestehende UUID-Benutzeridentität und Rolle; Schul-Keycloak bleibt Quelle der Anmeldung und der Rollenregeln. |
+| `tags` | Frei benannte Tags, einschließlich übernommener Fachnamen; ein Tag ist weder Spieltyp noch Branch. |
 | `game_families` | Fasst ein ursprüngliches Spiel und alle daraus kopierten Varianten zusammen. |
-| `games` | Ist die dauerhafte Identität eines Spiels. Es gehört zu einer Spielfamilie, hat einen Ersteller und ist öffentlich oder privat. Es verweist auf seine aktuell gültige Version; eine Kopie kann zusätzlich auf ihr Ursprungsspiel verweisen. |
-| `game_versions` | Speichert einen unveränderlichen Stand des Spiels, etwa Titel, Beschreibung, Modus und Fach. Ein Spiel kann mehrere Versionen haben; eine abgeschlossene Runde verweist auf die Version, mit der gespielt wurde. |
-| `questions` | Ist die dauerhafte Identität einer Frage innerhalb eines Spiels. Sie verweist auf ihre aktuelle Version. Eine kopierte Frage wird danach eigenständig. |
-| `question_versions` | Speichert einen bestimmten Stand von Fragetext und Fragetyp. Frühere Versionen helfen, abgeschlossene Runden später nachzuvollziehen. |
+| `games` | Bestehende String-Spielidentität mit Familie, konkretem Spieltyp, Ersteller und aktueller Version. `copied_from_game_id` hält die direkte Vorlage; bei vorhandener Kopie bleibt sie nach Löschung logisch erhalten. |
+| `game_versions` | Unveränderlicher Bearbeitungsstand eines Spiels. Eine abgeschlossene Runde verweist auf den gespielten Stand. |
+| `game_version_tags` | Ordnet einer Spielversion mehrere Tags und einem Tag mehrere Spielversionen zu. |
+| `game_version_branches` | Bewahrt Branch-Werte und ihre Reihenfolge je Spielversion. |
+| `questions` | Bestehende Long-Frageidentität innerhalb eines Spiels. Eine Kopie erhält eine unabhängige Identität ohne Herkunfts-Selbstreferenz. |
+| `question_versions` | Unveränderlicher Fragetext und Typ; bei Löschung der aktiven Frage bleiben benötigte historische Versionen entkoppelt erhalten. |
 | `game_version_questions` | Verbindet Spielversionen mit den verwendeten Frageversionen und legt ihre Reihenfolge fest. |
+| `answer_options` | Bestehende Long-Optionen mit Text, Boolean-Richtigkeit und Reihenfolge, einer Frageversion zugeordnet. |
 | `true_false_configs` | Ergänzt eine Wahr/Falsch-Frageversion um die richtige Antwort. |
 | `ordering_items` | Speichert die Elemente und ihre richtige Reihenfolge für eine Reihenfolge-Frageversion. |
 | `accepted_text_answers` | Speichert die akzeptierten Lösungen einer Freitext-Frageversion. |
-| `game_sessions` | Speichert eine **vollständig abgeschlossene** Spielrunde mit Spielversion, Spielart, Zeiten und gegebenenfalls Host. Abgebrochene Runden werden nicht dauerhaft gespeichert. |
+| `game_sessions` | Vollständig abgeschlossene Runde mit gespielter Version und stabilem `completion_key`; abgebrochene Runden bleiben flüchtig und Retries erzeugen kein zweites Ergebnis. |
 | `teams` | Speichert Teams einer abgeschlossenen Runde mit Punkten und Platzierung. Teilnehmer können einem Team zugeordnet sein. |
-| `session_participants` | Verbindet einen aktiv spielenden Benutzer mit einer abgeschlossenen Runde. Hier stehen seine endgültigen Punkte und seine Platzierung – daraus wird sein Fortschritt berechnet. Der Host ist kein Teilnehmer derselben Runde. |
-| `player_answers` | Speichert, was ein Teilnehmer auf eine bestimmte Frageversion geantwortet hat und wie diese Antwort damals bewertet wurde. |
-| `question_reports` | Speichert eine Meldung zu einer konkreten Frage und ihrer damaligen Version, einschließlich meldender Person und Kommentar. Wie der Bearbeitungsablauf genau aussieht, ist noch offen. |
+| `session_participants` | Aktive Spieler mit finalen Punkten und Platzierung als Fortschrittsquelle. Der Host nimmt nicht teil; Siegerstatus ergibt sich aus Einzel- oder Teamplatzierung. |
+| `player_answers` | Antwortinhalt, Boolean-Richtigkeit und Antwortzeitpunkt zu einer Frageversion; ohne eigenen Score oder Antwortdauer. |
+| `question_reports` | Meldung mit Kommentar und meldender Person an genau einer `question_version_id`; Status und Detailsichtbarkeit bleiben offen. |

@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.UUID;
 
 @Entity
 @Table(name = "answer_options")
@@ -17,6 +18,18 @@ public class AnswerOption extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     public Long id;
+
+    @JsonIgnore
+    @Column(name = "question_id")
+    public Long questionId;
+
+    @JsonIgnore
+    @Column(name = "answer_order")
+    public Integer answerOrder;
+
+    @JsonIgnore
+    @Column(name = "question_version_id")
+    public UUID questionVersionId;
 
     @Column(nullable = false, length = 1000)
     public String text;

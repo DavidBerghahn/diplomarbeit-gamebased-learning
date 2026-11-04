@@ -9,6 +9,7 @@ import io.quarkus.websockets.next.WebSocket;
 import io.quarkus.websockets.next.WebSocketConnection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import io.smallrye.common.annotation.Blocking;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,7 +26,11 @@ public class GameSocket {
     @Inject
     MultiplayerGameService multiplayerGameService;
 
+    @Inject
+    Smart10Tickets tickets;
+
     @OnTextMessage
+    @Blocking
     public String onMessage(String message, WebSocketConnection connection) throws JsonProcessingException {
         String requestId = null;
         try {
@@ -33,7 +38,15 @@ public class GameSocket {
             requestId = request.path("requestId").isMissingNode() ? null : request.path("requestId").asText();
             String type = request.path("type").asText();
 
+            if ("bind_ticket".equals(type)) {
+                if (connection == null) throw new IllegalArgumentException("Connection required");
+                Smart10Tickets.Actor actor = tickets.bind(connection.id(), request.path("ticket").asText(null));
+                return response(requestId, "ticket_bound", Map.of("displayName", actor.displayName()));
+            }
+
             if (type.startsWith("mp_")) {
+                if (connection == null) throw new IllegalArgumentException("Connection required");
+                tickets.actor(connection.id());
                 return multiplayerResponse(requestId, type, objectMapper.readTree(message), connection);
             }
 
@@ -50,6 +63,7 @@ public class GameSocket {
 
     @OnClose
     public void onClose(WebSocketConnection connection) {
+        tickets.unbind(connection.id());
         multiplayerGameService.leave(connection);
     }
 
@@ -61,6 +75,7 @@ public class GameSocket {
             case "mp_select_card" -> multiplayerGameService.selectCard(connection, request);
             case "mp_answer" -> multiplayerGameService.answer(connection, request);
             case "mp_pass" -> multiplayerGameService.pass(connection, request);
+            case "mp_retry_save" -> multiplayerGameService.retrySave(connection, request);
             default -> throw new IllegalStateException("Unbekannter Multiplayer-Befehl");
         };
         data.put("selfId", connection.id());
