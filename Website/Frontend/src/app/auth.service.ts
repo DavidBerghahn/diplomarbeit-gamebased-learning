@@ -60,11 +60,14 @@ export class AuthService {
     const codeVerifier = this.randomBase64Url(64);
     const codeChallenge = await this.sha256Base64Url(codeVerifier);
 
-    sessionStorage.setItem(this.pkceStorageKey, JSON.stringify({
-      state,
-      codeVerifier,
-      returnUrl: this.safeInternalReturnUrl(returnUrl),
-    }));
+    sessionStorage.setItem(
+      this.pkceStorageKey,
+      JSON.stringify({
+        state,
+        codeVerifier,
+        returnUrl: this.safeInternalReturnUrl(returnUrl),
+      }),
+    );
 
     const params = new URLSearchParams({
       client_id: config.keycloakClientId,
@@ -108,7 +111,7 @@ export class AuthService {
       throw new Error(`Token-Austausch fehlgeschlagen: HTTP ${tokenResponse.status}`);
     }
 
-    const tokens = await tokenResponse.json() as TokenResponse;
+    const tokens = (await tokenResponse.json()) as TokenResponse;
     this.storeTokens(tokens);
     this.postLoginUrl = this.safeInternalReturnUrl(pkce.returnUrl);
     sessionStorage.removeItem(this.pkceStorageKey);
@@ -159,7 +162,9 @@ export class AuthService {
         hasAccessToken: Boolean(tokens?.access_token),
         hasIdToken: Boolean(tokens?.id_token),
         expiresAt: tokens?.expires_at ? new Date(tokens.expires_at).toISOString() : null,
-        expiresInSeconds: tokens?.expires_at ? Math.max(0, Math.floor((tokens.expires_at - Date.now()) / 1000)) : null,
+        expiresInSeconds: tokens?.expires_at
+          ? Math.max(0, Math.floor((tokens.expires_at - Date.now()) / 1000))
+          : null,
       },
       accessTokenClaims: this.tokenClaims(tokens?.access_token),
       idTokenClaims: this.tokenClaims(tokens?.id_token),
@@ -168,9 +173,7 @@ export class AuthService {
 
   async authorizationHeaders(): Promise<HeadersInit> {
     const accessToken = await this.validAccessToken();
-    return accessToken
-      ? { Authorization: `Bearer ${accessToken}` }
-      : {};
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
   }
 
   invalidateSession(): void {
@@ -188,12 +191,19 @@ export class AuthService {
     }
 
     const refreshWindow = Math.min(30_000, tokens.expires_in * 250);
-    if (!forceRefresh && tokens.access_token && tokens.expires_at
-      && tokens.expires_at > Date.now() + refreshWindow) {
+    if (
+      !forceRefresh &&
+      tokens.access_token &&
+      tokens.expires_at &&
+      tokens.expires_at > Date.now() + refreshWindow
+    ) {
       return tokens.access_token;
     }
 
-    if (!tokens.refresh_token || (tokens.refresh_expires_at !== undefined && tokens.refresh_expires_at <= Date.now())) {
+    if (
+      !tokens.refresh_token ||
+      (tokens.refresh_expires_at !== undefined && tokens.refresh_expires_at <= Date.now())
+    ) {
       this.clearTokens();
       return null;
     }
@@ -230,7 +240,7 @@ export class AuthService {
     }
 
     try {
-      const refreshed = await response.json() as TokenResponse;
+      const refreshed = (await response.json()) as TokenResponse;
       return this.storeTokens(refreshed, tokens);
     } catch {
       this.clearTokens();
@@ -239,19 +249,29 @@ export class AuthService {
   }
 
   private storeTokens(response: TokenResponse, previous?: TokenResponse): string {
-    if (typeof response.access_token !== 'string' || !response.access_token
-      || !Number.isFinite(response.expires_in) || response.expires_in <= 0) {
+    if (
+      typeof response.access_token !== 'string' ||
+      !response.access_token ||
+      !Number.isFinite(response.expires_in) ||
+      response.expires_in <= 0
+    ) {
       throw new Error('Keycloak lieferte keinen gültigen Access-Token.');
     }
 
     const now = Date.now();
-    const refreshToken = typeof response.refresh_token === 'string' && response.refresh_token
-      ? response.refresh_token : previous?.refresh_token;
+    const refreshToken =
+      typeof response.refresh_token === 'string' && response.refresh_token
+        ? response.refresh_token
+        : previous?.refresh_token;
     const refreshExpiresIn = Number.isFinite(response.refresh_expires_in)
-      ? response.refresh_expires_in : undefined;
-    const refreshExpiresAt = refreshExpiresIn !== undefined
-      ? now + refreshExpiresIn * 1000
-      : refreshToken === previous?.refresh_token ? previous?.refresh_expires_at : undefined;
+      ? response.refresh_expires_in
+      : undefined;
+    const refreshExpiresAt =
+      refreshExpiresIn !== undefined
+        ? now + refreshExpiresIn * 1000
+        : refreshToken === previous?.refresh_token
+          ? previous?.refresh_expires_at
+          : undefined;
     const tokens: TokenResponse = {
       access_token: response.access_token,
       id_token: response.id_token ?? previous?.id_token,
@@ -268,8 +288,11 @@ export class AuthService {
 
   private scheduleRefresh(tokens: TokenResponse | null): void {
     clearTimeout(this.refreshTimer);
-    if (!tokens?.refresh_token || !tokens.expires_at
-      || (tokens.refresh_expires_at !== undefined && tokens.refresh_expires_at <= Date.now())) {
+    if (
+      !tokens?.refresh_token ||
+      !tokens.expires_at ||
+      (tokens.refresh_expires_at !== undefined && tokens.refresh_expires_at <= Date.now())
+    ) {
       return;
     }
 
@@ -303,7 +326,7 @@ export class AuthService {
     if (!response.ok) {
       throw new Error(`/api/auth/config lieferte HTTP ${response.status}`);
     }
-    this.authConfig = await response.json() as AuthConfig;
+    this.authConfig = (await response.json()) as AuthConfig;
     return this.authConfig;
   }
 
@@ -321,7 +344,8 @@ export class AuthService {
     }
 
     const url = new URL(value, window.location.origin);
-    const allowedPath = /^\/(?:home|games|myGames|createGame|kwizbattle|lobby(?:\/[^/]+)?)$/;
+    const allowedPath =
+      /^\/(?:home|games|myGames|createGame|kwizbattle|justOne|statistics|hosted|solo\/[^/]+|lobby(?:\/[^/]+)?)$/;
     if (url.origin !== window.location.origin || !allowedPath.test(url.pathname)) {
       return '/home';
     }
@@ -331,7 +355,9 @@ export class AuthService {
 
   private readTokens(): TokenResponse | null {
     try {
-      return JSON.parse(sessionStorage.getItem(this.tokenStorageKey) || 'null') as TokenResponse | null;
+      return JSON.parse(
+        sessionStorage.getItem(this.tokenStorageKey) || 'null',
+      ) as TokenResponse | null;
     } catch {
       this.clearTokens();
       return null;
@@ -364,11 +390,17 @@ export class AuthService {
       return null;
     }
 
-    return JSON.parse(new TextDecoder().decode(this.base64UrlToBytes(payload))) as Record<string, unknown>;
+    return JSON.parse(new TextDecoder().decode(this.base64UrlToBytes(payload))) as Record<
+      string,
+      unknown
+    >;
   }
 
   private base64UrlToBytes(value: string): Uint8Array {
-    const base64 = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+    const base64 = value
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(value.length / 4) * 4, '=');
     const binary = atob(base64);
     return Uint8Array.from(binary, (character) => character.charCodeAt(0));
   }

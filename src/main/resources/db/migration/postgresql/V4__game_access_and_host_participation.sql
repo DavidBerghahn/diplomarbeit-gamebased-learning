@@ -1,0 +1,7 @@
+ALTER TABLE games ADD COLUMN IF NOT EXISTS visibility VARCHAR(16) DEFAULT 'PUBLIC' NOT NULL;
+ALTER TABLE games ADD CONSTRAINT ck_game_visibility CHECK (visibility IN ('PUBLIC', 'PRIVATE', 'DRAFT'));
+ALTER TABLE game_sessions ADD COLUMN host_participates BOOLEAN DEFAULT FALSE NOT NULL;
+CREATE TABLE just_one_attempts (
+ id UUID PRIMARY KEY, session_id UUID NOT NULL REFERENCES game_sessions(id),
+ team_name VARCHAR(160) NOT NULL, awarded BOOLEAN NOT NULL, invalidated BOOLEAN DEFAULT FALSE NOT NULL
+);

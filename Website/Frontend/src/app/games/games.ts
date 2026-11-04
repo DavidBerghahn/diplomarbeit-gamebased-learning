@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { GameRestService } from '../game-rest.service';
 import { Game } from '../model/game.model';
-import {FormsModule} from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { AuthService, UserProfile } from '../auth.service';
 import { AdminViewService } from '../admin-view.service';
 import { DEMO_SMART10_GAMES } from '../model/demo-games';
@@ -22,16 +22,22 @@ export class Games implements OnInit {
 
   games = signal<Game[]>([]);
   profile = signal<UserProfile | null>(null);
-  canHost = computed(() => this.profile()?.role === 'TEACHER' ||
-    (this.profile()?.role === 'ADMIN' && this.adminViewService.view() === 'TEACHER'));
+  canHost = computed(
+    () =>
+      this.profile()?.role === 'TEACHER' ||
+      (this.profile()?.role === 'ADMIN' && this.adminViewService.view() === 'TEACHER'),
+  );
   quizbattleGames = computed(() =>
-    this.games().filter((game) => ['Quizbattle', 'Smart10', 'Smart10 / Quizbattle'].includes(game.spiel_typ)),
+    this.games().filter((game) =>
+      ['Quizbattle', 'Smart10', 'Smart10 / Quizbattle'].includes(game.spiel_typ),
+    ),
   );
   duellUmDieWeltGames = computed(() =>
     this.games().filter((game) => game.spiel_typ === 'DuellUmDieWelt'),
   );
 
   selectedGameType: 'Quizbattle' | 'DuellUmDieWelt' | '' = '';
+  justOneGames = computed(() => this.games().filter((game) => game.spiel_typ === 'JustOne'));
   selectedGameForHosting: Game | null = null;
   copyMessage = '';
 
@@ -41,7 +47,7 @@ export class Games implements OnInit {
     }
 
     if (this.selectedGameType === 'DuellUmDieWelt') {
-      return this.duellUmDieWeltGames();
+      return this.justOneGames();
     }
 
     return [];
@@ -53,18 +59,21 @@ export class Games implements OnInit {
     }
 
     if (this.selectedGameType === 'DuellUmDieWelt') {
-      return 'Duell um die Welt';
+      return 'Just One';
     }
 
     return '';
   });
 
-  setSelectedGameType(gameType: 'Quizbattle' | 'DuellUmDieWelt'){
+  setSelectedGameType(gameType: 'Quizbattle' | 'DuellUmDieWelt') {
     this.selectedGameType = gameType;
   }
 
   clearSelectedGameType(): void {
     this.selectedGameType = '';
+  }
+  async goHome(): Promise<void> {
+    await this.router.navigate(['/home']);
   }
 
   openHostDialog(event: Event, game: Game): void {
@@ -99,7 +108,8 @@ export class Games implements OnInit {
       await this.gameRestService.copyGame(game.id);
       this.copyMessage = 'Eine neue Kopie wurde in „Meine Spiele“ angelegt.';
     } catch (error) {
-      this.copyMessage = error instanceof Error ? error.message : 'Das Spiel konnte nicht kopiert werden.';
+      this.copyMessage =
+        error instanceof Error ? error.message : 'Das Spiel konnte nicht kopiert werden.';
     }
   }
 

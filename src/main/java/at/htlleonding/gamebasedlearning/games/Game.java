@@ -54,6 +54,13 @@ public class Game extends PanacheEntityBase {
     @Column(nullable = false, length = 160)
     public String name;
 
+    @JsonProperty("status")
+    @Column(name = "visibility", nullable = false, length = 16)
+    public String visibility = "PUBLIC";
+
+    @JsonProperty("besitzerId")
+    public UUID ownerId() { return createdBy == null ? null : createdBy.id; }
+
     @JsonProperty("beschreibung")
     @Column(length = 2000)
     public String description;
@@ -78,7 +85,7 @@ public class Game extends PanacheEntityBase {
     @Transient
     public List<Question> questions = new ArrayList<>();
 
-    @JsonIgnore
+    @JsonProperty("tags")
     @Transient
     public List<String> tags;
 

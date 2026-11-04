@@ -1,26 +1,42 @@
 <nav class="game-navigation">
-
   <div class="nav-main">
     <a routerLink="/games" class="nav-link">Alle Spiele</a>
+    <a routerLink="/hosted" class="nav-link">Gehostete Spiele</a>
     @if (canManageGames) {
       <a routerLink="/myGames" class="nav-link">Meine Spiele</a>
+      <a routerLink="/statistics" class="nav-link">Klassenstatistik</a>
     }
   </div>
 
   <div class="nav-actions">
     @if (isAdmin) {
       <div class="view-switch" role="group" aria-label="Ansicht wählen">
-        <button type="button" class="view-switch-button" [class.selected]="adminView === 'STUDENT'"
-                [attr.aria-pressed]="adminView === 'STUDENT'" (click)="selectAdminView('STUDENT')">
+        <button
+          type="button"
+          class="view-switch-button"
+          [class.selected]="adminView === 'STUDENT'"
+          [attr.aria-pressed]="adminView === 'STUDENT'"
+          (click)="selectAdminView('STUDENT')"
+        >
           Schüleransicht
         </button>
-        <button type="button" class="view-switch-button" [class.selected]="adminView === 'TEACHER'"
-                [attr.aria-pressed]="adminView === 'TEACHER'" (click)="selectAdminView('TEACHER')">
+        <button
+          type="button"
+          class="view-switch-button"
+          [class.selected]="adminView === 'TEACHER'"
+          [attr.aria-pressed]="adminView === 'TEACHER'"
+          (click)="selectAdminView('TEACHER')"
+        >
           Lehreransicht
         </button>
       </div>
     }
-    <button type="button" class="auth-details-button" (click)="toggleAuthDetails()" [attr.aria-expanded]="debugVisible">
+    <button
+      type="button"
+      class="auth-details-button"
+      (click)="toggleAuthDetails()"
+      [attr.aria-expanded]="debugVisible"
+    >
       {{ debugVisible ? 'Login-Details schließen' : 'Login-Details' }}
     </button>
     @if (canManageGames) {
@@ -36,7 +52,11 @@
 @if (debugVisible) {
   <section class="auth-details" aria-label="Login-Details">
     @if (profile(); as loadedProfile) {
-      <p><strong>Angemeldet als:</strong> {{ loadedProfile.displayName }} ({{ loadedProfile.username }})</p>
+      <p>
+        <strong>Angemeldet als:</strong> {{ loadedProfile.displayName }} ({{
+          loadedProfile.username
+        }})
+      </p>
     }
     @if (authError) {
       <p class="auth-error">{{ authError }}</p>
@@ -55,13 +75,23 @@
     <p>Gib den vierstelligen Spiel-PIN ein und leg direkt los.</p>
 
     <div class="pin-container">
-      <input class="pin-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000" name="joinCode" [(ngModel)]="joinCode" (keyup.enter)="joinGame()">
+      <input
+        class="pin-input"
+        type="text"
+        inputmode="numeric"
+        maxlength="4"
+        placeholder="0000"
+        name="joinCode"
+        [(ngModel)]="joinCode"
+        (keyup.enter)="joinGame()"
+      />
     </div>
 
     <button class="join-button" type="button" (click)="joinGame()">Beitreten</button>
-    @if (joinError) { <p class="join-error" role="alert">{{ joinError }}</p> }
+    @if (joinError) {
+      <p class="join-error" role="alert">{{ joinError }}</p>
+    }
   </div>
-
 </main>
 
 <app-footer></app-footer>

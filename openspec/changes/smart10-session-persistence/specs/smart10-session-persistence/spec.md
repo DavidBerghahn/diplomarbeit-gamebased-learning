@@ -71,19 +71,19 @@ Persistierbare Smart10-Runden SHALL Host und aktive Teilnehmer an ihre validiert
 - **THEN** wird die Aktion ohne Zustandsänderung abgewiesen
 
 ### Requirement: Host und echte Mitspieler trennen
-Ein Mehrspieler-Host SHALL weder Teammitglied noch aktiver Teilnehmer derselben Runde sein und SHALL daraus keine Punkte erhalten. Eine persistierbare Mehrspieler-Runde SHALL mindestens eine andere verifizierte aktive Person besitzen; doppelte Benutzer und leere Teams MUST ausgeschlossen werden. Bis zur offenen fachlichen Entscheidung über aktive Lehrer-Teilnahme SHALL der Server auf dem persistenten Mehrspielerpfad `TEACHER` bei `mp_join` und bei jeder Teilnehmerbindung abweisen, auch mit gültigem Ticket. `STUDENT` und `ADMIN` können gemäß den übrigen geltenden Regeln teilnehmen; Solo und Hosting für Lehrkräfte bleiben möglich. Diese technische Begrenzung trifft keine dauerhafte fachliche Entscheidung über Lehrer-Teilnahme. Private Einladungen bleiben außerhalb dieser Capability.
+Der Host SHALL bei Erstellung per Toggle entscheiden, ob er aktiv mitspielt. Ein beobachtender Host SHALL aus Teams, Teilnehmerergebnissen und Punkten ausgeschlossen bleiben. Ein mitspielender Host SHALL einschließlich Lehrerrolle wie andere Mitglieder gewertet werden. Doppelte Benutzer und leere Teams MUST ausgeschlossen werden. Private Einladungen bleiben außerhalb dieser Capability.
 
 #### Scenario: Host startet mit Mitspieler
 - **WHEN** ein Host eine zulässige Smart10-Runde mit mindestens einem anderen verifizierten Spieler startet
 - **THEN** werden nur echte Mitspieler Teams und späteren Teilnehmerergebnissen zugeordnet
 
 #### Scenario: Host allein oder leeres Team
-- **WHEN** nur der Host anwesend ist oder ein vorgesehenes Team keinen aktiven Spieler besitzt
-- **THEN** kann daraus kein gespeichertes Mehrspieler-Ergebnis entstehen
+- **WHEN** kein aktiver Spieler anwesend ist oder ein vorgesehenes Team keinen aktiven Spieler besitzt
+- **THEN** kann daraus kein gespeichertes Mehrspieler-Ergebnis entstehen; ein allein mitspielender Host in einem Smart10-Team ist dagegen zulässig
 
-#### Scenario: Direkter Lehrer-Beitritt mit gültigem Ticket
-- **WHEN** eine verifizierte `TEACHER`-Identität mit gültigem Ticket `mp_join` oder eine andere Teilnehmerbindung für eine persistente Mehrspieler-Runde ausführt
-- **THEN** weist der Server die aktive Teilnahme ohne Zustandsänderung ab; das Ticket allein berechtigt nicht zur Teilnahme
+#### Scenario: Lehrer als aktiver Mitspieler
+- **WHEN** eine aktive verifizierte Lehreridentität mit gültigem Ticket einem zulässigen Raum beitritt oder den Host-Mitspieltoggle aktiviert
+- **THEN** ist die Teilnahme nach denselben Spielregeln wie für andere aktive Mitglieder möglich
 
 ### Requirement: Solo-Punkte serverseitig nach bestehender Formel
 Ein regulär abgeschlossenes Smart10-Solospiel SHALL den Teilnehmer-Endwert serverseitig als `correctCards + completedQuestions * 10 + bestStreak * 2` berechnen. Die bisherigen drei Kartenmodi SHALL mit demselben gespielten Snapshot bewertet werden. Ein vom Client berechneter Wert SHALL die Speicherung nicht beeinflussen.
@@ -127,7 +127,50 @@ Nur eine nach den Spielregeln regulär abgeschlossene Smart10-Runde SHALL mit Te
 - **THEN** wird der neue Inhalt abgewiesen und das zuerst gespeicherte Ergebnis bleibt unverändert
 
 ### Requirement: Bestehende Zugriffsgrenzen für produktive Nutzung
-Die persistente Smart10-Anbindung SHALL in der Produktion standardmäßig deaktiviert bleiben, bis die geplanten Spielsichtbarkeits- und Eigentümerregeln sowie die Migrations- und Rollout-Prüfungen umgesetzt sind. Diese Capability SHALL weder einen allgemeinen Zugang zu privaten Spielen noch eine aktive Lehrer-Mehrspielerrolle einführen. Lokale Dev-/Test-Runden SHALL getrennt prüfbar sein.
+Die persistente Smart10-Anbindung SHALL in der Produktion standardmäßig deaktiviert bleiben, bis die Spielsichtbarkeits- und Eigentümerregeln sowie die Migrations- und Rollout-Prüfungen bestätigt sind. Diese Capability SHALL keinen allgemeinen Zugang zu privaten Spielen einführen. Lokale Dev-/Test-Runden SHALL getrennt prüfbar sein.
+
+#### Scenario: Produktive Freischaltung bleibt manuell
+- **WHEN** das Backend ohne ausdrückliche produktive Freischaltung startet
+- **THEN** bleibt der persistente Spielpfad in Produktion gesperrt
+
+### Requirement: Einstellbare und zeitlich begrenzte Räume
+Der Server SHALL Codes innerhalb der einzelnen aktiven Instanz atomar reservieren und nach 24 Stunden ab Erstellung ungültig machen, auch während des Spiels. Neustarts dürfen Räume schließen. Der Host SHALL für Smart10 5–120 Sekunden pro Zug wählen können, Standard 20. Zugtimeouts SHALL serverseitig automatisch zur Elimination und zum nächsten aktiven Team führen.
+
+#### Scenario: Kein Client meldet den Timeout
+- **WHEN** die Zugfrist ohne weiteren Clientbefehl verstreicht
+- **THEN** verliert das Team seine Punkte, scheidet aus und alle verbundenen Clients erhalten den Folgezustand
+
+### Requirement: Transparente Teamverwaltung
+Zufallszuweisung SHALL die Teamgrößen höchstens um eins unterscheiden lassen. Freie Wahl SHALL Selbstwechsel erlauben; der Host SHALL Spieler umverteilen können und stärkere Ungleichverteilung ausdrücklich bestätigen müssen. Kein Team darf leer starten. Teamleiter SHALL zufällig ausgelost und im Abschluss angezeigt werden.
+
+#### Scenario: Ungleich verteilte freie Teams
+- **WHEN** sich besetzte Teams um mehr als eine Person unterscheiden
+- **THEN** wird der Start ohne ausdrückliche Hostbestätigung abgewiesen
+
+### Requirement: Just One mit getrennten Spieleransichten
+Just One SHALL synchronisierte Räume mit mindestens zwei Personen pro Team und fünf Begriffen pro Karte verwenden. Der Ratende SHALL nur Nummern auswählen und den Zielbegriff bis zur Auflösung nicht über seine Spielverbindung erhalten. Mitspieler SHALL Hinweise senden; doppelte Hinweise SHALL ausgeblendet werden. Der Host SHALL bewerten und ungültige Versuche auch nach Spielende idempotent zurücknehmen können; dafür vergebene Punkte SHALL genau einmal vom Team und allen Mitgliedern abgezogen werden.
+
+#### Scenario: Ratender wählt eine Nummer
+- **WHEN** der Ratende eine Nummer auswählt
+- **THEN** erhalten nur die anderen Verbindungen den Zielbegriff; der Ratende wartet auf die Hinweise
+
+#### Scenario: Nachträgliche Korrektur
+- **WHEN** der ursprüngliche Host einen bereits gespeicherten gültigen Versuch zweimal ungültig macht
+- **THEN** sinken Team- und Mitgliederscores nur einmal und Klassenstatistiken zeigen den korrigierten Wert
+
+### Requirement: CSV und dauerhafte Spielanlage
+Lehrer und Admins SHALL Smart10 aller drei Modi sowie Just One per CSV-Vorlage importieren, vor dem Speichern prüfen und als öffentliche oder private Spiele speichern können. Der Server SHALL ungültige Kartenzahl, Lösungstypen und Reihenfolgen ablehnen. Öffentliche Kataloge MUST private Inhalte ausschließen.
+
+#### Scenario: Reihenfolge mit doppeltem Rang
+- **WHEN** eine importierte Frage einen Rang doppelt enthält
+- **THEN** wird der Import mit verständlichem Fehler abgewiesen und nicht gespeichert
+
+### Requirement: Klassen- und Schülerstatistik
+Lehrer und Admins SHALL alle Klassen mit Schülern, abgeschlossenen Spielen, Spielhäufigkeit, Punkten und Mitspielern einsehen können. Schüler MUST vom allgemeinen Klassenstatistik-Endpunkt ausgeschlossen sein. Statistikantworten SHALL keine konkreten Begriffe, Hinweise oder Antworten enthalten. Demos und abgebrochene Räume MUST ausgeschlossen bleiben.
+
+#### Scenario: Schüler öffnet Klassenstatistik
+- **WHEN** eine Schüleridentität die Statistik-API direkt aufruft
+- **THEN** wird sie serverseitig mit 403 abgewiesen
 
 #### Scenario: Noch offener Access-Change
 - **WHEN** die neue Smart10-Persistenz lokal vorhanden ist, die geplanten Sichtbarkeitsregeln aber noch nicht umgesetzt und geprüft sind

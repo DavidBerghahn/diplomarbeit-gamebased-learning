@@ -1,23 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-type CreationMode = 'reuse-game' | 'reuse-questions' | 'new-questions';
-type GameType = 'smart10' | 'just-one';
-type Smart10Mode = 'true-false' | 'free-text' | 'ordering';
-
-interface AnswerCardDraft {
-  id: number;
-  text: string;
-  answer: string;
-}
-
-interface QuestionDraft {
-  id: number;
-  prompt: string;
-  tags: string;
-  answerCards: AnswerCardDraft[];
-}
+import { GameRestService } from '../game-rest.service';
+import { ApiService } from '../api.service';
+import { Game, Question, Smart10Mode } from '../model/game.model';
+import { parseGameCsv, csvTemplate } from '../game-csv';
 
 @Component({
   selector: 'app-create-game',
@@ -25,113 +12,166 @@ interface QuestionDraft {
   templateUrl: './create-game.html',
   styleUrl: './create-game.css',
 })
-export class CreateGame {
-  readonly creationModes = [
-    { id: 'reuse-game' as const, title: 'Spiel wiederverwenden', description: 'Wähle ein bestehendes Spiel und sein Fragenset als Ausgangspunkt.', icon: '↻' },
-    { id: 'reuse-questions' as const, title: 'Spiel mit Fragen erstellen', description: 'Kombiniere eigene oder freigegebene Fragen zu einem neuen Spiel.', icon: '＋' },
-    { id: 'new-questions' as const, title: 'Neue Fragen erstellen', description: 'Baue dein Spiel direkt mit neuen Fragen und Antworten auf.', icon: '✦' },
-  ];
-
-  readonly gameTypes = [
-    { id: 'smart10' as const, title: 'Smart10 / Quizbattle', description: 'Eine zentrale Frage mit 12 Antwortkarten.', icon: '▦', available: true },
-    { id: 'just-one' as const, title: 'Just One', description: 'Gemeinsam Hinweise sammeln und erraten.', icon: '✎', available: false },
-  ];
-
-  readonly smart10Modes = [
-    { id: 'true-false' as const, title: 'Wahr oder falsch', description: 'Jede Karte enthält eine Aussage und eine Wahr/Falsch-Lösung.', icon: '✓' },
-    { id: 'free-text' as const, title: 'Konkrete Antwort', description: 'Für jede Karte wird eine konkrete Antwort eingegeben.', icon: 'Aa' },
-    { id: 'ordering' as const, title: 'Richtige Reihenfolge', description: 'Jede Karte erhält eine Position von 1 bis 12.', icon: '↕' },
-  ];
-
-  readonly existingGames = [
-    { id: 'smart10-space', name: 'Weltraum-Wissen', type: 'Smart10 / Quizbattle', questions: 10, author: 'M. Huber' },
-    { id: 'smart10-sew', name: 'SEW Grundlagen', type: 'Smart10 / Quizbattle', questions: 10, author: 'A. Leitner' },
-    { id: 'smart10-history', name: 'Europa im Wandel', type: 'Smart10 / Quizbattle', questions: 12, author: 'Dein Team' },
-  ];
-
-  readonly questionLibrary = [
-    { id: 1, prompt: 'Welche Sprache wird im Browser ausgeführt?', author: 'M. Huber', tags: ['SEW', 'Web'] },
-    { id: 2, prompt: 'Ordne die Schritte eines Git-Workflows.', author: 'A. Leitner', tags: ['SEW'] },
-    { id: 3, prompt: 'HTML beschreibt die Struktur einer Webseite.', author: 'Dein Team', tags: ['SEW', 'Web'] },
-    { id: 4, prompt: 'Was bedeutet die Abkürzung API?', author: 'L. Berger', tags: ['Informatik'] },
-  ];
-
-  creationMode: CreationMode = 'new-questions';
-  selectedGameType: GameType = 'smart10';
-  smart10Mode: Smart10Mode = 'true-false';
+export class CreateGame implements OnInit {
+  private readonly games = inject(GameRestService);
+  private readonly api = inject(ApiService);
+  selectedGameType: 'smart10' | 'just-one' = 'smart10';
+  smart10Mode: Smart10Mode = 'TRUE_FALSE';
+  creationMode: 'new-questions' | 'reuse-game' | 'reuse-questions' = 'new-questions';
   isPublic = true;
   gameName = '';
   description = '';
   subject = '';
   tags = '';
-  selectedGameId = this.existingGames[0].id;
-  selectedQuestionIds = new Set<number>();
-  questions: QuestionDraft[] = [this.createQuestion(1)];
+  questions: Question[] = [];
+  catalog: Game[] = [];
+  selectedGameId = '';
   submitted = false;
   saveError = '';
-  showTagHelp = false;
-
-  selectMode(mode: CreationMode): void {
-    this.creationMode = mode;
-    if (mode === 'reuse-game') this.questions = [];
-    else if (this.questions.length === 0) this.questions = [this.createQuestion(1)];
+  busy = false;
+  saved: Game | null = null;
+  csvMessage = '';
+  library: Question[] = [];
+  selectedQuestions = new Set<number>();
+  async ngOnInit(): Promise<void> {
+    this.newQuestion();
+    try {
+      this.catalog = await this.games.getPublicGames();
+    } catch {
+      this.saveError =
+        'Spielekatalog konnte nicht geladen werden. Neue Spiele können weiterhin erstellt werden.';
+    }
   }
-
-  selectGameType(gameType: GameType): void {
-    if (gameType === 'just-one') return;
-    this.selectedGameType = gameType;
+  get justOne(): boolean {
+    return this.selectedGameType === 'just-one';
   }
-
-  toggleLibraryQuestion(id: number): void {
-    this.selectedQuestionIds.has(id) ? this.selectedQuestionIds.delete(id) : this.selectedQuestionIds.add(id);
+  selectGameType(type: 'smart10' | 'just-one'): void {
+    this.selectedGameType = type;
+    this.questions = [];
+    this.newQuestion();
+    this.library = [];
+    this.selectedQuestions.clear();
   }
-
-  isQuestionSelected(id: number): boolean { return this.selectedQuestionIds.has(id); }
-
-  addQuestion(): void {
-    const nextId = this.questions.length ? Math.max(...this.questions.map((question) => question.id)) + 1 : 1;
-    this.questions = [...this.questions, this.createQuestion(nextId)];
+  newQuestion(): void {
+    this.questions.push({
+      typ: this.justOne ? 'JUST_ONE' : this.smart10Mode,
+      modus: this.justOne ? undefined : this.smart10Mode,
+      frage: '',
+      antwortmoeglichkeiten: this.justOne
+        ? Array.from({ length: 5 }, () => ({ text: '', ist_richtig: false }))
+        : [],
+      karten: this.justOne
+        ? undefined
+        : Array.from({ length: 12 }, (_, i) => ({
+            position: i + 1,
+            text: '',
+            loesung:
+              this.smart10Mode === 'TRUE_FALSE'
+                ? true
+                : this.smart10Mode === 'ORDERING'
+                  ? i + 1
+                  : '',
+          })),
+    });
   }
-
-  removeQuestion(id: number): void {
-    if (this.questions.length > 1) this.questions = this.questions.filter((question) => question.id !== id);
+  changeMode(): void {
+    this.questions = [];
+    this.newQuestion();
   }
-
-  addAnswerCard(question: QuestionDraft): void {
-    if (question.answerCards.length >= 12) return;
-    const nextId = Math.max(...question.answerCards.map((card) => card.id)) + 1;
-    question.answerCards.push({ id: nextId, text: '', answer: '' });
+  async loadLibrary(): Promise<void> {
+    try {
+      const game = await this.api.request<Game>(
+        '/api/games/' + encodeURIComponent(this.selectedGameId) + '/editor',
+      );
+      if (game.spiel_typ !== (this.justOne ? 'JustOne' : 'Smart10'))
+        throw new Error('Bitte passenden Spieltyp auswählen.');
+      this.library = game.fragen;
+      this.selectedQuestions.clear();
+      this.saveError = '';
+    } catch (error) {
+      this.saveError = error instanceof Error ? error.message : 'Laden fehlgeschlagen';
+    }
   }
-
-  removeAnswerCard(question: QuestionDraft, cardId: number): void {
-    if (question.answerCards.length <= 12) return;
-    question.answerCards = question.answerCards.filter((card) => card.id !== cardId);
+  toggleQuestion(index: number): void {
+    this.selectedQuestions.has(index)
+      ? this.selectedQuestions.delete(index)
+      : this.selectedQuestions.add(index);
   }
-
-  submit(): void {
-    if (this.selectedGameType === 'just-one') return;
-
-    this.submitted = false;
+  async readCsv(event: Event): Promise<void> {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      if (file.size > 2_000_000) throw new Error('CSV-Datei ist größer als 2 MB.');
+      const parsed = parseGameCsv(await file.text(), this.justOne);
+      this.questions = parsed;
+      this.creationMode = 'new-questions';
+      this.csvMessage =
+        parsed.length +
+        ' Fragen/Karten importiert. Bitte Vorschau prüfen und anschließend speichern.';
+      this.saveError = '';
+    } catch (error) {
+      this.csvMessage = '';
+      this.saveError = error instanceof Error ? error.message : 'CSV ungültig';
+    }
+  }
+  downloadTemplate(): void {
+    const url = URL.createObjectURL(
+      new Blob([csvTemplate(this.justOne ? 'JUST_ONE' : this.smart10Mode)], {
+        type: 'text/csv;charset=utf-8',
+      }),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'spiel-vorlage.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+  async submit(): Promise<void> {
+    if (this.busy || this.submitted) return;
+    this.busy = true;
     this.saveError = '';
-    this.submitted = true;
-  }
-
-  get selectedGame() {
-    return this.existingGames.find((game) => game.id === this.selectedGameId) ?? this.existingGames[0];
-  }
-
-  get selectedQuestionCount(): number { return this.selectedQuestionIds.size; }
-
-  get smart10ModeDetails() {
-    return this.smart10Modes.find((mode) => mode.id === this.smart10Mode) ?? this.smart10Modes[0];
-  }
-
-  private createQuestion(id: number): QuestionDraft {
-    return {
-      id,
-      prompt: '',
-      tags: '',
-      answerCards: Array.from({ length: 12 }, (_, index) => ({ id: index + 1, text: '', answer: '' })),
-    };
+    this.submitted = false;
+    try {
+      if (!this.gameName.trim()) throw new Error('Bitte einen Spieltitel eingeben.');
+      if (this.creationMode === 'reuse-game') {
+        if (!this.selectedGameId) throw new Error('Bitte ein Spiel auswählen.');
+        const copied = await this.games.copyGame(this.selectedGameId);
+        this.saved = await this.games.updateGame(copied.id, {
+          ...(await this.api.request<Game>('/api/games/' + copied.id + '/editor')),
+          name: this.gameName,
+          beschreibung: this.description,
+          status: this.isPublic ? 'PUBLIC' : 'PRIVATE',
+        });
+      } else {
+        const questions =
+          this.creationMode === 'reuse-questions'
+            ? [...this.selectedQuestions].map((i) => this.library[i])
+            : this.questions;
+        if (!questions.length) throw new Error('Bitte mindestens eine Frage/Karte auswählen.');
+        this.saved = await this.games.createGame({
+          id: crypto.randomUUID(),
+          spiel_typ: this.justOne ? 'JustOne' : 'Smart10',
+          name: this.gameName,
+          beschreibung: this.description,
+          fach: this.subject,
+          zweige: [],
+          status: this.isPublic ? 'PUBLIC' : 'PRIVATE',
+          tags: this.tags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          fragen: questions.map((q) => ({
+            ...q,
+            id: undefined,
+            karten: q.karten?.map((c) => ({ ...c, id: undefined })),
+          })),
+        });
+      }
+      this.submitted = true;
+    } catch (error) {
+      this.saveError = error instanceof Error ? error.message : 'Speichern fehlgeschlagen';
+    } finally {
+      this.busy = false;
+    }
   }
 }

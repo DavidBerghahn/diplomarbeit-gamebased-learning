@@ -2,6 +2,59 @@
 
 Stand: 4. November 2026
 
+## Neuester Einstieg: Classroom-Todos angebunden
+
+Die Umsetzung dieses Teammitglieds baut auf main 9301ae3 auf. Der Nutzer hat
+ausdrücklich alle Classroom-Todos zur lokalen Umsetzung sowie Commit/GitHub-Push
+freigegeben und nach Rückfrage die Arbeit ausschließlich im Supervisor-Chat gewählt.
+Es wurden keine Spezialisten-Chats beauftragt. Kein LeoCloud-Rollout und keine
+Änderung an der Cloud-Datenbank sind beauftragt oder durchgeführt.
+
+Implementiert sind der ticketgebundene Angular-Multiplayertransport, gespeicherte
+Smart10-Soloabläufe mit Commitbestätigung/Retry, Spielerstellung/Kopie/Status/Meine
+Spiele mit Besitzschutz, Smart10-Zeitlimit 5–120 Sekunden, serverseitige Timeouts,
+atomare Codes und 24-Stunden-Ablauf, Host-Mitspielen einschließlich Lehrer,
+gleichmäßige Zufallszuordnung, freie Teamwahl/Host-Umverteilung/Bestätigung,
+zufällige Teamleiter und Abschlussanzeige. Just One läuft über denselben Raumdienst
+mit getrennten Nachrichten, Nummernwahl ohne Zielwort für den Ratenden, Hinweisen
+und Hostbewertung. Korrekturen gespeicherter Versuche nehmen Punkte genau einmal
+zurück und sind über den gehosteten Verlauf auch nach Raumende erreichbar.
+CSV-Vorlagen und Import für beide Spiele sowie Lehrerstatistik aller Klassen,
+Schüler, Häufigkeiten, Punkte und Mitspieler sind angeschlossen.
+
+V1–V3 bleiben unverändert; V4 ergänzt Sichtbarkeit, Host-Mitspielen und
+Just-One-Versuche. Dev-H2 speichert lokal unter dem ignorierten .local-data/-Pfad.
+Optionales local-pg-Profil und DB-Healthcheck sind ergänzt. Das vorbereitete
+Kubernetes-Manifest verwendet weiterhin eine Replica, jetzt mit Recreate.
+Die GitHub-CI prüft H2, PostgreSQL und das Frontend. Prod-Migration und
+SMART10_PERSISTENCE_ENABLED bleiben standardmäßig aus und müssen beim späteren
+manuellen Rollout bewusst freigeschaltet werden.
+
+Die Abnahmematrix und die lokale/Cloud-Anleitung stehen in
+[docs/classroom-todos-implementation.md](docs/classroom-todos-implementation.md).
+Öffentliche Kataloge und WebSocket-Lesewege geben keine privaten Spiele frei;
+private Schüler-Einladungen bleiben ausgeschlossen. Der ursprüngliche Access-
+und Foundation-Rollout-Change ist damit nicht automatisch vollständig abgenommen
+oder archiviert. Nicht nachgewiesene ältere Smart10-Detailabnahmen bleiben in
+der Aufgabenliste offen; das ist kein Hinweis, dass die neue Todo-Umsetzung
+unimplementiert sei.
+
+Aktuelle Prüfungen: 65 Frontendtests erfolgreich und Produktionsbuild erfolgreich.
+Die vollständigen Backendläufe wurden getrennt mit H2 und PostgreSQL ausgeführt:
+jeweils 58 Tests, keine Fehler und keine übersprungenen Tests. Der Backend-Paketbau
+mit ausgelassenen Tests war ebenfalls erfolgreich. Ein echter
+WebSocket-Integrationstest prüft Ticket, Lobby-Broadcast und Datenbankabschluss.
+Ein lokaler pg_dump/pg_restore-Test erhielt 92 Spiele, 40 Sessions, 55 Teilnehmer
+und vier Just-One-Versuche unverändert in einer zweiten lokalen Datenbank.
+Keine Prüfung eines Cloud-Abzugs und kein echter Schul-Login im Browser.
+Die bekannten H2/Flyway-Versionswarnungen wurden nicht durch einen Versionssprung
+überdeckt. Details der vorherigen Entwicklungsstufen folgen als historische Angaben.
+
+Die isolierte PostgreSQL-Testinstanz wurde danach beendet. Ihre Dateien liegen
+noch unter dem lokalen TEMP-Unterordner diplomarbeit-pg-d7bce349, da die automatische
+Sicherheitsprüfung das rekursive Aufräumen blockierte. Kein Testport ist ein dauerhafter
+Projektzugang; für weitere Tests eine neue lokale Testinstanz starten.
+
 ## Team-Einstieg: veröffentlichter Arbeitsstand vom 4. November
 
 **Zielbranch: `main`. Dies ist ein unvollständiger Entwicklungsstand, keine fertige Smart10-Anbindung und keine Rollout-Freigabe.** David hat ausdrücklich beauftragt, den zunächst unter `codex/smart10-db-integration-wip` veröffentlichten Commit `eb3c4d5` auf `main` zu übernehmen, damit das Team ihn direkt abrufen kann. Ausgangspunkt war `106209b`. Enthalten sind die Datenmodell-/Flyway-Foundation, der geprüfte Smart10-Plan sowie die bis zum Nutzungslimit entstandene Backend-Teilimplementierung. Der Push auf `main` löst den vorhandenen Build-/Image-Workflow aus; ein erfolgreicher Workflow oder LeoCloud-Rollout ist damit nicht nachgewiesen. Die nachfolgenden Abschnitte dokumentieren frühere Meilensteine; diese Team-Zusammenfassung ist der aktuelle Einstieg.

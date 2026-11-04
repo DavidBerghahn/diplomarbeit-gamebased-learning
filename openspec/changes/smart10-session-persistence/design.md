@@ -1,5 +1,19 @@
 # Design
 
+## Accepted scope update
+
+Der Auftrag vom 4. November 2026 ersetzt die früheren Beschränkungen zu Host- und Lehrer-Teilnahme in den historischen Designabschnitten: Ein Host entscheidet bei Erstellung per Toggle über aktive Teilnahme. Aktive Hosts, auch Lehrer, werden als normale Teammitglieder gewertet; beobachtende Hosts bleiben aus Teilnehmerergebnissen ausgeschlossen. Die Ausnahme gilt nur im internen verifizierten Spiel-Speicherweg, nicht für frei übergebene Ergebnisse.
+
+Der gemeinsame synchronisierte Raumdienst bedient Smart10 und Just One über ticketgebundene WebSockets. Eine einzelne aktive Backendinstanz reserviert Codes unter demselben Lock wie die Raumerstellung; das vorbereitete Kubernetes-Manifest verwendet eine Replica und Recreate, damit beim späteren Rollout keine zwei In-Memory-Instanzen gleichzeitig Codes/Tickets ausstellen. Raumablauf gilt 24 Stunden nach Erstellung auch während des Spiels; Neustarts und Verbindungsabbruch schließen Räume. Ein serverseitiger Takt führt reguläre Smart10-Zugtimeouts ohne Clientbefehl aus. Der Host wählt 5–120 Sekunden, Standard 20.
+
+Zufallsverteilung erfolgt unter den jeweils kleinsten Teams. Freie Wahl erlaubt Selbstwechsel, der Host kann alle Spieler umverteilen. Kein leeres Team darf starten; bei Just One mindestens zwei Mitglieder. Größenunterschiede über eins benötigen eine ausdrückliche Hostbestätigung. Teamleiter werden beim Start zufällig unter den Mitgliedern gewählt und in der Abschlussübersicht angezeigt.
+
+Just One verwendet gespeicherte versionierte Karten mit fünf Begriffen. Nur der Ratende wählt eine Nummer. Personalisierte Nachrichten verbergen den Begriff bis zur Bewertung auf dessen Verbindung; andere Teammitglieder liefern je einen Hinweis. Doppelte Hinweise werden ausgeblendet, der Host bewertet die Antwort. Versuche speichern nur Team, Punktvergabe und Ungültig-Markierung, keine Begriffe oder Hinweise. Ungültigmachen nimmt höchstens den einen vergebenen Punkt zurück; nach Abschluss aktualisiert eine autorisierte, idempotente Transaktion Team-/Teilnehmerscores und Platzierungen. Ein eigener Verlauf erlaubt Korrekturen auch nach Schließen des Raums.
+
+V1–V3 bleiben unverändert. V4 ergänzt Sichtbarkeit, Host-Mitspielen und Just-One-Versuche. Öffentliche Lesewege filtern private Inhalte; Besitzer/Admin dürfen eigene Inhalte lesen/bearbeiten, Lehrer/Admin importieren und erstellen. CSV wird im Frontend mit Vorlage, Größenlimit, Quote-/Zeilenprüfung und Vorschau gelesen und am bestehenden Backend-Schreibvertrag erneut fachlich geprüft. Statistiken stammen ausschließlich aus abgeschlossenen Datenbanksessions, zeigen Klassen, Schüler, Spielhäufigkeit, Punkte und Mitspieler, aber keine konkreten Antworten. Lehrer/Admin sehen alle Klassen.
+
+Dev verwendet eine ignorierte dateibasierte H2-Datenbank; das optionale Profil local-pg und das bestehende prod-Profil nutzen PostgreSQL. HTTP/WS bleiben an derselben Backendadresse; ausschließlich das Backend spricht SQL. Der Healthcheck prüft die DB. Prod-Migration und Spielfreischaltung bleiben ausdrücklich manuelle Schritte; kein Live-Rollout ist Bestandteil dieses Auftrags.
+
 ## Context
 
 Siehe `proposal.md` und `specs/smart10-session-persistence/spec.md`. Der Hauptcheckout steht auf `106209b` mit uncommitteter Flyway-Foundation: V1 bildet das bisherige ORM-Schema ab, V2 ergänzt Versionen, Tags und abgeschlossene Runden. `database-model-foundation` steht bei 22/23 Aufgaben; das ist kein produktiver Smart10-Nachweis. Der Access-Change `game-visibility-and-ownership` steht bei 0/13. Die V2-Tabelle `player_answers` hat `UNIQUE(participant_id, question_version_id)`. `CompletedRoundStore` prüft aktive `app_user`, Snapshot-Zugehörigkeit, Host-Ausschluss und `score > 0`, nutzt `completion_key` plus `payload_hash` und speichert atomar. Seine aktuellen Antworten können noch keine einzelnen Smart10-Karten unterscheiden.

@@ -4,6 +4,7 @@ node_modules/
 dist/
 build/
 target/
+.local-data/
 .env
 .env.*
 !.env.example

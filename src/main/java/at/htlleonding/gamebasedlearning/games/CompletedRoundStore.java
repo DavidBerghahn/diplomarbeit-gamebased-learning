@@ -51,6 +51,62 @@ public class CompletedRoundStore {
         return saveInternal(round, true);
     }
 
+    public record Attempt(UUID id, String teamName, boolean awarded, boolean invalidated) { }
+    UUID saveJustOne(Round round, List<Attempt> attempts) {
+        validateShape(round, true);
+        String hash = fingerprint(round);
+        try {
+            return QuarkusTransaction.requiringNew().call(() -> {
+                UUID existing = readMatching(round.completionKey(), hash);
+                if (existing != null) return existing;
+                UUID id = insert(round, hash, true);
+                for (Attempt attempt : attempts) entityManager.createNativeQuery(
+                        "insert into just_one_attempts(id, session_id, team_name, awarded, invalidated) values (?1,?2,?3,?4,?5)")
+                        .setParameter(1, attempt.id()).setParameter(2, id).setParameter(3, attempt.teamName())
+                        .setParameter(4, attempt.awarded()).setParameter(5, attempt.invalidated()).executeUpdate();
+                return id;
+            });
+        } catch (RuntimeException failure) {
+            UUID existing = QuarkusTransaction.requiringNew().call(() -> readMatching(round.completionKey(), hash));
+            if (existing != null) return existing;
+            throw failure;
+        }
+    }
+
+    void invalidateJustOne(UUID sessionId, UUID attemptId, UUID hostId) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            Object session = entityManager.createNativeQuery("select host_user_id from game_sessions where id=?1 for update")
+                    .setParameter(1, sessionId).getSingleResult();
+            if (!asUuid(session).equals(hostId)) throw new jakarta.ws.rs.ForbiddenException();
+            List<Object[]> attempts = entityManager.createNativeQuery(
+                    "select team_name, awarded, invalidated from just_one_attempts where id=?1 and session_id=?2")
+                    .setParameter(1, attemptId).setParameter(2, sessionId).getResultList();
+            if (attempts.isEmpty()) throw new jakarta.ws.rs.NotFoundException();
+            Object[] attempt = attempts.getFirst();
+            if (Boolean.TRUE.equals(attempt[2])) return;
+            entityManager.createNativeQuery("update just_one_attempts set invalidated=true where id=?1")
+                    .setParameter(1, attemptId).executeUpdate();
+            if (Boolean.TRUE.equals(attempt[1])) {
+                entityManager.createNativeQuery("update teams set score=score-1 where session_id=?1 and name=?2")
+                        .setParameter(1, sessionId).setParameter(2, attempt[0]).executeUpdate();
+                entityManager.createNativeQuery("update session_participants set score=score-1 where session_id=?1 and team_id in (select id from teams where session_id=?1 and name=?2)")
+                        .setParameter(1, sessionId).setParameter(2, attempt[0]).executeUpdate();
+                List<Object[]> teams = entityManager.createNativeQuery("select id, score from teams where session_id=?1 order by score desc")
+                        .setParameter(1, sessionId).getResultList();
+                int place = 0, previous = Integer.MIN_VALUE;
+                for (int i=0; i<teams.size(); i++) {
+                    int score = ((Number) teams.get(i)[1]).intValue();
+                    if (score != previous) place = i+1;
+                    previous = score;
+                    entityManager.createNativeQuery("update teams set placement=?1 where id=?2")
+                            .setParameter(1, place).setParameter(2, teams.get(i)[0]).executeUpdate();
+                    entityManager.createNativeQuery("update session_participants set placement=?1 where team_id=?2")
+                            .setParameter(1, place).setParameter(2, teams.get(i)[0]).executeUpdate();
+                }
+            }
+        });
+    }
+
     private UUID saveInternal(Round round, boolean trustedSmart10) {
         validateShape(round, trustedSmart10);
         String hash = fingerprint(round);
@@ -105,6 +161,10 @@ public class CompletedRoundStore {
                 .setParameter(8, round.startedAt()).setParameter(9, round.finishedAt())
                 .setParameter(10, Instant.now()).executeUpdate();
         entityManager.flush();
+
+        entityManager.createNativeQuery("update game_sessions set host_participates=?1 where id=?2")
+                .setParameter(1, round.participants().stream().anyMatch(p -> p.userId().equals(round.hostUserId())))
+                .setParameter(2, sessionId).executeUpdate();
 
         java.util.Map<String, UUID> teamIds = new java.util.HashMap<>();
         for (Team team : round.teams()) {
@@ -163,7 +223,7 @@ public class CompletedRoundStore {
         Set<UUID> users = new HashSet<>();
         for (Participant participant : round.participants()) {
             if (participant == null || participant.userId() == null || !users.add(participant.userId())
-                    || participant.userId().equals(round.hostUserId())
+                    || (!trustedSmart10 && participant.userId().equals(round.hostUserId()))
                     || participant.score() < (trustedSmart10 ? 0 : 1)
                     || participant.placement() == null || participant.placement() <= 0
                     || participant.joinedAt() == null || participant.answers() == null
@@ -188,7 +248,8 @@ public class CompletedRoundStore {
         if (types.size() != 1)
             throw new IllegalArgumentException("Game version does not belong to game");
         boolean smart10 = "Smart10".equals(types.getFirst());
-        if (trustedSmart10 && !smart10) throw new IllegalArgumentException("Verified Smart10 version required");
+        if (trustedSmart10 && !smart10 && !"JustOne".equals(types.getFirst()))
+            throw new IllegalArgumentException("Verified game version required");
         if (round.hostUserId() != null) requireActiveUser(round.hostUserId());
         for (Participant participant : round.participants()) {
             requireActiveUser(participant.userId());

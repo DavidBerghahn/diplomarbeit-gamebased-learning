@@ -42,13 +42,13 @@ public class GameResource {
 
     @GET
     public List<Game> findAll() {
-        return repository.findAll();
+        return repository.findAll().stream().filter(GameAccess::publicGame).toList();
     }
 
     @GET
     @Path("/grouped")
     public Map<String, Map<String, List<Game>>> findAllGroupedLikeGamesJson() {
-        Map<String, List<Game>> games = repository.findAll().stream()
+        Map<String, List<Game>> games = findAll().stream()
                 .collect(Collectors.groupingBy(
                         game -> game.gameType,
                         LinkedHashMap::new,
@@ -61,19 +61,23 @@ public class GameResource {
     @GET
     @Path("/type/{gameType}")
     public List<Game> findByType(@PathParam("gameType") String gameType) {
-        return repository.findByType(gameType);
+        return repository.findByType(gameType).stream().filter(GameAccess::publicGame).toList();
     }
 
     @GET
     @Path("/{id}")
-    public Game findById(@PathParam("id") String id) {
-        return repository.findById(id)
-                .orElseThrow(NotFoundException::new);
+    public Game findById(@Context HttpHeaders headers, @PathParam("id") String id) {
+        Game game = repository.findById(id).orElseThrow(NotFoundException::new);
+        GameAccess.read(game, GameAccess.publicGame(game) ? null : userService.getOrCreateFromIdentity(authProvider.currentUser(headers)));
+        return game;
     }
 
     @POST
     public Response create(@Context HttpHeaders headers, Game game) {
         AppUser creator = requireTeacher(headers);
+        validate(game);
+        if (game.id == null || game.id.isBlank()) game.id = java.util.UUID.randomUUID().toString();
+        game.teacher = creator.displayName;
         Game createdGame = repository.create(game, creator);
         return Response
                 .created(URI.create("/api/games/" + createdGame.id))
@@ -84,7 +88,9 @@ public class GameResource {
     @PUT
     @Path("/{id}")
     public Game update(@Context HttpHeaders headers, @PathParam("id") String id, Game game) {
-        requireTeacher(headers);
+        AppUser user = requireTeacher(headers);
+        GameAccess.write(repository.findById(id).orElseThrow(NotFoundException::new), user);
+        if ("Smart10".equals(game.gameType) || "JustOne".equals(game.gameType)) validate(game);
         return repository.update(id, game)
                 .orElseThrow(NotFoundException::new);
     }
@@ -92,11 +98,71 @@ public class GameResource {
     @DELETE
     @Path("/{id}")
     public Response delete(@Context HttpHeaders headers, @PathParam("id") String id) {
-        requireTeacher(headers);
+        AppUser user = requireTeacher(headers);
+        GameAccess.write(repository.findById(id).orElseThrow(NotFoundException::new), user);
         if (!repository.delete(id)) {
             throw new NotFoundException();
         }
         return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/mine")
+    public List<Game> mine(@Context HttpHeaders headers) {
+        AppUser user = requireTeacher(headers);
+        return repository.findAll().stream().filter(game -> GameAccess.owns(game, user)).toList();
+    }
+
+    public record StatusRequest(String status) { }
+    @GET
+    @Path("/{id}/editor")
+    public com.fasterxml.jackson.databind.node.ObjectNode editor(@Context HttpHeaders headers, @PathParam("id") String id) {
+        AppUser user = requireTeacher(headers);
+        Game game = repository.findById(id).orElseThrow(NotFoundException::new);
+        GameAccess.read(game, user);
+        com.fasterxml.jackson.databind.node.ObjectNode json = mapper.valueToTree(game);
+        for (int i=0; i<game.questions.size(); i++)
+            ((com.fasterxml.jackson.databind.node.ObjectNode) json.path("fragen").get(i)).set("karten", mapper.valueToTree(game.questions.get(i).smart10Cards));
+        return json;
+    }
+    @Inject com.fasterxml.jackson.databind.ObjectMapper mapper;
+    @jakarta.ws.rs.PATCH
+    @Path("/{id}/status")
+    @jakarta.transaction.Transactional
+    public Game status(@Context HttpHeaders headers, @PathParam("id") String id, StatusRequest request) {
+        AppUser user = requireTeacher(headers);
+        Game game = repository.findById(id).orElseThrow(NotFoundException::new);
+        GameAccess.write(game, user);
+        if (request == null || request.status() == null || !List.of("PUBLIC", "PRIVATE", "DRAFT").contains(request.status()))
+            throw new jakarta.ws.rs.BadRequestException("Ungültiger Status");
+        jakarta.persistence.EntityManager em = Game.getEntityManager();
+        em.find(Game.class, id).visibility = request.status();
+        game.visibility = request.status();
+        return game;
+    }
+
+    @POST
+    @Path("/{id}/copy")
+    public Game copy(@Context HttpHeaders headers, @PathParam("id") String id) {
+        AppUser user = requireTeacher(headers);
+        Game source = repository.findById(id).orElseThrow(NotFoundException::new);
+        GameAccess.read(source, user);
+        return repository.copyGame(id, java.util.UUID.randomUUID().toString(), user);
+    }
+
+    private void validate(Game game) {
+        if (game == null || game.name == null || game.name.isBlank() || game.name.length() > 160
+                || game.questions == null || game.questions.isEmpty()
+                || game.visibility == null || !List.of("PUBLIC", "PRIVATE", "DRAFT").contains(game.visibility)
+                || !List.of("Smart10", "JustOne").contains(game.gameType))
+            throw new jakarta.ws.rs.BadRequestException("Titel, Spieltyp und Fragen sind erforderlich.");
+        for (Question question : game.questions) {
+            if (question.text == null || question.text.isBlank()) throw new jakarta.ws.rs.BadRequestException("Fragetext fehlt");
+            if ("Smart10".equals(game.gameType)) Smart10Cards.validate(question);
+            else if (question.answerOptions == null || question.answerOptions.size() != 5
+                    || question.answerOptions.stream().anyMatch(option -> option.text == null || option.text.isBlank()))
+                throw new jakarta.ws.rs.BadRequestException("Just One benötigt fünf Begriffe pro Karte.");
+        }
     }
 
     private AppUser requireTeacher(HttpHeaders headers) {

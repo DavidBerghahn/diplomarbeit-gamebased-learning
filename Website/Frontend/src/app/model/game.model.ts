@@ -18,9 +18,11 @@ export interface Question {
   erstellungsdatum?: string;
   aenderungsdatum?: string;
   tags?: string[];
+  karten?: { id?: string; position: number; text: string; loesung: string | boolean | number }[];
 }
 
 export interface Game {
+  tags?: string[];
   id: string;
   spiel_typ: string;
   lehrer: string;

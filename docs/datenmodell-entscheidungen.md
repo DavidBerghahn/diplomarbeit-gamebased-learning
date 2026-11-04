@@ -90,3 +90,12 @@ David bestätigte für Smart10-Mehrspieler ausdrücklich: **Jedes aktive Teammit
 Für Smart10-Solo bleibt die bereits verwendete Berechnung `correctCards + completedQuestions * 10 + bestStreak * 2` erhalten, soll bei dauerhaft gespeicherten Runden aber serverseitig aus geprüften Kartenantworten entstehen. Nur nach den Spielregeln regulär abgeschlossene Runden werden gespeichert; der Host nimmt nicht aktiv teil und erhält daraus keinen Fortschritt. Ein vorzeitiger Transportabbruch ist keine abgeschlossene Runde. Ein normaler Zugtimeout kann nach der bestehenden Smart10-Regel zum Teamwert null und später zu einem regulären Abschluss führen. Ein eliminiertes Team wird beim Wechsel zur nächsten Gruppenfrage nicht wieder aktiviert; sind alle Teams eliminiert, endet die Runde nach der bestehenden Regel auch vor der letzten Frage regulär. Die Planung hierzu steht im OpenSpec-Change `smart10-session-persistence`; sie ist noch kein Implementierungs- oder Live-Nachweis.
 
 Weiter offen bleiben die aktive Lehrer-Teilnahme im Mehrspieler-Modus, private Schüler-Einladungen, Hosting ohne Mitspieler, die genaue Top-3-Punkteformel und Levelkurve. Technische Vorschläge zu Karten- und Antwortschema, WebSocket-Tickets und Rollout-Sperre sind keine zusätzlichen fachlichen Beschlüsse Davids.
+# Aktuelle Ergänzung vom 4. November 2026 (Teammitglied Fabian)
+
+Der Nutzer hat für die Classroom-Umsetzung ausdrücklich bestätigt: Host-Mitspielen per Toggle
+gilt für alle Hosts, einschließlich Lehrer; ein aktiver Host erhält die normalen Teamwerte.
+Teamleiter werden zufällig gewählt. Lehrer sehen Statistiken aller Klassen.
+Just-One-Hosts dürfen ungültige Versuche nachträglich löschen und den jeweils vergebenen
+Punkt zurücknehmen. Diese Freigaben ersetzen für diesen Auftrag die früheren offenen
+oder entgegenstehenden Aussagen zu Lehrer-Teilnahme und Host-Ausschluss.
+Der Cloud-Rollout bleibt ausdrücklich ausgeschlossen.

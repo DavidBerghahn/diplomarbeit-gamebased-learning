@@ -1,43 +1,410 @@
 <main class="lobby-page multiplayer-page">
+  <nav class="page-nav">
+    <a routerLink="/home">← Startseite</a
+    ><button type="button" class="secondary-button" (click)="leave()">
+      Zurück zu den Spielen / Raum verlassen
+    </button>
+  </nav>
   @if (loading()) {
-    <section class="state-panel">Spielraum wird vorbereitet...</section>
-  } @else if (error() && !room()) {
-    <section class="state-panel error">{{ error() }}</section>
-  } @else if (game(); as selectedGame) {
-    @if (!room()) {
+    <p>Spielraum wird vorbereitet …</p>
+  }
+  @if (error() || multiplayer.error()) {
+    <p role="alert" class="room-error">{{ error() || multiplayer.error() }}</p>
+  }
+  @if (!loading() && !room()) {
+    @if (game(); as selectedGame) {
       <section class="setup-view">
-        <span class="eyebrow">Smart10 Multiplayer</span>
+        <span class="eyebrow">Gemeinsam spielen</span>
         <h1>{{ selectedGame.name }}</h1>
-        <p>{{ selectedGame.beschreibung || 'Eröffne einen flüchtigen Spielraum und spiele gemeinsam mit deinem Team.' }}</p>
+        <p>{{ selectedGame.beschreibung }}</p>
         <div class="setup-options">
-          <label class="team-slider"><span>Teams</span><input type="range" min="1" max="6" [value]="teamCount()" (input)="teamCount.set(+$any($event.target).value)"><strong>{{ teamCount() }}</strong></label>
-          <div class="mode-switch" aria-label="Teamzuordnung"><button type="button" [class.active]="assignmentMode() === 'self'" (click)="assignmentMode.set('self')">Spieler wählen Team</button><button type="button" [class.active]="assignmentMode() === 'random'" (click)="assignmentMode.set('random')">Zufällig zuweisen</button></div>
+          <label class="team-slider"
+            >Teams
+            <input
+              type="range"
+              min="1"
+              max="6"
+              [ngModel]="teamCount()"
+              (ngModelChange)="teamCount.set(+$event)"
+            /><strong>{{ teamCount() }}</strong></label
+          >
+          @if (selectedGame.spiel_typ !== 'JustOne') {
+            <label
+              >Zeit pro Zug (5–120 Sekunden)<input
+                type="number"
+                min="5"
+                max="120"
+                [ngModel]="configuredSeconds()"
+                (ngModelChange)="configuredSeconds.set(+$event)"
+            /></label>
+          }
+          <label
+            ><input
+              type="checkbox"
+              [ngModel]="hostPlays()"
+              (ngModelChange)="hostPlays.set($event)"
+            />
+            Als Host mitspielen</label
+          >
+          <div class="mode-switch">
+            <button
+              type="button"
+              [class.active]="assignmentMode() === 'self'"
+              (click)="assignmentMode.set('self')"
+            >
+              Freie Teamwahl</button
+            ><button
+              type="button"
+              [class.active]="assignmentMode() === 'random'"
+              (click)="assignmentMode.set('random')"
+            >
+              Zufällig und gleichmäßig
+            </button>
+          </div>
         </div>
-        <p class="temporary-note">Der Spielraum und der Spielstand werden nur im Arbeitsspeicher gehalten und nach dem Ende verworfen.</p>
-        <button type="button" class="primary-action" (click)="createLobby()">Spielraum öffnen</button>
+        <p>Spielcodes gelten 24 Stunden. Just One benötigt mindestens zwei Spieler pro Team.</p>
+        <button type="button" class="primary-action" (click)="createLobby()">
+          Spielraum öffnen
+        </button>
       </section>
     }
   }
-
-  @if (room(); as activeRoom) {
-    <section class="room-view">
-      <header class="room-header"><div><span class="eyebrow">{{ activeRoom.phase === 'LOBBY' ? 'Warteraum' : 'Smart10 Multiplayer' }}</span><h1>{{ activeRoom.gameName }}</h1><p>Code: <strong class="room-code">{{ activeRoom.code }}</strong></p></div><div class="phase-badge">{{ activeRoom.phase }}</div></header>
-
-      @if (error()) { <p class="room-error" role="alert">{{ error() }}</p> }
-
-      @if (activeRoom.phase === 'LOBBY') {
-        <section class="lobby-grid">
-          <div class="room-card"><h2>Spieler</h2><div class="player-list">@for (player of activeRoom.players; track player.id) {<span>{{ player.name }} @if (player.host) {<b>Host</b>}</span>}</div><p>{{ activeRoom.players.length }} Spieler verbunden.</p>@if (isHost()) {<button type="button" class="primary-action" (click)="startGame()">Spiel starten</button>} @else {<p class="leader-message">Warte, bis der Host das Spiel startet.</p>}</div>
-          <div class="room-card"><h2>Teams</h2><div class="teams-board">@for (team of activeRoom.teams; track team.number) {<article class="team-lane"><h3>Team {{ team.number + 1 }}</h3><small>Teamleader: {{ activeRoom.players.find((player) => player.id === team.leader)?.name || 'wird gewählt' }}</small><div class="members">@for (member of playersForTeam(team); track member) {<span>{{ member }}</span>}</div></article>}</div></div>
-        </section>
-      } @else if (activeRoom.phase === 'FINISHED') {
-        <section class="finished-card"><span class="eyebrow">Spiel beendet</span><h2>Danke fürs Mitspielen!</h2><div class="teams-board">@for (team of activeRoom.teams; track team.number) {<article class="team-lane" [class.eliminated]="team.eliminated"><h3>Team {{ team.number + 1 }}</h3><strong>{{ team.points }} Punkte</strong><small>{{ team.eliminated ? 'ausgeschieden' : 'aktiv' }}</small></article>}</div></section>
-      } @else {
-        <section class="game-grid">
-          <div class="board-card"><div class="turn-banner"><span>Frage {{ activeRoom.questionIndex + 1 }} / {{ activeRoom.questionsTotal }}</span><strong>{{ activeRoom.currentTeam === currentPlayer()?.team ? (isCurrentLeader() ? 'Du bist dran' : 'Setze dich zu deinem Teamleader') : 'Anderes Team ist dran' }}</strong><b>{{ turnSeconds() }} s</b></div><div class="current-team-indicator">Aktuell an der Reihe: <strong>Team {{ activeRoom.currentTeam + 1 }}</strong></div>@if (activeRoom.lastAnswer; as feedback) {<div class="answer-feedback" [class.correct]="feedback.correct" [class.incorrect]="!feedback.correct"><strong>{{ feedback.correct ? 'Richtig!' : 'Falsch!' }}</strong><span>{{ feedback.answeredBy }} für Team {{ feedback.team + 1 }} · Lösung: {{ feedback.solution }}</span></div>}<h2>{{ activeRoom.currentQuestion.prompt }}</h2><div class="cards-grid">@for (card of activeRoom.currentQuestion.cards; track card.id) {<button type="button" class="answer-card" [class.resolved]="card.state === 'resolved'" [class.selected]="activeRoom.selectedCard === card.id" [disabled]="!isCurrentLeader() || card.state !== 'open' || activeRoom.selectedCard !== null" (click)="selectCard(card.id)"><span>{{ card.id }}</span><strong>{{ card.text }}</strong>@if (card.solution !== undefined) {<small>Lösung: {{ card.solution }}</small>}</button>}</div></div>
-          <aside class="side-panel"><section class="score-card"><div class="score-card-heading"><h2>Live-Score</h2><span>{{ activeRoom.players.length }} Spieler</span></div><div class="score-list">@for (team of activeRoom.teams; track team.number) {<article class="score-row" [class.current]="team.number === activeRoom.currentTeam && !team.passed && !team.eliminated" [class.out]="team.passed || team.eliminated"><div><strong>Team {{ team.number + 1 }}</strong><small>@for (member of playersForTeam(team); track member; let last = $last) {<span>{{ member }}@if (!last) {, }</span>}</small><em>{{ team.eliminated ? 'ausgeschieden' : team.passed ? 'für diese Runde ausgesetzt' : team.number === activeRoom.currentTeam ? 'am Zug' : 'wartet' }}</em></div><b>{{ team.points }} P</b></article>}</div></section><section class="control-card"><h2>{{ isCurrentLeader() ? 'Dein Zug' : 'Teamleader gefragt' }}</h2>@if (!isCurrentLeader()) {<p>Du kannst das Spielfeld beobachten. Die Auswahl und Antwort übernimmt dein Teamleader.</p>} @else if (activeRoom.selectedCard === null) {<p>Wähle eine offene Karte.</p>} @else if (activeRoom.currentQuestion.mode === 'TRUE_FALSE') {<p>Ist die Aussage wahr oder falsch?</p><div class="answer-actions"><button type="button" (click)="answerTrueFalse(true)">Wahr</button><button type="button" class="secondary-button" (click)="answerTrueFalse(false)">Falsch</button></div>} @else if (activeRoom.currentQuestion.mode === 'FREE_TEXT') {<label>Konkrete Antwort<input [(ngModel)]="answerDraft" (keyup.enter)="answerText()"></label><button type="button" (click)="answerText()">Antwort prüfen</button>} @else {<label>Position (1–12)<input type="number" min="1" max="12" [(ngModel)]="answerDraft" (keyup.enter)="answerOrdering()"></label><button type="button" (click)="answerOrdering()">Position prüfen</button>}@if (isCurrentLeader() && activeRoom.selectedCard === null) {<button type="button" class="pass-button" (click)="passTurn()">Team steigt für diese Runde aus</button>}</section></aside>
-        </section>
-      }
+  @if (room(); as r) {
+    <header class="room-header">
+      <div>
+        <span class="eyebrow"
+          >{{ r.gameType }} ·
+          {{
+            r.phase === 'LOBBY'
+              ? 'Lobby'
+              : r.phase === 'FINISHED'
+                ? 'Zusammenfassung'
+                : 'Spiel läuft'
+          }}</span
+        >
+        <h1>{{ r.gameName }}</h1>
+        <p>
+          Spielcode <strong class="room-code">{{ r.code }}</strong>
+        </p>
+      </div>
+      <span class="phase-badge">{{ r.players.length }} Spieler</span>
+    </header>
+    @if (r.demo) {
+      <p class="temporary-note">Demo: Dieses Ergebnis wird nicht gespeichert.</p>
+    }
+    <p>Host: {{ r.hostName }} {{ isHost() ? '(du)' : '' }}</p>
+    @if (r.phase === 'LOBBY') {
+      <section class="room-card">
+        <h2>Verbundene Spieler</h2>
+        <div class="player-list">
+          @for (player of r.players; track player.id) {
+            <span
+              >{{ player.name }}
+              @if (player.id === multiplayer.connectionId) {
+                (du)
+              }
+            </span>
+          }
+        </div>
+        <p>
+          Die Teamleiter werden beim Spielstart zufällig ausgelost. Der Host kann Spieler zwischen
+          Teams verschieben.
+        </p>
+        @if (uneven()) {
+          <p class="temporary-note">Teams sind ungleich verteilt.</p>
+          @if (isHost()) {
+            <label
+              ><input
+                type="checkbox"
+                [ngModel]="allowUneven()"
+                (ngModelChange)="allowUneven.set($event)"
+              />
+              Trotzdem starten</label
+            >
+          }
+        }
+        @if (isHost()) {
+          <button
+            type="button"
+            [disabled]="busy() || (uneven() && !allowUneven())"
+            (click)="startGame()"
+          >
+            Spiel starten
+          </button>
+        } @else {
+          <p>Warte auf den Host.</p>
+        }
+      </section>
+    }
+    <section class="game-grid">
+      <div>
+        @if (r.phase === 'PLAYING' && r.gameType === 'Smart10') {
+          <section class="board-card">
+            <div class="turn-banner">
+              <span>Frage {{ r.questionIndex + 1 }} / {{ r.questionsTotal }}</span
+              ><strong>Team {{ r.currentTeam + 1 }} ist dran</strong><b>{{ turnSeconds() }} s</b>
+            </div>
+            <h2>{{ r.currentQuestion.prompt }}</h2>
+            @if (r.lastAnswer; as feedback) {
+              <div
+                class="answer-feedback"
+                role="status"
+                [class.correct]="feedback.correct"
+                [class.incorrect]="!feedback.correct"
+              >
+                <strong>{{ feedback.correct ? 'Richtig!' : 'Falsch!' }}</strong
+                ><span>{{ feedback.answeredBy }} · Lösung: {{ feedback.solution }}</span>
+              </div>
+            }
+            <div class="cards-grid">
+              @for (card of r.currentQuestion.cards; track card.id; let position = $index) {
+                <button
+                  type="button"
+                  class="answer-card"
+                  [class.resolved]="card.state === 'resolved'"
+                  [class.selected]="r.selectedCard === card.id"
+                  [disabled]="
+                    busy() || !isCurrentLeader() || card.state !== 'open' || r.selectedCard !== null
+                  "
+                  (click)="selectCard(card.id)"
+                >
+                  <span>{{ position + 1 }}</span
+                  ><strong>{{ card.text }}</strong>
+                  @if (card.solution !== undefined) {
+                    <small>Lösung: {{ card.solution }}</small>
+                  }
+                </button>
+              }
+            </div>
+          </section>
+          <section class="control-card">
+            @if (!isCurrentLeader()) {
+              <h2>
+                {{
+                  currentPlayer()?.team === r.currentTeam
+                    ? 'Besprich dich mit deinem Teamleiter'
+                    : 'Das andere Team ist am Zug'
+                }}
+              </h2>
+              <p>Teamleiter: {{ playerName(currentTeam()?.leader) }}</p>
+            } @else if (r.selectedCard === null) {
+              <h2>Dein Zug</h2>
+              <p>Wähle eine offene Karte.</p>
+              <button type="button" [disabled]="busy()" class="pass-button" (click)="passTurn()">
+                Für diese Runde aussteigen · Punkte behalten
+              </button>
+            } @else if (r.currentQuestion.mode === 'TRUE_FALSE') {
+              <div class="answer-actions">
+                <button type="button" [disabled]="busy()" (click)="answerTrueFalse(true)">
+                  Wahr</button
+                ><button type="button" [disabled]="busy()" (click)="answerTrueFalse(false)">
+                  Falsch
+                </button>
+              </div>
+            } @else {
+              <label
+                >Deine Antwort<input
+                  [type]="r.currentQuestion.mode === 'ORDERING' ? 'number' : 'text'"
+                  min="1"
+                  max="12"
+                  [(ngModel)]="answerDraft"
+                  (keyup.enter)="
+                    r.currentQuestion.mode === 'ORDERING' ? answerOrdering() : answerText()
+                  " /></label
+              ><button
+                type="button"
+                [disabled]="busy()"
+                (click)="r.currentQuestion.mode === 'ORDERING' ? answerOrdering() : answerText()"
+              >
+                Antwort abgeben
+              </button>
+            }
+          </section>
+        }
+        @if (r.justOne; as j) {
+          @if (r.phase !== 'LOBBY') {
+            <section class="board-card">
+              <h2>Team {{ r.currentTeam + 1 }} · {{ playerName(j.guesser) }} rät</h2>
+              @if (j.phase === 'NUMBER' && r.phase === 'PLAYING') {
+                <p>Der Ratende wählt eine Zahl, ohne die Begriffe zu sehen.</p>
+                @if (multiplayer.connectionId === j.guesser) {
+                  <div class="answer-actions">
+                    @for (n of [1, 2, 3, 4, 5]; track n) {
+                      <button
+                        type="button"
+                        [disabled]="busy()"
+                        (click)="justOne('number', { number: n })"
+                      >
+                        {{ n }}
+                      </button>
+                    }
+                  </div>
+                }
+              }
+              @if (j.number) {
+                <p>Gewählte Zahl: {{ j.number }}</p>
+              }
+              @if (j.word) {
+                <h2>{{ j.word }}</h2>
+              }
+              @if (j.phase === 'CLUES') {
+                <p>{{ j.submitted.length }} Hinweise abgegeben.</p>
+                @if (
+                  currentPlayer()?.team === r.currentTeam &&
+                  multiplayer.connectionId !== j.guesser &&
+                  !j.submitted.includes(multiplayer.connectionId || '')
+                ) {
+                  <label>Ein Wort als Hinweis<input [(ngModel)]="clueDraft" /></label
+                  ><button
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="justOne('clue', { text: clueDraft() })"
+                  >
+                    Hinweis senden
+                  </button>
+                } @else {
+                  <p>Warte auf die Hinweise deines Teams.</p>
+                }
+              }
+              <div class="player-list">
+                @for (clue of j.clues; track clue.player) {
+                  @if (!clue.duplicate) {
+                    <span>{{ clue.text }}</span>
+                  }
+                }
+              </div>
+              @if (j.phase === 'GUESS' && multiplayer.connectionId === j.guesser) {
+                <label>Welcher Begriff ist gesucht?<input [(ngModel)]="guessDraft" /></label
+                ><button
+                  type="button"
+                  [disabled]="busy()"
+                  (click)="justOne('guess', { text: guessDraft() })"
+                >
+                  Antwort senden
+                </button>
+              }
+              @if (j.guess) {
+                <p>Antwort: {{ j.guess }}</p>
+              }
+              @if (j.phase === 'DECISION' && isHost()) {
+                <div class="answer-actions">
+                  <button
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="justOne('judge', { correct: true })"
+                  >
+                    Gültig · +1 Punkt</button
+                  ><button
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="justOne('judge', { correct: false })"
+                  >
+                    Ungültig · kein Punkt
+                  </button>
+                </div>
+              }
+              @if (j.phase === 'RESULT' && r.phase === 'PLAYING' && isHost()) {
+                <button type="button" [disabled]="busy()" (click)="justOne('next')">
+                  Nächstes Team
+                </button>
+              }
+              <h3>Spielversuche</h3>
+              @for (attempt of j.attempts; track attempt.id; let index = $index) {
+                <p>
+                  Versuch {{ index + 1 }} · Team {{ attempt.team + 1 }} ·
+                  {{
+                    attempt.invalidated ? 'gelöscht' : attempt.awarded ? '+1 Punkt' : 'kein Punkt'
+                  }}
+                  @if (isHost() && !attempt.invalidated) {
+                    <button
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="justOne('invalidate', { attemptId: attempt.id })"
+                    >
+                      Versuch löschen
+                    </button>
+                  }
+                </p>
+              }
+            </section>
+          }
+        }
+        @if (r.phase === 'FINISHED') {
+          <section class="finished-card">
+            <h2>Spiel beendet</h2>
+            @if (r.sessionId) {
+              <p role="status">Ergebnis gespeichert.</p>
+            } @else if (r.saveError) {
+              <p role="alert">{{ r.saveError }}</p>
+              @if (isHost()) {
+                <button type="button" [disabled]="busy()" (click)="retrySave()">
+                  Speicherung erneut versuchen
+                </button>
+              }
+            } @else if (!r.demo) {
+              <p>Speicherung noch nicht bestätigt.</p>
+            }
+          </section>
+        }
+      </div>
+      <aside class="score-card">
+        <h2>{{ r.phase === 'LOBBY' ? 'Teams' : 'Live-Score' }}</h2>
+        <div class="score-list">
+          @for (team of r.teams; track team.number) {
+            <article
+              class="score-row"
+              [class.current]="
+                r.phase === 'PLAYING' &&
+                team.number === r.currentTeam &&
+                !team.passed &&
+                !team.eliminated
+              "
+              [class.out]="team.passed || team.eliminated"
+            >
+              <div>
+                <strong>Team {{ team.number + 1 }} · {{ team.points }} Punkte</strong
+                ><small>Teamleiter: {{ playerName(team.leader) }}</small>
+                @if (r.phase !== 'LOBBY') {
+                  <em>{{
+                    team.eliminated
+                      ? 'ausgeschieden'
+                      : team.passed
+                        ? 'für diese Runde ausgesetzt'
+                        : r.phase === 'FINISHED'
+                          ? 'beendet'
+                          : team.number === r.currentTeam
+                            ? 'am Zug'
+                            : 'wartet'
+                  }}</em>
+                }
+                <div class="members">
+                  @for (id of team.members; track id) {
+                    <span>{{ playerName(id) }}</span>
+                    @if (isHost() && r.phase === 'LOBBY') {
+                      <select
+                        aria-label="Spieler umverteilen"
+                        [ngModel]="team.number"
+                        (ngModelChange)="chooseTeam(+$event, id)"
+                      >
+                        @for (target of r.teams; track target.number) {
+                          <option [ngValue]="target.number">Team {{ target.number + 1 }}</option>
+                        }
+                      </select>
+                    }
+                  } @empty {
+                    <small>Noch keine Spieler</small>
+                  }
+                </div>
+                @if (r.phase === 'LOBBY' && r.assignmentMode === 'self' && currentPlayer()) {
+                  <button type="button" [disabled]="busy()" (click)="chooseTeam(team.number)">
+                    Diesem Team beitreten
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </aside>
     </section>
   }
 </main>

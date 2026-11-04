@@ -1,0 +1,68 @@
+.statistics-page {
+  max-width: 1200px;
+  margin: auto;
+  padding: 4vh 5vw;
+  color: #004b8a;
+  font-family: Arial, sans-serif;
+}
+nav,
+.filters {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
+label,
+button span {
+  display: block;
+}
+select,
+input,
+button {
+  font: inherit;
+  border: 1px solid #b9d7eb;
+  border-radius: 10px;
+  padding: 0.8rem;
+  background: white;
+  color: #004b8a;
+}
+.students {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+.students button {
+  text-align: left;
+  cursor: pointer;
+}
+.students span {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+}
+.selected {
+  background: #eaf7ff;
+  outline: 2px solid #004b8a;
+}
+.details {
+  background: #f6fbff;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border-radius: 14px;
+}
+.table-wrap {
+  overflow: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+td,
+th {
+  padding: 0.7rem;
+  text-align: left;
+  border-bottom: 1px solid #cfe3f1;
+}

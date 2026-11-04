@@ -151,7 +151,7 @@ class FlywayMigrationTest {
                 + " (id, game_id, question_order, type, text) "
                 + "VALUES (42, 'ownerless-game', 0, 'old_custom_type', 'Unbekannte Frage')");
         fixture.flyway().baseline();
-        assertEquals(2, fixture.flyway().migrate().migrationsExecuted);
+        assertEquals(3, fixture.flyway().migrate().migrationsExecuted);
         assertEquals(1, scalar(fixture, "SELECT COUNT(*) FROM " + fixture.table("question_versions")
                 + " WHERE question_id = 42 AND type = 'old_custom_type' AND text = 'Unbekannte Frage'"));
         assertEquals(1, scalar(fixture, "SELECT COUNT(*) FROM " + fixture.table("game_version_questions")
@@ -174,7 +174,7 @@ class FlywayMigrationTest {
                     .baselineOnMigrate(false)
                     .cleanDisabled(true)
                     .load();
-            assertEquals(3, ordered.migrate().migrationsExecuted);
+            assertEquals(4, ordered.migrate().migrationsExecuted);
             assertEquals(1, scalar(fixture, "SELECT COUNT(*) FROM " + fixture.table("games")
                     + " WHERE id = 'legacy-game' AND visibility = 'PRIVATE'"));
             assertLegacyRows(fixture);
@@ -188,7 +188,7 @@ class FlywayMigrationTest {
     }
 
     private void verifyFreshMigration(Fixture fixture) throws SQLException {
-        assertEquals(3, fixture.flyway().migrate().migrationsExecuted);
+        assertEquals(4, fixture.flyway().migrate().migrationsExecuted);
         assertEquals(0, fixture.flyway().migrate().migrationsExecuted);
         assertTrue(fixture.flyway().validateWithResult().validationSuccessful);
     }
@@ -208,7 +208,7 @@ class FlywayMigrationTest {
 
         assertThrows(org.flywaydb.core.api.FlywayException.class, () -> fixture.flyway().migrate());
         fixture.flyway().baseline();
-        assertEquals(2, fixture.flyway().migrate().migrationsExecuted);
+        assertEquals(3, fixture.flyway().migrate().migrationsExecuted);
         assertLegacyRows(fixture);
         assertEquals(2, scalar(fixture, "SELECT COUNT(*) FROM " + fixture.table("game_versions")));
         assertEquals(2, scalar(fixture, "SELECT COUNT(*) FROM " + fixture.table("game_families")));

@@ -44,6 +44,7 @@ public class GameRepository {
         if (entityManager.find(Game.class, input.id) != null) throw new IllegalArgumentException("Game ID already exists");
         Game game = new Game();
         game.id = input.id;
+        game.visibility = input.visibility;
         game.createdBy = creator;
         game.teacher = isBlank(input.teacher) && creator != null ? creator.displayName : input.teacher;
         game.creationDate = input.creationDate == null ? LocalDate.now() : input.creationDate;
@@ -84,6 +85,7 @@ public class GameRepository {
         game.name = changed.name;
         game.description = changed.description;
         game.subject = changed.subject;
+        game.visibility = changed.visibility;
         game.creationDate = changed.creationDate;
         game.playedRounds = changed.playedRounds;
         return Optional.of(currentSnapshot(game));
@@ -151,6 +153,7 @@ public class GameRepository {
         Game source = findById(sourceId).orElseThrow(() -> new IllegalArgumentException("Source game not found"));
         Game copy = new Game();
         copy.id = newId;
+        copy.visibility = source.visibility;
         copy.familyId = source.familyId;
         copy.copiedFromGameId = sourceId;
         copy.gameType = source.gameType;
@@ -437,6 +440,8 @@ public class GameRepository {
 
     private Game currentSnapshot(Game identity) {
         Game result = new Game();
+        result.visibility = identity.visibility;
+        result.createdBy = identity.createdBy;
         result.id = identity.id;
         result.familyId = identity.familyId;
         result.copiedFromGameId = identity.copiedFromGameId;

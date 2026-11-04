@@ -18,6 +18,18 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: flyway_test
+          POSTGRES_USER: flyway_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U flyway_test -d flyway_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
     permissions:
       contents: read
       packages: write
@@ -34,7 +46,31 @@ jobs:
           cache: "maven"
 
       - name: Run tests
-        run: mvn -B test
+        run: mvn -B test -Dflyway.test.pg-url=jdbc:postgresql://127.0.0.1:5432/flyway_test
+
+      - name: Run backend against PostgreSQL
+        run: >-
+          mvn -B test
+          -Dquarkus.datasource.db-kind=postgresql
+          -Dquarkus.datasource.jdbc.url=jdbc:postgresql://127.0.0.1:5432/flyway_test
+          -Dquarkus.datasource.username=flyway_test
+          -Dquarkus.datasource.password=
+          -Dquarkus.flyway.locations=db/migration/postgresql
+          -Dflyway.test.pg-url=jdbc:postgresql://127.0.0.1:5432/flyway_test
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: Website/Frontend/package-lock.json
+
+      - name: Test frontend
+        working-directory: Website/Frontend
+        run: |
+          npm ci
+          npm test -- --watch=false
+          npm run build
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3

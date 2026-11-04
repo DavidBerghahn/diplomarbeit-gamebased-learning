@@ -1,5 +1,9 @@
 # Proposal
 
+## Accepted scope update
+
+Der Nutzerauftrag vom 4. November 2026 erweitert diesen Change: Host-Mitspielen ist für alle Rollen per Toggle erlaubt, einschließlich Lehrer; ausschließlich beobachtende Hosts erhalten weiterhin keine Punkte. Diese ausdrückliche Freigabe ersetzt die frühere Lehrer-Sperre und den generellen Host-Ausschluss in den historischen Abschnitten unten. Zusätzlich gehören Raumlaufzeit, Teamverwaltung, Just-One-Multiplayer, CSV-Import, die tatsächlich angebundene Spielerstellung und Klassenstatistik zum Auftrag. Die Umsetzung erfolgt im Supervisor-Chat auf ausdrücklichen Wunsch des Nutzers. Commit und GitHub-Push sind beauftragt, LeoCloud-Rollout und Cloud-Datenänderungen nicht.
+
 ## Why
 
 Smart10 spielt Solo und Multiplayer derzeit überwiegend mit clientseitigen Lösungen und flüchtigem Rundenzustand; ein angezeigtes Ende erzeugt kein verlässlich zugeordnetes, dauerhaftes Ergebnis. Die lokale Datenmodell-Foundation bietet versionierte Spiele und einen Dienst für abgeschlossene Runden, benötigt für Smart10 aber noch einzelne versionierte Karten, geprüfte Identitäten und eine sichere Anbindung der Spielabläufe.

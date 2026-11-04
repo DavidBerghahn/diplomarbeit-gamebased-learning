@@ -41,7 +41,8 @@ class FoundationIntegrationTest {
         second.text = "Zweite Frage?";
         second.trueFalseCorrect = true;
         draft.questions.add(second);
-        Game created = games.create(draft, null);
+        AppUser editor = user("rest-editor");
+        Game created = games.create(draft, editor);
         Long firstId = created.questions.get(0).id;
         Long secondId = created.questions.get(1).id;
         UUID firstQuestionVersion = versionOfFirstQuestion(created.currentVersionId);
@@ -49,7 +50,7 @@ class FoundationIntegrationTest {
         UUID report = games.reportQuestion(created.id, firstId, reporter, "Bitte prüfen");
         QuarkusMock.installMockForType(new AuthProvider() {
             @Override public AuthenticatedUser currentUser(jakarta.ws.rs.core.HttpHeaders headers) {
-                return new AuthenticatedUser("rest-editor", "rest-editor", "Editor", null, UserRole.TEACHER);
+                return new AuthenticatedUser(editor.externalSubject, editor.username, "Editor", null, UserRole.TEACHER);
             }
         }, AuthProvider.class);
 

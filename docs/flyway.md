@@ -1,5 +1,21 @@
 # Flyway für das bestehende Datenbankschema
 
+## Ergänzung vom 4. November: V4 und angebundene Spielabläufe
+
+V4 ergänzt additive Spielsichtbarkeit, host_participates und just_one_attempts.
+V1–V3 wurden für diese Umsetzung nicht verändert. Vorhandene Sichtbarkeitswerte
+werden nicht überschrieben. Die öffentliche API filtert private Inhalte;
+Besitzer-/Admin-Prüfungen schützen Bearbeitung, Statuswechsel und Kopieren.
+Private Schüler-Einladungen sind weiterhin nicht freigegeben.
+
+Der lokale Dev-Start verwendet jetzt dateibasiertes H2 unter .local-data/.
+Test-H2 bleibt flüchtig. Das Profil local-pg erlaubt einen lokalen PostgreSQL-Start;
+das prod-Profil benutzt die bestehenden DATABASE_* Umgebungsvariablen.
+Spielerstellung, Tickettransport, Solo-/Mehrspieler-Abschluss und Klassenstatistik
+sind angebunden. Die lokalen Prüfungen und die spätere manuelle Cloud-Freischaltung
+sind in [classroom-todos-implementation.md](classroom-todos-implementation.md) beschrieben.
+Die nachfolgenden V1–V3-Abschnitte dokumentieren die vorherigen Entwicklungsstufen.
+
 ## Stand und Geltungsbereich
 
 Die Migration `V1__current_legacy_schema.sql` bildet die fünf ursprünglichen Tabellen (`app_user`, `games`, `game_branches`, `questions`, `answer_options`) ab. `V2__database_model_foundation.sql` ergänzt Familien, unveränderliche Versionen, Tags, Meldungen und abgeschlossene Ergebnisse und übernimmt die vorhandenen Spiele, Fragen, Optionen und Branches in erste Versionen. Beide Migrationen liegen für PostgreSQL und H2 mit demselben fachlichen Stand und datenbankspezifischer SQL vor. Die Sichtbarkeits- und Eigentumsregeln des separaten OpenSpec-Changes sind darin nicht umgesetzt.

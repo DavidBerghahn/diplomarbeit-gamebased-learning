@@ -19,6 +19,7 @@ public class Smart10SoloResource {
     @Inject AuthProvider auth;
     @Inject UserService users;
     @Inject Smart10SoloService solo;
+    @Inject GameRepository games;
 
     public record StartRequest(String gameId) { }
     public record AnswerRequest(UUID cardId, JsonNode answer) { }
@@ -27,7 +28,9 @@ public class Smart10SoloResource {
     @Path("/start")
     public Smart10SoloService.Start start(@Context HttpHeaders headers, StartRequest request) {
         if (request == null || request.gameId() == null) throw new IllegalArgumentException("Game ID required");
-        return solo.start(user(headers).id, request.gameId());
+        AppUser viewer = user(headers);
+        GameAccess.read(games.findById(request.gameId()).orElseThrow(jakarta.ws.rs.NotFoundException::new), viewer);
+        return solo.start(viewer.id, request.gameId());
     }
 
     @POST

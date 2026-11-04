@@ -2,6 +2,16 @@
 
 KI-gestützte Spieleplattform für Game-based Learning.
 
+## Aktueller Spiel- und Datenbankstand
+
+Die Umsetzung der Classroom-Todos, der lokale Start mit dauerhafter H2-Datenbank,
+das optionale PostgreSQL-Profil und die Schritte für den **späteren manuellen**
+LeoCloud-Rollout stehen in [docs/classroom-todos-implementation.md](docs/classroom-todos-implementation.md).
+Smart10 und Just One werden aus der Spieleübersicht gestartet; CSV-Vorlagen und
+Import befinden sich in „Spiel erstellen“, Klassenstatistik und gehostete Ergebnisse
+sind über die Startseite erreichbar. In Produktion bleiben Migration und
+persistierende Spielabläufe bis zur ausdrücklichen Freischaltung deaktiviert.
+
 ## Für Teammitglieder mit Codex
 
 Die gemeinsamen Projektregeln stehen in [`AGENTS.md`](AGENTS.md). Wer eigene
@@ -89,7 +99,7 @@ erreichbar. Wenn Keycloak eine `invalid redirect_uri` Meldung zeigt, muss der
 Keycloak-Client `frontend` von einem Admin für die lokale URL und die LeoCloud-
 URL freigeschaltet werden.
 
-Im Dev-Modus verwendet das Backend H2 im Speicher. Das gebaute Docker-/LeoCloud-
+Im Dev-Modus verwendet das Backend dateibasiertes H2 unter .local-data/; Tests verwenden H2 im Speicher. Das gebaute Docker-/LeoCloud-
 Artefakt verwendet im `prod`-Profil PostgreSQL.
 
 ## Frontend und Spiele

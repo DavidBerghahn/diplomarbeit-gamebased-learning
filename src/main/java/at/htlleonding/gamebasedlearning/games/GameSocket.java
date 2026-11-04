@@ -51,8 +51,8 @@ public class GameSocket {
             }
 
             return switch (type) {
-                case "get_games" -> response(requestId, "games", gameRepository.findAll());
-                case "get_games_by_type" -> response(requestId, "games", gameRepository.findByType(request.path("gameType").asText()));
+                case "get_games" -> response(requestId, "games", gameRepository.findAll().stream().filter(GameAccess::publicGame).toList());
+                case "get_games_by_type" -> response(requestId, "games", gameRepository.findByType(request.path("gameType").asText()).stream().filter(GameAccess::publicGame).toList());
                 case "get_game" -> gameResponse(requestId, request.path("id").asText());
                 default -> error(requestId, "Unbekannter WebSocket-Befehl: " + type);
             };
@@ -76,9 +76,14 @@ public class GameSocket {
             case "mp_answer" -> multiplayerGameService.answer(connection, request);
             case "mp_pass" -> multiplayerGameService.pass(connection, request);
             case "mp_retry_save" -> multiplayerGameService.retrySave(connection, request);
+            case "mp_team" -> multiplayerGameService.chooseTeam(connection, request);
+            case "mp_leave" -> multiplayerGameService.leaveRoom(connection, request);
+            case "mp_just_one" -> multiplayerGameService.justOne(connection, request);
             default -> throw new IllegalStateException("Unbekannter Multiplayer-Befehl");
         };
+        if ("mp_leave".equals(type)) return response(requestId, "room_left", data);
         data.put("selfId", connection.id());
+        multiplayerGameService.personalize(data, connection);
         return response(requestId, "room_state", data);
     }
 
@@ -87,7 +92,7 @@ public class GameSocket {
             return error(requestId, "Es wurde keine Spiel-ID mitgeschickt.");
         }
 
-        return gameRepository.findById(id)
+        return gameRepository.findById(id).filter(GameAccess::publicGame)
                 .map(game -> {
                     try {
                         return response(requestId, "game", game);
