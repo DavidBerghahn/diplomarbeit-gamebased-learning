@@ -69,6 +69,17 @@ public class UserResource {
         return UserProfileResponse.from(userService.updateUser(id, request));
     }
 
+    public record SchoolClassRequest(String schoolClass) { }
+
+    @PUT
+    @Path("/{id}/school-class")
+    public UserProfileResponse assignSchoolClass(@Context HttpHeaders headers, @PathParam("id") UUID id,
+                                                 SchoolClassRequest request) {
+        requireAtLeastTeacher(currentUser(headers));
+        if (request == null) throw new jakarta.ws.rs.BadRequestException("Bitte eine Klasse angeben.");
+        return UserProfileResponse.from(userService.assignSchoolClass(id, request.schoolClass()));
+    }
+
     private AppUser currentUser(HttpHeaders headers) {
         AuthenticatedUser identity = authProvider.currentUser(headers);
         AppUser user = userService.getOrCreateFromIdentity(identity);

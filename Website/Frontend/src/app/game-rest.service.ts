@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { Game, GameStatus } from './model/game.model';
+import { apiErrorMessage } from './api-error';
 
 export interface CreateGameRequest extends Partial<Game> {
   copyFromGameId?: string;
@@ -64,7 +65,9 @@ export class GameRestService {
     }
     if (!response.ok) {
       const message = await response.text();
-      throw new Error(message || `Spiel-API lieferte HTTP ${response.status}`);
+      throw new Error(
+        apiErrorMessage(message, `Spiel konnte nicht geladen werden (HTTP ${response.status}).`),
+      );
     }
 
     if (response.status === 204) {

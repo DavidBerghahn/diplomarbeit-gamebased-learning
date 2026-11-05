@@ -16,6 +16,9 @@
       <section class="setup-view">
         <span class="eyebrow">Gemeinsam spielen</span>
         <h1>{{ selectedGame.name }}</h1>
+        @if (selectedGame.spielbar === false) {
+          <p role="status">{{ selectedGame.startHinweis }}</p>
+        }
         <p>{{ selectedGame.beschreibung }}</p>
         <div class="setup-options">
           <label class="team-slider"
@@ -63,7 +66,12 @@
           </div>
         </div>
         <p>Spielcodes gelten 24 Stunden. Just One benötigt mindestens zwei Spieler pro Team.</p>
-        <button type="button" class="primary-action" (click)="createLobby()">
+        <button
+          type="button"
+          class="primary-action"
+          [disabled]="selectedGame.spielbar === false"
+          (click)="createLobby()"
+        >
           Spielraum öffnen
         </button>
       </section>

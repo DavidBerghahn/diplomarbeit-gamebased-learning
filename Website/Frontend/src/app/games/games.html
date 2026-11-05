@@ -48,7 +48,11 @@
           >
             <div class="card-header">
               <h2>{{ game.name }}</h2>
-              <span>{{ game.gespielte_runden }} Runden</span>
+              <span>{{
+                game.spielbar === false
+                  ? 'Noch nicht spielbereit'
+                  : game.gespielte_runden + ' Runden'
+              }}</span>
             </div>
 
             <p>{{ game.beschreibung || 'Keine Beschreibung vorhanden.' }}</p>
@@ -78,6 +82,9 @@
         <span class="dialog-label">{{ selectedGameForHosting.spiel_typ }}</span>
         <h2>Spiel starten</h2>
         <p>{{ selectedGameForHosting.name }}</p>
+        @if (selectedGameForHosting.spielbar === false) {
+          <p role="status">{{ selectedGameForHosting.startHinweis }}</p>
+        }
 
         @if (copyMessage) {
           <p class="copy-message" role="status">{{ copyMessage }}</p>
@@ -87,9 +94,21 @@
             Abbrechen
           </button>
           @if (selectedGameForHosting.spiel_typ !== 'JustOne') {
-            <button type="button" (click)="playSolo()">Solo spielen</button>
+            <button
+              type="button"
+              [disabled]="selectedGameForHosting.spielbar === false"
+              (click)="playSolo()"
+            >
+              Solo spielen
+            </button>
           }
-          <button type="button" (click)="hostSelectedGame()">Lobby erstellen</button>
+          <button
+            type="button"
+            [disabled]="selectedGameForHosting.spielbar === false"
+            (click)="hostSelectedGame()"
+          >
+            Lobby erstellen
+          </button>
           @if (canHost()) {
             <button type="button" class="secondary-button" (click)="copySelectedGame()">
               Kopie erstellen

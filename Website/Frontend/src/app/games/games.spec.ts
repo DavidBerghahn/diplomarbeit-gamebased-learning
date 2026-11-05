@@ -44,20 +44,43 @@ describe('Games', () => {
     expect(card.getAttribute('role')).toBe('button');
     expect(card.getAttribute('tabindex')).toBe('0');
     expect(component.selectedGameForHosting?.id).toBe('game-1');
-    expect(fixture.nativeElement.querySelector('.host-dialog')?.textContent).toContain('Solo spielen');
+    expect(fixture.nativeElement.querySelector('.host-dialog')?.textContent).toContain(
+      'Solo spielen',
+    );
   });
 
-  it.each(['TEACHER', 'ADMIN'] as const)('allows %s users to open the hosting dialog', async (role) => {
-    await createGames(role);
-
-    const card = fixture.nativeElement.querySelector('.game-card') as HTMLElement;
-    card.click();
+  it('does not start incomplete legacy games', async () => {
+    await createGames('STUDENT');
+    component.games.set([{ ...game, spielbar: false, startHinweis: 'Zwölf Karten fehlen.' }]);
     fixture.detectChanges();
-
-    expect(card.getAttribute('role')).toBe('button');
-    expect(component.selectedGameForHosting?.id).toBe('game-1');
-    expect(fixture.nativeElement.querySelector('.host-dialog')?.textContent).toContain('Lobby erstellen');
+    (fixture.nativeElement.querySelector('.game-card') as HTMLElement).click();
+    fixture.detectChanges();
+    const dialog = fixture.nativeElement.querySelector('.host-dialog') as HTMLElement;
+    expect(dialog.textContent).toContain('Zwölf Karten fehlen.');
+    expect([...dialog.querySelectorAll('button')].filter((button) => button.disabled)).toHaveLength(
+      2,
+    );
+    await component.playSolo();
+    await component.hostSelectedGame();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
+
+  it.each(['TEACHER', 'ADMIN'] as const)(
+    'allows %s users to open the hosting dialog',
+    async (role) => {
+      await createGames(role);
+
+      const card = fixture.nativeElement.querySelector('.game-card') as HTMLElement;
+      card.click();
+      fixture.detectChanges();
+
+      expect(card.getAttribute('role')).toBe('button');
+      expect(component.selectedGameForHosting?.id).toBe('game-1');
+      expect(fixture.nativeElement.querySelector('.host-dialog')?.textContent).toContain(
+        'Lobby erstellen',
+      );
+    },
+  );
 
   it('shows the student game view to admins after they switch views', async () => {
     await createGames('ADMIN');

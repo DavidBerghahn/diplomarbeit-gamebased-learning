@@ -102,6 +102,10 @@ export class Lobby implements OnInit, OnDestroy {
   async createLobby(): Promise<void> {
     const game = this.game();
     if (!game) return;
+    if (game.spielbar === false) {
+      this.error.set(game.startHinweis || 'Dieses Spiel ist noch nicht spielbereit.');
+      return;
+    }
     try {
       await this.multiplayer.createRoom(
         game,

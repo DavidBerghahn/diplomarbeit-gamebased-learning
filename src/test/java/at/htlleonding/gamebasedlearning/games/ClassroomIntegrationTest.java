@@ -159,6 +159,58 @@ class ClassroomIntegrationTest {
         };
     }
 
+    @Test void classAssignmentPersistsAndStatisticsIncludeStudentsWithoutGames() {
+        AppUser teacher=user(UserRole.TEACHER),student=user(UserRole.STUDENT),noGames=user(UserRole.STUDENT),unassigned=user(UserRole.STUDENT);
+        String className="5"+UUID.randomUUID().toString().substring(0,6).toUpperCase(Locale.ROOT);
+        users.assignSchoolClass(student.id," "+className.toLowerCase(Locale.ROOT)+" ");
+        users.assignSchoolClass(noGames.id,className);
+        QuarkusTransaction.requiringNew().run(()->em.find(AppUser.class,unassigned.id).schoolClass=" ");
+        Game game=game("Smart10",teacher);
+        var round=solo.start(student.id,game.id);
+        for(var card:round.questions().getFirst().cards())solo.answer(student.id,round.roundId(),card.id(),mapper.getNodeFactory().booleanNode(true));
+        solo.finish(student.id,round.roundId());
+        em.clear();
+        assertEquals(className,users.getById(student.id).schoolClass);
+        StatisticsResource resource=new StatisticsResource();resource.users=users;resource.em=em;resource.auth=auth(teacher);
+        var data=resource.statistics(null);
+        var members=data.stream().filter(s->s.schoolClass().equals(className)).toList();
+        assertEquals(2,members.size());
+        assertEquals(46,members.stream().flatMap(s->s.plays().stream()).mapToInt(StatisticsResource.Play::score).sum());
+        assertTrue(members.stream().anyMatch(s->s.id().equals(noGames.id.toString()) && s.plays().isEmpty()));
+        assertTrue(data.stream().anyMatch(s->s.id().equals(unassigned.id.toString()) && s.schoolClass().equals("Ohne Klasse")));
+    }
+
+    @Test void studentAdminsAppearInTheirClassWithScoresAndKeepAdminRights() {
+        AppUser admin=user(UserRole.ADMIN), noGames=user(UserRole.ADMIN);
+        AppUser student=user(UserRole.STUDENT), teacher=user(UserRole.TEACHER);
+        String className="5"+UUID.randomUUID().toString().substring(0,6).toUpperCase(Locale.ROOT);
+        users.assignSchoolClass(admin.id,className);
+        users.assignSchoolClass(noGames.id,className);
+        users.assignSchoolClass(student.id,className);
+        QuarkusTransaction.requiringNew().run(()->{
+            em.find(AppUser.class,admin.id).username="it220240";
+            em.find(AppUser.class,noGames.id).username="it220269";
+            em.find(AppUser.class,teacher.id).schoolClass=className;
+        });
+        Game game=game("Smart10",teacher);
+        var round=solo.start(admin.id,game.id);
+        for(var card:round.questions().getFirst().cards())solo.answer(admin.id,round.roundId(),card.id(),mapper.getNodeFactory().booleanNode(true));
+        solo.finish(admin.id,round.roundId());
+        em.clear();
+        StatisticsResource resource=new StatisticsResource();resource.users=users;resource.em=em;
+        resource.auth=auth(users.getById(admin.id));
+        var data=resource.statistics(null);
+        var members=data.stream().filter(s->s.schoolClass().equals(className)).toList();
+        assertEquals(3,members.size());
+        assertEquals(3,members.stream().map(StatisticsResource.Student::id).distinct().count());
+        var adminResult=members.stream().filter(s->s.id().equals(admin.id.toString())).findFirst().orElseThrow();
+        assertEquals(46,adminResult.plays().getFirst().score());
+        assertEquals(46,members.stream().flatMap(s->s.plays().stream()).mapToInt(StatisticsResource.Play::score).sum());
+        assertTrue(members.stream().anyMatch(s->s.id().equals(noGames.id.toString()) && s.plays().isEmpty()));
+        assertFalse(data.stream().anyMatch(s->s.id().equals(teacher.id.toString())));
+        assertEquals(UserRole.ADMIN,users.getById(admin.id).role);
+    }
+
     @Test void storedCreateMineCopyAndStatusContractsUseOwnership() {
         AppUser owner=user(UserRole.TEACHER), stranger=user(UserRole.TEACHER);
         GameResource resource=new GameResource();resource.repository=games;resource.userService=users;

@@ -77,6 +77,17 @@ class KeycloakAuthProviderTest {
         return roleFor(claims, Set.of());
     }
 
+    @Test
+    void readsStudentClassFromExplicitClaimsOrSchoolDirectory() {
+        for (String claim : Set.of("school_class", "schoolClass", "class", "klasse")) {
+            var identity = new KeycloakAuthProvider(jwt(Map.of(claim, "5BHITM"), Set.of()), "frontend", "STUDENT").currentUser(null);
+            assertEquals("5BHITM", identity.schoolClass());
+        }
+        var identity = new KeycloakAuthProvider(jwt(Map.of("distinguishedName",
+                "CN=student,OU=5BHITM,OU=Students,OU=HTL,DC=EDU,DC=HTL-LEONDING,DC=AC,DC=AT"), Set.of()), "frontend", "STUDENT").currentUser(null);
+        assertEquals("5BHITM", identity.schoolClass());
+    }
+
     private UserRole roleFor(Map<String, Object> claims, Set<String> groups) {
         return new KeycloakAuthProvider(jwt(claims, groups), "frontend", "STUDENT")
                 .currentUser(null).role();

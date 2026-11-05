@@ -50,6 +50,33 @@ Schülern ist das Spiel zunächst öffentlich zu stellen.
 
 ## Datenfluss
 
+### Ergänzung der Klassenstatistik am 5. November 2026
+
+Unter `/statistics` kann ein Lehrer/Admin alle Klassen oder eine einzelne Klasse
+auswählen. Angezeigt werden die gespeicherten Punkte je Schüler, die Summe pro
+Klasse und der Spielverlauf. Ein Datumsfilter gilt einheitlich für alle Werte.
+Schüler ohne Spiele zählen mit null Punkten. Die Klassensumme zählt die Punkte
+jedes Schülers, auch wenn mehrere Schüler denselben Teamwert erhalten haben.
+Die Zahl abgeschlossener Spiele zählt dieselbe Session pro Klasse dagegen nur einmal.
+Die Projektmitglieder mit Adminrechten zählen ebenfalls als Schüler, inklusive
+ihrer Klasse und Punkte. Lehrerkonten bleiben außerhalb der Schülerwertung.
+Fehlende Klassen können auch für Schüler mit Adminrechten ergänzt werden, ohne
+ihre Rolle zu verändern.
+
+Die Klasse stammt aus den Klassenclaims beziehungsweise dem LDAP-DN des
+Schulkontos. Sie wird getrimmt und in Großbuchstaben gespeichert. Fehlt die
+Klasse bei einem späteren Login, bleibt eine vorhandene Zuordnung erhalten.
+Fehlende Angaben erscheinen unter „Ohne Klasse“ und können dort von Lehrern/Admins
+ergänzt werden. Ohne bekannte Klasse wird keine Zuordnung erfunden. Ein späterer
+nichtleerer Schulclaim aktualisiert die Klasse wieder. Für die Anzeige gilt die
+aktuelle Klasse einschließlich aller bisherigen Punkte; historische Ergebnisse
+werden nicht geändert.
+
+Der Nutzer hat anschließend Commit und GitHub-Push des lokalen Folgeauftrags
+freigegeben; ein LeoCloud-Rollout bleibt ausdrücklich ausgeschlossen. Geprüft wurden
+74 Frontendtests, der Frontendbuild und nach der Admin-Korrektur 59 Backendtests; sieben zusätzliche
+PostgreSQL-Migrationstests wurden mangels laufender Testinstanz übersprungen.
+
 Frontend → authentifizierte HTTP-API / WebSocket-Ticket → Quarkus → H2 oder PostgreSQL.
 Der Browser verbindet sich nie direkt mit PostgreSQL. Die bestehende Schul-Keycloak-Anbindung bleibt die Identitätsquelle.
 Ein WebSocket-Ticket wird über authentifiziertes HTTP geladen, vor der ersten Spielaktion gebunden
@@ -60,7 +87,7 @@ Nur abgeschlossene Runden erzeugen Sessions. Demos und abgebrochene Räume zähl
 Klassenstatistik. Just-One-Versuche speichern nur Team, Punktvergabe und Ungültig-Markierung,
 keine Begriffe, Hinweise oder geratene Antworten. Historische Smart10-Kartenantworten bleiben
 entsprechend dem bestehenden Modell erhalten, werden aber nicht in der Statistik ausgeliefert.
-Korrekturen sind über Startseite → Gehostete Spiele auch nach Raumende erreichbar.
+Korrekturen sind über Startseite → Just-One-Spielverlauf auch nach Raumende erreichbar.
 
 ## Lokaler Betrieb
 

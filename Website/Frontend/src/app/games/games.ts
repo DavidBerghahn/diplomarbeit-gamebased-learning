@@ -78,12 +78,17 @@ export class Games implements OnInit {
 
   openHostDialog(event: Event, game: Game): void {
     event.stopPropagation();
+    this.copyMessage = '';
     this.selectedGameForHosting = game;
   }
 
   async playSolo(): Promise<void> {
     const game = this.selectedGameForHosting;
     if (!game) return;
+    if (game.spielbar === false) {
+      this.copyMessage = game.startHinweis || 'Dieses Spiel ist noch nicht spielbereit.';
+      return;
+    }
     await this.router.navigate(['/solo', game.id]);
   }
 
@@ -97,6 +102,10 @@ export class Games implements OnInit {
       return;
     }
 
+    if (game.spielbar === false) {
+      this.copyMessage = game.startHinweis || 'Dieses Spiel ist noch nicht spielbereit.';
+      return;
+    }
     await this.router.navigate(['/lobby', game.id]);
   }
 

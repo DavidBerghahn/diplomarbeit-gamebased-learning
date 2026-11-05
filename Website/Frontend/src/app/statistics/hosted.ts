@@ -13,7 +13,7 @@ interface Hosted {
   styleUrl: './statistics.css',
   template: ` <main class="statistics-page">
     <nav><a routerLink="/home">← Startseite</a><a routerLink="/games">Alle Spiele</a></nav>
-    <h1>Gehostete Just-One-Spiele</h1>
+    <h1>Just-One-Spielverlauf</h1>
     <p>
       Ungültige Versuche können nachträglich gelöscht werden. Der dafür erhaltene Punkt wird dem
       Team und seinen Mitgliedern abgezogen.

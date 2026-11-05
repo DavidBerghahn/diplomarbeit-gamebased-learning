@@ -25,7 +25,8 @@ class UserResourceAuthorizationTest {
                 () -> resource.updateOwnProfile(null, new UpdateOwnProfileRequest()),
                 () -> resource.listUsers(null),
                 () -> resource.getUser(null, userId),
-                () -> resource.updateUser(null, userId, new UpdateUserRequest())
+                () -> resource.updateUser(null, userId, new UpdateUserRequest()),
+                () -> resource.assignSchoolClass(null, userId, new UserResource.SchoolClassRequest("5BHITM"))
         );
 
         assertAll(requests.stream()
@@ -51,6 +52,20 @@ class UserResourceAuthorizationTest {
         resource.authProvider = new StubAuthProvider();
         resource.userService = new StubUserService(user);
         return resource;
+    }
+
+    @Test
+    void studentsCannotAssignClassesButTeachersAndAdminsCan() {
+        AppUser viewer = activeAdmin();
+        viewer.role = UserRole.STUDENT;
+        UserResource resource = resourceFor(viewer);
+        var request = new UserResource.SchoolClassRequest("5BHITM");
+        assertThrows(ForbiddenException.class, () -> resource.assignSchoolClass(null, viewer.id, request));
+        viewer.role = UserRole.TEACHER;
+        assertEquals("5BHITM", resource.assignSchoolClass(null, viewer.id, request).schoolClass());
+        viewer.role = UserRole.ADMIN;
+        assertEquals("5BHITM", resource.assignSchoolClass(null, viewer.id, request).schoolClass());
+        assertThrows(BadRequestException.class, () -> resource.assignSchoolClass(null, viewer.id, null));
     }
 
     private AppUser inactiveAdmin() {
@@ -88,6 +103,12 @@ class UserResourceAuthorizationTest {
 
         @Override
         public AppUser getById(UUID id) {
+            return user;
+        }
+
+        @Override
+        public AppUser assignSchoolClass(UUID id, String schoolClass) {
+            user.schoolClass = schoolClass;
             return user;
         }
     }

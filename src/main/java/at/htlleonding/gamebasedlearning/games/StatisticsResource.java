@@ -38,14 +38,16 @@ public class StatisticsResource {
     public List<Student> statistics(@Context HttpHeaders headers) {
         AppUser viewer = users.getOrCreateFromIdentity(auth.currentUser(headers));
         if (!viewer.active || viewer.role == UserRole.STUDENT) throw new ForbiddenException();
-        List<AppUser> students = em.createQuery("select u from AppUser u where u.role = :role order by u.schoolClass, u.displayName", AppUser.class)
-                .setParameter("role", UserRole.STUDENT).getResultList();
+        // The project's admin accounts are students too; their permissions must not hide their results.
+        List<AppUser> students = em.createQuery("select u from AppUser u where u.role in :roles order by u.schoolClass, u.displayName", AppUser.class)
+                .setParameter("roles", List.of(UserRole.STUDENT, UserRole.ADMIN)).getResultList();
         return students.stream().map(student -> {
             List<Object[]> rows = em.createNativeQuery("select s.id, s.game_id, v.title, v.game_type, s.mode, s.finished_at, p.score "
                     + "from session_participants p join game_sessions s on s.id=p.session_id "
                     + "join game_versions v on v.id=s.game_version_id where p.user_id=?1 order by s.finished_at desc")
                     .setParameter(1, student.id).getResultList();
-            return new Student(student.id.toString(), student.displayName, student.schoolClass == null ? "Ohne Klasse" : student.schoolClass,
+            String schoolClass = SchoolClass.normalize(student.schoolClass);
+            return new Student(student.id.toString(), student.displayName, schoolClass == null ? "Ohne Klasse" : schoolClass,
                     rows.stream().map(row -> {
                         List<String> players = em.createNativeQuery("select u.display_name from session_participants p "
                                 + "join app_user u on u.id=p.user_id where p.session_id=?1 order by u.display_name", String.class)

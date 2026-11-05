@@ -175,3 +175,27 @@ Lehrer und Admins SHALL alle Klassen mit Schülern, abgeschlossenen Spielen, Spi
 #### Scenario: Noch offener Access-Change
 - **WHEN** die neue Smart10-Persistenz lokal vorhanden ist, die geplanten Sichtbarkeitsregeln aber noch nicht umgesetzt und geprüft sind
 - **THEN** kann sie in Produktion nicht als freigegebener persistenter Spielpfad genutzt werden
+
+### Requirement: Dauerhafte Klassenzuordnung und Klassenpunkte
+Die Statistik SHALL Schüler nach ihrer aktuellen gespeicherten Klasse filtern und für jede Klasse die Punkte jedes Schülers sowie die Summe dieser Schülerpunkte anzeigen. Schüler ohne abgeschlossene Spiele SHALL mit null Punkten erscheinen. Klassen- und Schülerwerte SHALL denselben Datumsfilter berücksichtigen. Teamwerte SHALL entsprechend den gespeicherten Teilnehmerpunkten je Schüler zählen. Ein gemeinsames Spiel SHALL in der Anzahl der Klassenspiele nur einmal gezählt werden.
+
+#### Scenario: Schüler mit Adminrechten
+- **WHEN** ein Projektmitglied mit Rolle `ADMIN` eine gespeicherte Klasse besitzt
+- **THEN** erscheint es mit seinen Teilnehmerpunkten genau einmal in dieser Klasse und deren Summe, auch ohne bisherige Spiele mit null Punkten; seine Adminrechte bleiben unverändert
+- **AND** bei fehlender Klasse kann die Zuordnung wie bei anderen Schülern ergänzt werden; Konten mit Rolle `TEACHER` bleiben aus der Schülerwertung ausgeschlossen
+
+#### Scenario: Klasse und Zeitraum auswählen
+- **WHEN** ein Lehrer eine Klasse und ein Anfangsdatum auswählt
+- **THEN** sieht er nur die Schüler dieser Klasse und ihre seit dem Datum gespeicherten Punkte; die Klassensumme entspricht exakt der Summe der sichtbaren Schülerwerte
+
+#### Scenario: Klasse aus dem Schulkonto oder ergänzter Zuordnung
+- **WHEN** ein Schüler sich mit einer Klassenangabe anmeldet
+- **THEN** wird die Klasse normalisiert gespeichert; fehlt diese Angabe später, bleibt die gespeicherte Klasse erhalten
+
+#### Scenario: Fehlende Klasse ergänzen
+- **WHEN** ein Lehrer oder Admin einen bislang nicht zugeordneten Schüler einer gültigen Klasse zuweist
+- **THEN** wird die Klasse dauerhaft gespeichert und dessen bisheriger Punktestand der Klassensumme zugeordnet; ein Schüleraufruf dieses Endpunkts wird mit 403 abgewiesen
+
+#### Scenario: Keine verlässliche Klassenangabe
+- **WHEN** weder Schulkonto noch gespeichertes Profil eine Klasse angeben
+- **THEN** wird der Schüler mit seinen Punkten als „Ohne Klasse“ angezeigt, bis eine Zuordnung ergänzt wurde; keine Klasse wird automatisch erfunden

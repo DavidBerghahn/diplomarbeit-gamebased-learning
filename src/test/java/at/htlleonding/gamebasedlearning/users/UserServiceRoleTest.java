@@ -87,6 +87,44 @@ class UserServiceRoleTest {
         return user;
     }
 
+    @Test
+    @TestTransaction
+    void retainsAssignedClassWithoutClaimAndUpdatesItFromSchoolIdentity() {
+        AppUser student = storedUser("class-student", UserRole.STUDENT);
+        assertEquals("5BHITM", userService.assignSchoolClass(student.id, " 5bhitm ").schoolClass);
+        assertEquals("5BHITM", userService.getOrCreateFromIdentity(identity(student, UserRole.STUDENT)).schoolClass);
+        assertEquals("5AHITM", userService.getOrCreateFromIdentity(new AuthenticatedUser(
+                student.externalSubject, student.username, student.displayName, " 5ahitm ", UserRole.STUDENT)).schoolClass);
+
+        AppUser newStudent = userService.getOrCreateFromIdentity(new AuthenticatedUser(
+                "keycloak:" + UUID.randomUUID(), "new-class-student", "Student", " 4bhitm ", UserRole.STUDENT));
+        assertEquals("4BHITM", newStudent.schoolClass);
+        AppUser unknown = userService.getOrCreateFromIdentity(new AuthenticatedUser(
+                "keycloak:" + UUID.randomUUID(), "unknown-class", "Student", null, UserRole.STUDENT));
+        org.junit.jupiter.api.Assertions.assertNull(unknown.schoolClass);
+    }
+
+    @Test
+    @TestTransaction
+    void rejectsEmptyAndInvalidClassAssignmentsAndTeachers() {
+        AppUser student = storedUser("class-validation", UserRole.STUDENT);
+        AppUser teacher = storedUser("teacher-validation", UserRole.TEACHER);
+        for (String value : new String[]{null, " ", "Ohne Klasse", "a".repeat(41), "5B\nHITM"}) {
+            assertThrows(BadRequestException.class, () -> userService.assignSchoolClass(student.id, value));
+        }
+        assertThrows(BadRequestException.class, () -> userService.assignSchoolClass(teacher.id, "5BHITM"));
+    }
+
+    @Test
+    @TestTransaction
+    void canAssignStudentAdminWithoutChangingPermissions() {
+        AppUser admin = storedUser("it220240", UserRole.ADMIN);
+        assertEquals("5BHITM", userService.assignSchoolClass(admin.id, " 5bhitm ").schoolClass);
+        AppUser refreshed = userService.getOrCreateFromIdentity(identity(admin, UserRole.ADMIN));
+        assertEquals("5BHITM", refreshed.schoolClass);
+        assertEquals(UserRole.ADMIN, refreshed.role);
+    }
+
     private AuthenticatedUser identity(AppUser user, UserRole role) {
         return new AuthenticatedUser(user.externalSubject, user.username, user.displayName, null, role);
     }

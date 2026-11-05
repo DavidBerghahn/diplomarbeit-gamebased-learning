@@ -58,3 +58,4 @@
 - [x] 8.4 CSV-Vorlagen, Quote-/Zeilenparser, Vorschau, serverseitige Inhaltsprüfung und dauerhafte Erstellung beider Spiele anbinden; CSV- und API-Vertragstests ausführen.
 - [x] 8.5 Lehrerstatistik aller Klassen und Schüler mit Spielhäufigkeiten, Punkten und Mitspielern implementieren; 403 für Schüler und fehlende Antwortinhalte testen.
 - [x] 8.6 Lokale dauerhafte Datenbank, PostgreSQL-Profil, DB-Healthcheck und manuelle LeoCloud-Anleitung bereitstellen; H2-/PostgreSQL-Prüfung und Frontendtests/Build dokumentieren. Kein Cloud-Rollout.
+- [x] 8.7 Klassen aus der Schulidentität dauerhaft zuordnen, fehlende Klassen durch Lehrer/Admins ergänzen und Klassenfilter mit Schülerpunkten und Klassensummen inklusive Schülern mit Adminrechten implementieren; Persistenz-, Rechte-, Summen- und Datumsfiltertests sowie Frontendbuild prüfen (Folgeauftrag 5. November 2026).

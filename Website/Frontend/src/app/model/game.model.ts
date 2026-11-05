@@ -22,6 +22,8 @@ export interface Question {
 }
 
 export interface Game {
+  spielbar?: boolean;
+  startHinweis?: string | null;
   tags?: string[];
   id: string;
   spiel_typ: string;

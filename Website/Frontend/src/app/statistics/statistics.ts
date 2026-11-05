@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../api.service';
@@ -19,123 +20,119 @@ interface Student {
   schoolClass: string;
   plays: Play[];
 }
+interface ClassSummary {
+  name: string;
+  students: Student[];
+  points: number;
+  games: number;
+}
 @Component({
   selector: 'app-statistics',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, DatePipe, DecimalPipe],
   styleUrl: './statistics.css',
-  template: ` <main class="statistics-page">
-    <nav><a routerLink="/home">← Startseite</a><a routerLink="/games">Alle Spiele</a></nav>
-    <span class="eyebrow">Lehrerbereich</span>
-    <h1>Klassenstatistik</h1>
-    <p>Abgeschlossene Solo- und Multiplayer-Spiele aller Klassen. Demos werden nicht gezählt.</p>
-    @if (error()) {
-      <p role="alert">{{ error() }}</p>
-    }
-    <div class="filters">
-      <label
-        >Klasse<select
-          [ngModel]="schoolClass()"
-          (ngModelChange)="schoolClass.set($event); studentId.set('')"
-        >
-          <option value="">Alle Klassen</option>
-          @for (name of classes(); track name) {
-            <option [value]="name">{{ name }}</option>
-          }
-        </select></label
-      >
-      <label
-        >Ab Datum<input type="date" [ngModel]="since()" (ngModelChange)="since.set($event)"
-      /></label>
-      <button type="button" (click)="load()">Aktualisieren</button>
-    </div>
-    @if (loading()) {
-      <p>Lädt …</p>
-    }
-    <section class="students">
-      @for (student of filtered(); track student.id) {
-        <button
-          type="button"
-          [class.selected]="studentId() === student.id"
-          (click)="studentId.set(student.id)"
-        >
-          <strong>{{ student.name }}</strong
-          ><span
-            >{{ student.schoolClass }} · {{ plays(student).length }} Spiele ·
-            {{ points(student) }} Punkte</span
-          >
-        </button>
-      } @empty {
-        @if (!loading()) {
-          <p>Keine Schüler in dieser Auswahl.</p>
-        }
-      }
-    </section>
-    @if (selected(); as student) {
-      <section class="details">
-        <h2>{{ student.name }} · {{ student.schoolClass }}</h2>
-        <h3>Welche Spiele wurden wie oft gespielt?</h3>
-        @for (entry of frequencies(student); track entry.id) {
-          <p>{{ entry.name }} · {{ entry.count }} Mal</p>
-        }
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Spiel</th>
-                <th>Modus</th>
-                <th>Abgeschlossen</th>
-                <th>Punkte</th>
-                <th>Mitspieler</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (play of plays(student); track play.sessionId) {
-                <tr>
-                  <td>{{ play.game }}</td>
-                  <td>{{ play.mode === 'SINGLEPLAYER' ? 'Solo' : 'Multiplayer' }}</td>
-                  <td>{{ play.finishedAt }}</td>
-                  <td>{{ play.score }}</td>
-                  <td>{{ play.players.join(', ') }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="5">Noch keine abgeschlossenen Spiele im Zeitraum.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-    }
-  </main>`,
+  templateUrl: './statistics.html',
 })
 export class Statistics implements OnInit {
   private readonly api = inject(ApiService);
+  readonly unassignedClass = 'Ohne Klasse';
   readonly students = signal<Student[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
   readonly schoolClass = signal('');
   readonly studentId = signal('');
   readonly since = signal('');
-  readonly classes = computed(() => [...new Set(this.students().map((s) => s.schoolClass))].sort());
+  readonly assigning = signal('');
+  readonly assignmentMessage = signal('');
+  readonly assignmentError = signal('');
+  classInputs: Record<string, string> = {};
+  readonly classes = computed(() =>
+    [...new Set(this.students().map((s) => s.schoolClass))].sort((a, b) =>
+      a.localeCompare(b, 'de', { numeric: true }),
+    ),
+  );
+  readonly assignableClasses = computed(() =>
+    this.classes().filter((c) => c !== this.unassignedClass),
+  );
   readonly filtered = computed(() =>
     this.students().filter((s) => !this.schoolClass() || s.schoolClass === this.schoolClass()),
   );
   readonly selected = computed(() => this.filtered().find((s) => s.id === this.studentId()));
+  readonly classSummaries = computed<ClassSummary[]>(() => {
+    const groups = new Map<string, Student[]>();
+    for (const student of this.filtered()) {
+      const members = groups.get(student.schoolClass) ?? [];
+      members.push(student);
+      groups.set(student.schoolClass, members);
+    }
+    return [...groups.entries()]
+      .sort(([a], [b]) => a.localeCompare(b, 'de', { numeric: true }))
+      .map(([name, students]) => ({
+        name,
+        students: students.sort(
+          (a, b) => this.points(b) - this.points(a) || a.name.localeCompare(b.name, 'de'),
+        ),
+        points: students.reduce((sum, s) => sum + this.points(s), 0),
+        games: new Set(students.flatMap((s) => this.plays(s).map((p) => p.sessionId))).size,
+      }));
+  });
+  readonly totalPoints = computed(() =>
+    this.classSummaries().reduce((sum, c) => sum + c.points, 0),
+  );
+  readonly unassignedCount = computed(
+    () => this.students().filter((s) => s.schoolClass === this.unassignedClass).length,
+  );
   ngOnInit(): void {
     void this.load();
+  }
+  selectClass(name: string): void {
+    this.schoolClass.set(name);
+    this.studentId.set('');
   }
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set('');
     try {
       this.students.set(await this.api.request<Student[]>('/api/statistics'));
+      if (this.schoolClass() && !this.classes().includes(this.schoolClass())) this.selectClass('');
     } catch (error) {
       this.error.set(
         error instanceof Error ? error.message : 'Statistiken konnten nicht geladen werden.',
       );
     } finally {
       this.loading.set(false);
+    }
+  }
+  async assignClass(student: Student): Promise<void> {
+    if (this.assigning()) return;
+    this.assignmentError.set('');
+    this.assignmentMessage.set('');
+    const schoolClass = (this.classInputs[student.id] ?? '').trim();
+    if (!schoolClass || schoolClass.length > 40 || schoolClass.toUpperCase() === 'OHNE KLASSE') {
+      this.assignmentError.set('Bitte eine Klasse mit höchstens 40 Zeichen angeben.');
+      return;
+    }
+    this.assigning.set(student.id);
+    try {
+      const updated = await this.api.request<{ schoolClass: string }>(
+        `/api/users/${encodeURIComponent(student.id)}/school-class`,
+        { schoolClass },
+        'PUT',
+      );
+      this.students.update((students) =>
+        students.map((s) => (s.id === student.id ? { ...s, schoolClass: updated.schoolClass } : s)),
+      );
+      this.classInputs[student.id] = '';
+      if (this.schoolClass() === this.unassignedClass && !this.unassignedCount())
+        this.selectClass(updated.schoolClass);
+      this.assignmentMessage.set(
+        `${student.name} wurde der Klasse ${updated.schoolClass} zugeordnet.`,
+      );
+    } catch (error) {
+      this.assignmentError.set(
+        error instanceof Error ? error.message : 'Zuordnung fehlgeschlagen.',
+      );
+    } finally {
+      this.assigning.set('');
     }
   }
   plays(student: Student): Play[] {

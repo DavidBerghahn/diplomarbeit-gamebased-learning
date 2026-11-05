@@ -13,9 +13,10 @@ public class Smart10SnapshotLoader {
     @Transactional
     public Smart10Snapshot load(String gameId) {
         Game game = games.findById(gameId)
-                .orElseThrow(() -> new IllegalArgumentException("Stored game not found"));
-        if (!"Smart10".equals(game.gameType) || game.questions.isEmpty())
-            throw new IllegalArgumentException("Stored Smart10 game required");
+                .orElseThrow(() -> new IllegalArgumentException("Das gespeicherte Spiel wurde nicht gefunden."));
+        if (!"Smart10".equals(game.gameType) || game.questions.isEmpty() || !game.playable())
+            throw new IllegalArgumentException(game.unavailableReason() == null
+                    ? "Dieses Spiel kann nicht als Smart10 gestartet werden." : game.unavailableReason());
         List<Smart10Snapshot.Group> questions = game.questions.stream().map(question -> {
             Smart10Cards.validate(question);
             if (question.currentVersionId == null)

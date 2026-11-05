@@ -6,6 +6,8 @@ Der Nutzerauftrag vom 4. November 2026 erweitert diesen Change: Host-Mitspielen 
 
 ## Why
 
+Ergänzung vom 5. November 2026: Die Klassenstatistik erhält einen Klassenfilter, Schülerpunkte und die Summe dieser Punkte pro Klasse, einschließlich Schülern mit Adminrechten. Die Klasse stammt aus dem Schulkonto; Lehrer/Admins können fehlende Zuordnungen dauerhaft ergänzen. Ein Token ohne Klassenclaim darf eine vorhandene Zuordnung nicht löschen. Der Nutzer hat anschließend Commit und GitHub-Push des gesamten lokalen Stands ausdrücklich freigegeben; ein Cloud-Rollout bleibt ausgeschlossen.
+
 Smart10 spielt Solo und Multiplayer derzeit überwiegend mit clientseitigen Lösungen und flüchtigem Rundenzustand; ein angezeigtes Ende erzeugt kein verlässlich zugeordnetes, dauerhaftes Ergebnis. Die lokale Datenmodell-Foundation bietet versionierte Spiele und einen Dienst für abgeschlossene Runden, benötigt für Smart10 aber noch einzelne versionierte Karten, geprüfte Identitäten und eine sichere Anbindung der Spielabläufe.
 
 ## What Changes

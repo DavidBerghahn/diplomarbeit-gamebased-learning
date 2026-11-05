@@ -12,13 +12,15 @@
   <section class="game-section">
     <h2>Eigene Spiele starten</h2>
     @for (game of games(); track game.id) {
-      @if (game.status !== 'DRAFT') {
+      @if (game.status !== 'DRAFT' && game.spielbar !== false) {
         <p>
           {{ game.name }} · <a [routerLink]="['/lobby', game.id]">Lobby öffnen</a>
           @if (game.spiel_typ !== 'JustOne') {
             · <a [routerLink]="['/solo', game.id]">Solo spielen</a>
           }
         </p>
+      } @else if (game.status !== 'DRAFT') {
+        <p>{{ game.name }} · {{ game.startHinweis }}</p>
       }
     }
   </section>

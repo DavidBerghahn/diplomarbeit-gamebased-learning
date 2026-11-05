@@ -19,7 +19,9 @@ public class UserService {
 
         user.username = identity.username();
         user.displayName = identity.displayName();
-        user.schoolClass = identity.schoolClass();
+        String identityClass = SchoolClass.normalize(identity.schoolClass());
+        // Some school tokens omit the class. Keep the last known or teacher-assigned class then.
+        user.schoolClass = identityClass != null ? identityClass : SchoolClass.normalize(user.schoolClass);
         user.role = mergedRole(user.role, identity);
         return user;
     }
@@ -39,7 +41,7 @@ public class UserService {
             user.displayName = request.displayName.trim();
         }
         if (request.schoolClass != null) {
-            user.schoolClass = blankToNull(request.schoolClass);
+            user.schoolClass = SchoolClass.normalize(request.schoolClass);
         }
         return user;
     }
@@ -54,7 +56,7 @@ public class UserService {
             user.displayName = request.displayName.trim();
         }
         if (request.schoolClass != null) {
-            user.schoolClass = blankToNull(request.schoolClass);
+            user.schoolClass = SchoolClass.normalize(request.schoolClass);
         }
         if (request.active != null) {
             user.active = request.active;
@@ -67,7 +69,7 @@ public class UserService {
         user.externalSubject = identity.externalSubject();
         user.username = identity.username();
         user.displayName = identity.displayName();
-        user.schoolClass = identity.schoolClass();
+        user.schoolClass = SchoolClass.normalize(identity.schoolClass());
         user.role = mergedRole(null, identity);
         user.active = true;
         user.persist();
@@ -84,10 +86,17 @@ public class UserService {
         return UserRole.STUDENT;
     }
 
-    private String blankToNull(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
+    @Transactional
+    public AppUser assignSchoolClass(UUID id, String schoolClass) {
+        String normalized = SchoolClass.normalize(schoolClass);
+        if (normalized == null || "OHNE KLASSE".equals(normalized)) {
+            throw new BadRequestException("Bitte eine Klasse angeben.");
         }
-        return value.trim();
+        AppUser student = getById(id);
+        if (student.role != UserRole.STUDENT && student.role != UserRole.ADMIN) {
+            throw new BadRequestException("Nur Schüler können einer Klasse zugeordnet werden.");
+        }
+        student.schoolClass = normalized;
+        return student;
     }
 }

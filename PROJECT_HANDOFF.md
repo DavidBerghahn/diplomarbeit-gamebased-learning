@@ -1,6 +1,51 @@
 # Projektübergabe: Diplomarbeit Game-based Learning
 
-Stand: 4. November 2026
+Stand: 5. November 2026
+
+## Klassenstatistik am 5. November
+
+Ausgangspunkt dieses Folgeauftrags ist main b22af9a mit den unten beschriebenen
+uncommitteten Startkorrekturen. Die Klassenansicht unter /statistics gruppiert
+alle gespeicherten Schüler nach aktueller Klasse, zeigt ihre Punkte und deren
+Summe pro Klasse und berücksichtigt den Datumsfilter auch bei den Summen.
+Schüler ohne Spiele erscheinen mit null Punkten. Gemeinsame Sessions zählen
+bei der Anzahl der Klassenspiele einmal; Teamwerte zählen je Schüler.
+
+Nach ausdrücklicher Klarstellung des Nutzers zählen auch die Projektmitglieder
+mit Rolle ADMIN als Schüler in ihrer Klasse. Die Statistik berücksichtigt daher
+STUDENT und ADMIN, während TEACHER aus der Schülerwertung ausgeschlossen bleibt.
+Fehlende Klassenzuordnungen lassen sich ebenfalls für diese Admin-Konten ergänzen.
+Dabei bleiben Rollen und Berechtigungen unverändert.
+
+Klassen aus dem Schulkonto werden normalisiert gespeichert. Ein fehlender Claim
+löscht keine vorhandene Klasse mehr. Ohne bekannte Zuordnung erscheint ein Schüler
+unter „Ohne Klasse“; Lehrer/Admins können diese über die Oberfläche ergänzen.
+Der neue PUT-Endpunkt /api/users/{id}/school-class prüft aktive Lehrer-/Adminrechte
+und erlaubt ausschließlich die Klasse eines Schülers. Eine spätere nichtleere
+Klasse aus Keycloak hat Vorrang. Klassenwechsel beziehen sich auf die aktuelle
+Gruppierung inklusive bisheriger Schülerpunkte, nicht auf historische Klassen.
+Keine neue Migration und kein Datenreset. Der Nutzer hat anschließend ausdrücklich
+Commit und GitHub-Push des gesamten lokalen Stands beauftragt; LeoCloud bleibt
+ausgenommen. Der GitHub-Workflow baut/veröffentlicht ein Image, führt aber keinen
+Kubernetes-Rollout aus.
+
+Prüfung vor dem beauftragten Push: 74 Frontendtests und Produktionsbuild erfolgreich;
+66 Backendtests insgesamt nach der Admin-Korrektur, davon 59 erfolgreich ausgeführt und sieben
+PostgreSQL-Migrationstests mangels Testinstanz übersprungen. Lokales Backend mit
+Datenbank meldet UP, /statistics liefert HTTP 200; Statistik- und Zuordnungs-API
+weisen Aufrufe ohne Login mit 401 ab. OpenSpec-Validierung und git diff --check
+erfolgreich. Kein neuer Nachweis eines echten Schul-Logins oder Cloudbetriebs.
+
+## Lokaler Startfehler am 5. November
+
+Der alte Entwicklungsdatensatz quizbattle-001 enthält nur zwei Single-Choice-Antworten
+und ist kein vollständiges gespeichertes Smart10-Spiel. Er bleibt unverändert erhalten,
+wird aber über die additive API-Angabe spielbar=false/startHinweis nicht mehr als startbereit
+angeboten. Dev/Test ergänzen idempotent vollständige gespeicherte Programmierbeispiele
+sample-smart10-programming (zwölf Karten) und sample-just-one-programming (fünf Begriffe).
+Prod legt standardmäßig keine Beispiele an. Die Oberfläche zeigt API-Fehlermeldungen
+ohne JSON-Hülle; Solo/Lobby verhindern den Start unvollständiger Inhalte.
+Kein Datenbankreset und keine Änderung vorhandener Migrationen.
 
 ## Neuester Einstieg: Classroom-Todos angebunden
 

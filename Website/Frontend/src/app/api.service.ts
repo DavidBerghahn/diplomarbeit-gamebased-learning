@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
+import { apiErrorMessage } from './api-error';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -18,7 +19,10 @@ export class ApiService {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     if (response.status === 401) this.auth.invalidateSession();
-    if (!response.ok) throw new Error((await response.text()) || `HTTP ${response.status}`);
+    if (!response.ok)
+      throw new Error(
+        apiErrorMessage(await response.text(), `Anfrage fehlgeschlagen (HTTP ${response.status}).`),
+      );
     return response.status === 204 ? (undefined as T) : response.json();
   }
 }

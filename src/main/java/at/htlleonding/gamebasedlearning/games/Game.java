@@ -61,6 +61,29 @@ public class Game extends PanacheEntityBase {
     @JsonProperty("besitzerId")
     public UUID ownerId() { return createdBy == null ? null : createdBy.id; }
 
+    @JsonProperty(value = "spielbar", access = JsonProperty.Access.READ_ONLY)
+    public boolean playable() { return unavailableReason() == null; }
+
+    @JsonProperty(value = "startHinweis", access = JsonProperty.Access.READ_ONLY)
+    public String unavailableReason() {
+        if (!"Smart10".equals(gameType) && !"JustOne".equals(gameType))
+            return "Dieses Spiel hat noch kein vollständiges Smart10-Fragenset. Bitte wähle ein anderes Spiel.";
+        if (questions == null || questions.isEmpty()) return "Dieses Spiel enthält noch keine Fragen.";
+        for (Question question : questions) {
+            if (question == null || question.text == null || question.text.isBlank())
+                return "Dieses Spiel enthält noch eine unvollständige Frage.";
+            if ("Smart10".equals(gameType)) {
+                try { Smart10Cards.validate(question); }
+                catch (IllegalArgumentException invalid) {
+                    return "Jede Smart10-Frage benötigt zwölf vollständige Karten mit passenden Lösungen.";
+                }
+            } else if (question.answerOptions == null || question.answerOptions.size() != 5
+                    || question.answerOptions.stream().anyMatch(option -> option == null || option.text == null || option.text.isBlank()))
+                return "Jede Just-One-Karte benötigt fünf vollständige Begriffe.";
+        }
+        return null;
+    }
+
     @JsonProperty("beschreibung")
     @Column(length = 2000)
     public String description;
