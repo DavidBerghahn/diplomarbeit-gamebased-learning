@@ -40,17 +40,19 @@ public class GameResource {
     @Inject
     UserService userService;
 
+    @Inject PublicGameView publicView;
+
     @GET
-    public List<Game> findAll() {
-        return repository.findAll().stream().filter(GameAccess::publicGame).toList();
+    public List<com.fasterxml.jackson.databind.node.ObjectNode> findAll() {
+        return repository.findAll().stream().filter(GameAccess::publicGame).map(publicView::of).toList();
     }
 
     @GET
     @Path("/grouped")
-    public Map<String, Map<String, List<Game>>> findAllGroupedLikeGamesJson() {
-        Map<String, List<Game>> games = findAll().stream()
+    public Map<String, Map<String, List<com.fasterxml.jackson.databind.node.ObjectNode>>> findAllGroupedLikeGamesJson() {
+        Map<String, List<com.fasterxml.jackson.databind.node.ObjectNode>> games = findAll().stream()
                 .collect(Collectors.groupingBy(
-                        game -> game.gameType,
+                        game -> game.path("spiel_typ").asText(),
                         LinkedHashMap::new,
                         Collectors.toList()
                 ));
@@ -60,16 +62,17 @@ public class GameResource {
 
     @GET
     @Path("/type/{gameType}")
-    public List<Game> findByType(@PathParam("gameType") String gameType) {
-        return repository.findByType(gameType).stream().filter(GameAccess::publicGame).toList();
+    public List<com.fasterxml.jackson.databind.node.ObjectNode> findByType(@PathParam("gameType") String gameType) {
+        return repository.findByType(gameType).stream().filter(GameAccess::publicGame)
+                .map(publicView::of).toList();
     }
 
     @GET
     @Path("/{id}")
-    public Game findById(@Context HttpHeaders headers, @PathParam("id") String id) {
+    public com.fasterxml.jackson.databind.node.ObjectNode findById(@Context HttpHeaders headers, @PathParam("id") String id) {
         Game game = repository.findById(id).orElseThrow(NotFoundException::new);
         GameAccess.read(game, GameAccess.publicGame(game) ? null : userService.getOrCreateFromIdentity(authProvider.currentUser(headers)));
-        return game;
+        return publicView.of(game);
     }
 
     @POST
@@ -119,10 +122,29 @@ public class GameResource {
     public com.fasterxml.jackson.databind.node.ObjectNode editor(@Context HttpHeaders headers, @PathParam("id") String id) {
         AppUser user = requireTeacher(headers);
         Game game = repository.findById(id).orElseThrow(NotFoundException::new);
+        GameAccess.write(game, user);
+        return fullContent(game);
+    }
+
+    @GET
+    @Path("/{id}/library")
+    public com.fasterxml.jackson.databind.node.ObjectNode library(@Context HttpHeaders headers, @PathParam("id") String id) {
+        AppUser user = requireTeacher(headers);
+        Game game = repository.findById(id).orElseThrow(NotFoundException::new);
         GameAccess.read(game, user);
+        com.fasterxml.jackson.databind.node.ObjectNode content = fullContent(game);
+        com.fasterxml.jackson.databind.node.ObjectNode result = mapper.createObjectNode();
+        result.set("spiel_typ", content.path("spiel_typ"));
+        result.set("fragen", content.path("fragen"));
+        return result;
+    }
+
+    private com.fasterxml.jackson.databind.node.ObjectNode fullContent(Game game) {
         com.fasterxml.jackson.databind.node.ObjectNode json = mapper.valueToTree(game);
-        for (int i=0; i<game.questions.size(); i++)
-            ((com.fasterxml.jackson.databind.node.ObjectNode) json.path("fragen").get(i)).set("karten", mapper.valueToTree(game.questions.get(i).smart10Cards));
+        for (int i = 0; i < game.questions.size(); i++) {
+            ((com.fasterxml.jackson.databind.node.ObjectNode) json.path("fragen").get(i))
+                    .set("karten", mapper.valueToTree(game.questions.get(i).smart10Cards));
+        }
         return json;
     }
     @Inject com.fasterxml.jackson.databind.ObjectMapper mapper;

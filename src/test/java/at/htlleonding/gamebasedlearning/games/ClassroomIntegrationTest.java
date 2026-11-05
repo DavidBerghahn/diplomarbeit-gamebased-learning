@@ -25,6 +25,7 @@ class ClassroomIntegrationTest {
     @Inject ObjectMapper mapper;
     @Inject EntityManager em;
     @Inject UserService users;
+    @Inject PublicGameView publicView;
 
     private AppUser user(UserRole role) {
         AppUser user = new AppUser();
@@ -214,13 +215,14 @@ class ClassroomIntegrationTest {
     @Test void storedCreateMineCopyAndStatusContractsUseOwnership() {
         AppUser owner=user(UserRole.TEACHER), stranger=user(UserRole.TEACHER);
         GameResource resource=new GameResource();resource.repository=games;resource.userService=users;
+        resource.publicView=publicView;
         resource.authProvider=auth(owner);resource.mapper=mapper;
         Game input=game("Smart10",owner);
         Game created=(Game)resource.create(null, inputCopy(input)).getEntity();
         assertTrue(resource.mine(null).stream().anyMatch(g->g.id.equals(created.id)));
         QuarkusTransaction.requiringNew().run(()->resource.status(null,created.id,new GameResource.StatusRequest("PRIVATE")));
         em.clear(); // Direct resource calls share this test context; HTTP requests do not.
-        assertFalse(resource.findAll().stream().anyMatch(g->g.id.equals(created.id)));
+        assertFalse(resource.findAll().stream().anyMatch(g->g.path("id").asText().equals(created.id)));
         Game copied=resource.copy(null,created.id);
         assertNotEquals(created.id,copied.id);assertEquals("PRIVATE",copied.visibility);
         resource.authProvider=auth(stranger);

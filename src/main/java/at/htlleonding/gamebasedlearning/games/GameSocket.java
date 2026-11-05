@@ -29,6 +29,9 @@ public class GameSocket {
     @Inject
     Smart10Tickets tickets;
 
+    @Inject
+    PublicGameView publicView;
+
     @OnTextMessage
     @Blocking
     public String onMessage(String message, WebSocketConnection connection) throws JsonProcessingException {
@@ -51,8 +54,10 @@ public class GameSocket {
             }
 
             return switch (type) {
-                case "get_games" -> response(requestId, "games", gameRepository.findAll().stream().filter(GameAccess::publicGame).toList());
-                case "get_games_by_type" -> response(requestId, "games", gameRepository.findByType(request.path("gameType").asText()).stream().filter(GameAccess::publicGame).toList());
+                case "get_games" -> response(requestId, "games", gameRepository.findAll().stream()
+                        .filter(GameAccess::publicGame).map(publicView::of).toList());
+                case "get_games_by_type" -> response(requestId, "games", gameRepository.findByType(request.path("gameType").asText()).stream()
+                        .filter(GameAccess::publicGame).map(publicView::of).toList());
                 case "get_game" -> gameResponse(requestId, request.path("id").asText());
                 default -> error(requestId, "Unbekannter WebSocket-Befehl: " + type);
             };
@@ -95,7 +100,7 @@ public class GameSocket {
         return gameRepository.findById(id).filter(GameAccess::publicGame)
                 .map(game -> {
                     try {
-                        return response(requestId, "game", game);
+                        return response(requestId, "game", publicView.of(game));
                     } catch (JsonProcessingException e) {
                         throw new IllegalStateException(e);
                     }

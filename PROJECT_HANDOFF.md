@@ -2,6 +2,30 @@
 
 Stand: 5. November 2026
 
+## Just-One-Zielwortschutz: Bugfix am 5. November
+
+- Normale HTTP-Spielabrufe (Listen, Gruppierung, Typfilter, Details) und WebSocket-Katalogbefehle verwenden für Just One nun `PublicGameView`: keine Zielwörter/Antwortoptionen oder Kartenlösungen, aber unveränderte Metadaten und korrekt ermittelte Spielbarkeit. Die Projektion verändert keine gespeicherten Inhalte; der Raumdienst nutzt weiterhin vollständige Inhalte.
+- Der Editor verlangt Besitzer-/Adminrecht. Für den schon erlaubten Autoren-Fragenimport dient der getrennte Endpunkt `GET /api/games/{id}/library`: nur aktive Lehrkräfte/Admins, öffentliche oder berechtigt zugängliche private Spiele, keine automatische persistente Kopie beim Lesen. `CreateGame.loadLibrary()` nutzt diesen Weg. Anonyme/Schüler und fremde private Inhalte bleiben ausgeschlossen.
+- Umsetzung durch bestehenden Coder-Chat, unabhängige Prüfung durch bestehenden Reviewer-Chat; beide Delegationen funktionierten. Nach einer Korrekturrunde wegen des zunächst gebrochenen Fragenübernahme-Workflows kein wesentlicher Restbefund im geprüften Umfang. Regressionstests prüfen öffentliche HTTP-/Socket-Wege, geschützte Autorenwege, Kopieren/Bearbeiten und unveränderte gespeicherte Zielwörter.
+- Lokal: 70 Backendtests, davon 63 erfolgreich ausgeführt und sieben PostgreSQL-Tests mangels Instanz übersprungen; 75 Frontendtests, Frontendbuild, Backend-Paketbau, OpenSpec-Validierung und Diff-Prüfung erfolgreich. Kein Schemawechsel. Der folgende GitHub-Lauf und der beauftragte LeoCloud-Rollout werden separat bestätigt.
+
+## Folge-Rollout am 5. November, 09:50 Uhr (Europe/Vienna)
+
+- Auf Davids Auftrag aktuellen `main` per Fast-forward auf `bcd2a56efa2e1468384bd8098490a65af88bcb38` aktualisiert und ausgerollt. Die lokalen Notizen zum ersten Rollout wurden vor dem Pull gezielt gestasht und unten wieder eingefügt; der Sicherungs-Stash bleibt erhalten. `docs/Datenmodell1.png` unverändert.
+- GitHub-Actions-Lauf `41996849777` erfolgreich einschließlich Backend-/PostgreSQL-/Frontendprüfung und Imagebau. OCI-Revision geprüft; Deployment verwendet nun `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning@sha256:2265e4dd91a23b27450c2ea83f7f1beb569087b89ea326b90d56d57dadb5f4b4`.
+- Cloud-Backup vor dem Neustart lokal und nicht in Git: `/Users/davidberghahn/.codex/backups/gamebased-rollout-bcd2a56-20261105/before-rollout.dump`. Keine neue Migration; Flyway V1–V4 weiterhin erfolgreich. Bestehende Einstellungen für Persistenz und ausgeschaltete automatische Migration erhalten; zusätzlich `SAMPLE_GAMES_ENABLED=true` live gesetzt.
+- Rollout erfolgreich: eine bereite Instanz ohne Neustarts. Öffentliches `/api/health` meldet Backend und Datenbank `UP`, Startseite HTTP 200. Beide Detailendpunkte für `sample-smart10-programming` und `sample-just-one-programming` liefern HTTP 200, `status=PUBLIC` und `spielbar=true`. Ein kurzfristiges HTTP 503 während des Start-/Routingwechsels ist anschließend nicht mehr aufgetreten. Vollständige Runden mit echtem Schullogin wurden nicht manuell geprüft.
+
+## LeoCloud-Rollout am 5. November, 09:22 Uhr (Europe/Vienna)
+
+- David beauftragte ausdrücklich Pull und Rollout. Hauptcheckout per Fast-forward auf `ef24c2865fdd008568dbe55a1e1a3060724b92ba` aktualisiert; die unversionierte `docs/Datenmodell1.png` blieb unangetastet. Frühere Aussagen unten über einen nicht erfolgten Cloud-Rollout gelten für ihren damaligen Zeitpunkt.
+- GitHub-Actions-Lauf `41992882580` für diesen Commit war erfolgreich: H2, PostgreSQL, Frontend und Imagebau. Der zusätzliche lokale Backend-Paketbau mit ausgelassenen Tests bestand ebenfalls.
+- Cloud-Bestand vor Migration: fünf Legacy-Tabellen ohne Flyway-Historie. Der bestehende sichtbare Reviewer-Chat prüfte den Schemaexport unabhängig gegen V1 und bestätigte Gleichwertigkeit; diese Delegation funktionierte. Backup in restriktivem lokalen Verzeichnis `/Users/davidberghahn/.codex/backups/gamebased-20261105/`, nicht in Git. Wiederherstellung und ausdrückliche Baseline 1 mit Migration V2–V4 wurden zuerst in einer lokalen Wegwerf-PostgreSQL-Kopie geprüft.
+- Danach altes Backend auf null Instanzen gesetzt, abschließendes Backup erstellt und Cloud-Datenbank ausdrücklich auf Version 1 gebaselined sowie V2–V4 mit der Projekt-Flyway-Version migriert. Alle vier Historieneinträge erfolgreich. Fingerprints sämtlicher ursprünglicher Spaltenwerte und Zeilenzahlen blieben nach Migration unverändert: sieben Benutzer, zwei Spiele, eine Frage, zwei Antwortoptionen und vier Branch-Zuordnungen. Keine Beispiele in Prod angelegt und keine Bestandsdaten gelöscht.
+- Deployment `student-it220269/gamebased-learning-api` verwendet eine Replica, Strategie `Recreate` und das unveränderliche Image `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning@sha256:87fa050cb2edc8ffd37c74d6cd5d1d95207aa1d92cd5407d1fd43f814a8eb450`; OCI-Revision stimmt mit `ef24c28` überein. `SMART10_PERSISTENCE_ENABLED=true`, `FLYWAY_PROD_MIGRATE=false`; automatische Baseline bleibt deaktiviert. Diese Einstellungen wurden live gesetzt und stehen nicht vollständig im unveränderten Standardmanifest. Ein späteres blindes `kubectl apply` ist daher kein identischer Rollout.
+- Nachweis: Kubernetes-Rollout erfolgreich, eine bereite Instanz; öffentliches `/api/health` meldet `status=UP` und `database=UP`, Startseite HTTP 200, Statistik-API ohne Anmeldung HTTP 401. Echte Schul-Logins, Solo-/Mehrspielerabschlüsse und Klassenstatistik mit angemeldeten Konten wurden dabei nicht manuell durchgespielt.
+- Kein ungeschütztes Downgrade auf das alte Backend: Das Schema und der Zugriffsschutz haben sich geändert. Vor einem Rückfall das geprüfte Backup und einen dazu passenden Image-/Schema-Stand verwenden. Die historischen OpenSpec-Aufgaben sind durch diesen Rollout nicht automatisch vollständig verifiziert oder archiviert.
+
 ## Gespeicherte Beispiele für den nächsten Teampartner-Rollout
 
 Nach der Prüfung des leeren öffentlichen LeoCloud-Katalogs hat der Nutzer

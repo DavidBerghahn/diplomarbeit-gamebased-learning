@@ -81,7 +81,7 @@ export class CreateGame implements OnInit {
   async loadLibrary(): Promise<void> {
     try {
       const game = await this.api.request<Game>(
-        '/api/games/' + encodeURIComponent(this.selectedGameId) + '/editor',
+        '/api/games/' + encodeURIComponent(this.selectedGameId) + '/library',
       );
       if (game.spiel_typ !== (this.justOne ? 'JustOne' : 'Smart10'))
         throw new Error('Bitte passenden Spieltyp auswählen.');

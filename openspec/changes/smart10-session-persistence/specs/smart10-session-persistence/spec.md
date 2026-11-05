@@ -165,6 +165,18 @@ Just One SHALL synchronisierte Räume mit mindestens zwei Personen pro Team und 
 - **WHEN** der Ratende eine Nummer auswählt
 - **THEN** erhalten nur die anderen Verbindungen den Zielbegriff; der Ratende wartet auf die Hinweise
 
+#### Scenario: Allgemeine Spielabrufe verraten keine Zielwörter
+- **WHEN** ein Just-One-Spiel über normale HTTP-Listen, gruppierte Listen, Typfilter oder Details sowie über die entsprechenden WebSocket-Katalogbefehle geladen wird
+- **THEN** enthält die Antwort keine Zielwörter oder alternativen Lösungsfelder; Metadaten und die aus vollständigen Inhalten ermittelte Spielbarkeit bleiben erhalten und die gespeicherten Inhalte bleiben unverändert
+
+#### Scenario: Geschützter Autoreninhalt
+- **WHEN** der Editor-Vollinhalt eines Just-One-Spiels angefordert wird
+- **THEN** erhalten nur der aktive berechtigte Besitzer oder Admin die Zielwörter; nach erlaubtem Kopieren eines öffentlichen Spiels kann der neue Besitzer seine eigene Kopie bearbeiten
+
+#### Scenario: Autorisierte Fragenübernahme
+- **WHEN** eine aktive Lehrkraft oder ein Admin ausdrücklich Fragen eines zugänglichen öffentlichen oder eigenen Spiels zur Wiederverwendung lädt
+- **THEN** erhält der geschützte Autorenweg die vollständigen benötigten Inhalte ohne automatische dauerhafte Kopie beim bloßen Vorschau-Lesen; anonyme Personen, Schüler und unberechtigte Zugriffe auf fremde private Spiele werden abgewiesen und normale Spielabrufe bleiben redigiert
+
 #### Scenario: Nachträgliche Korrektur
 - **WHEN** der ursprüngliche Host einen bereits gespeicherten gültigen Versuch zweimal ungültig macht
 - **THEN** sinken Team- und Mitgliederscores nur einmal und Klassenstatistiken zeigen den korrigierten Wert
