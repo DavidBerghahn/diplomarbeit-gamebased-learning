@@ -2,12 +2,14 @@
 
 Stand: 5. November 2026
 
-## Klassenstatistik für Schüler: Veröffentlichung beauftragt
+## Klassenstatistik für Schüler: live am 5. November, 11:05 Uhr
 
 - David bestätigt ausdrücklich, dass Schüler **alle Klassen wie Lehrkräfte** lesen dürfen. Auf Basis `c187223` sind der Statistik-Leseendpunkt, die authentifizierte Route und der Navigationslink entsprechend geöffnet. Filter, Summen, Schülerverläufe und DTO-Inhalte bleiben unverändert; keine Migration.
 - Klassen zuordnen und sonstige Verwaltungsaktionen bleiben ausschließlich aktiven Lehrkräften/Admins vorbehalten. Für Schüler fehlen die entsprechenden UI-Formulare und Aufforderungen; `assignClass()` sendet keinen PUT. Der bestehende Backend-Schreibschutz bleibt unverändert. Ohne Anmeldung bleibt Statistikzugriff gesperrt, inaktive Konten erhalten 403.
 - Bestehender Coder-Chat hat umgesetzt; bestehender Reviewer-Chat meldet in der gezielten Rechteprüfung keinen wesentlichen Restbefund. Beide Delegationen funktionierten. Lokal 70 Backendtests, davon 63 erfolgreich ausgeführt und sieben PostgreSQL-Tests mangels Instanz übersprungen; 79 Frontendtests, Frontendbuild, Diff- und OpenSpec-Prüfung erfolgreich. Neues Lesen über Klassengrenzen sowie unveränderte Schreibsperren sind in den Tests enthalten.
-- David hat Commit, GitHub-Push und LeoCloud-Rollout ausdrücklich freigegeben. Veröffentlichung erfolgt nach erfolgreichem GitHub-Lauf mit dem geprüften Image; der tatsächliche Live-Nachweis wird anschließend ergänzt. Die neue fachliche Entscheidung ist in `docs/datenmodell-entscheidungen.md` und im bestehenden Smart10-Change festgehalten.
+- David hat Commit, GitHub-Push und LeoCloud-Rollout ausdrücklich freigegeben. Codecommit `b6d3469daac542074155c85361bfd91d33aad197` ist nach erfolgreichem GitHub-Lauf `42007009635` (Backend/H2, PostgreSQL, Frontend und Imagebau) auf LeoCloud ausgerollt. OCI-Revision geprüft; aktives Image `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning@sha256:4c77fcb5aa607db40c7e9fdf411349ec72604d0a4c9f42083b62bcedc4a82876`.
+- Live-Nachweis: eine bereite Instanz ohne Neustarts, Backend und Datenbank `UP`, Startseite HTTP 200, Statistik-API ohne Anmeldung HTTP 401. Kurzzeitiges HTTP 503 beim Start-/Routingwechsel ist anschließend nicht mehr aufgetreten. Der Zugriff als echter Schüler wurde nicht manuell mit Schul-Login durchgespielt; die Rollenfälle sind durch automatisierte Tests und Review belegt.
+- Kein Schemawechsel; bestehende Deployment-Schalter erhalten. Backup außerhalb Git: `/Users/davidberghahn/.codex/backups/gamebased-student-statistics-20261105/before-rollout.dump`. Die neue fachliche Entscheidung ist in `docs/datenmodell-entscheidungen.md` und im bestehenden Smart10-Change festgehalten.
 
 ## Just-One-Zielwortschutz: Bugfix am 5. November
 
