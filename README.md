@@ -131,6 +131,11 @@ Dieses Projekt ist für ein LeoCloud-Deployment vorbereitet.
 - Image: `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning:latest`
 - Datenbank-Service: `gamebased-learning-postgres`
 
+Beim nächsten Start legt das Backend die zwei freigegebenen gespeicherten
+Programmier-Beispiele für Smart10 und Just One an, falls ihre IDs noch fehlen.
+Details und die notwendige Spielfreischaltung `SMART10_PERSISTENCE_ENABLED=true`
+stehen in [der Rollout-Anleitung](docs/classroom-todos-implementation.md#freigegebene-beispielspiele-für-den-nächsten-rollout-5-november-2026).
+
 Deployment:
 
 ```bash

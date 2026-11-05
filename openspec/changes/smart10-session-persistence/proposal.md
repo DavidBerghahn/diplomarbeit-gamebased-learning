@@ -2,6 +2,8 @@
 
 ## Accepted scope update
 
+Der Nutzerauftrag vom 5. November 2026 gibt zusätzlich genau zwei gespeicherte öffentliche Beispielspiele für die spätere LeoCloud-Bereitstellung frei: `sample-smart10-programming` und `sample-just-one-programming`. Die Dateien werden committed und gepusht; der Teampartner führt den Rollout aus. Die Anlage dieser gespeicherten Beispiele ist eine ausdrückliche Ausnahme von der bisherigen Beschränkung produktiver Beispieldaten, keine Aktivierung alter Entwicklungs-Demos. Bestehende Einträge und Ergebnisse bleiben erhalten. Der produktive Spiel-/Speicherschalter und die Schemafreigabe bleiben separate Rollout-Einstellungen.
+
 Der Nutzerauftrag vom 4. November 2026 erweitert diesen Change: Host-Mitspielen ist für alle Rollen per Toggle erlaubt, einschließlich Lehrer; ausschließlich beobachtende Hosts erhalten weiterhin keine Punkte. Diese ausdrückliche Freigabe ersetzt die frühere Lehrer-Sperre und den generellen Host-Ausschluss in den historischen Abschnitten unten. Zusätzlich gehören Raumlaufzeit, Teamverwaltung, Just-One-Multiplayer, CSV-Import, die tatsächlich angebundene Spielerstellung und Klassenstatistik zum Auftrag. Die Umsetzung erfolgt im Supervisor-Chat auf ausdrücklichen Wunsch des Nutzers. Commit und GitHub-Push sind beauftragt, LeoCloud-Rollout und Cloud-Datenänderungen nicht.
 
 ## Why

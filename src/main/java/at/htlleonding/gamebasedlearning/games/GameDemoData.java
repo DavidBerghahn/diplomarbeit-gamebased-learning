@@ -16,14 +16,16 @@ public class GameDemoData {
     @ConfigProperty(name = "gamebased.demo-data.enabled", defaultValue = "false")
     boolean demoDataEnabled;
 
+    @ConfigProperty(name = "gamebased.sample-games.enabled", defaultValue = "false")
+    boolean sampleGamesEnabled;
+
     @Inject
     GameRepository gameRepository;
 
     @Transactional
     void seed(@Observes StartupEvent event) {
-        if (!demoDataEnabled) return;
-        if (gameRepository.findAll().isEmpty()) seedLegacy();
-        seedPlayableSamples();
+        if (demoDataEnabled && gameRepository.findAll().isEmpty()) seedLegacy();
+        if (sampleGamesEnabled) seedPlayableSamples();
     }
 
     private void seedLegacy() {
@@ -104,7 +106,7 @@ public class GameDemoData {
     private Game sample(String id, String type, String name) {
         Game game = new Game();
         game.id=id; game.gameType=type; game.name=name; game.teacher="Beispielspiel";
-        game.description="Vollständiges lokales Beispielspiel zum Ausprobieren.";
+        game.description="Vollständiges gespeichertes Beispielspiel zum Ausprobieren.";
         game.subject="Programmieren"; game.creationDate=LocalDate.now();
         return game;
     }

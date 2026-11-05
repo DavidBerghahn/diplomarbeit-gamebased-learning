@@ -123,6 +123,52 @@ bei fehlender Datenbankverbindung HTTP 503.
 
 ## Späterer manueller LeoCloud-Rollout
 
+### Freigegebene Beispielspiele für den nächsten Rollout (5. November 2026)
+
+Der Nutzer hat ausdrücklich die Bereitstellung dieser zwei gespeicherten Spiele
+beauftragt. Der Teampartner übernimmt den Rollout nach erfolgreichem GitHub-Build:
+
+- `sample-smart10-programming`: **Programmieren: Smart10 zum Ausprobieren**,
+  eine zentrale Frage mit zwölf Wahr/Falsch-Karten.
+- `sample-just-one-programming`: **Programmieren: Just One zum Ausprobieren**,
+  eine Karte mit fünf Programmierbegriffen (mindestens zwei Personen pro Team).
+
+Das neue Image legt fehlende Beispiele beim Start über den versionierten
+Schreibadapter an. In Prod ist `gamebased.sample-games.enabled` dafür standardmäßig
+aktiv; mit `SAMPLE_GAMES_ENABLED=false` lässt sich die Anlage abschalten.
+Die alten Entwicklungs-Demos bleiben in Prod deaktiviert. Vorhandene Einträge
+werden weder überschrieben noch dupliziert oder erneut veröffentlicht.
+
+Für das tatsächliche Spielen und Speichern muss im bestehenden Deployment
+weiterhin **`SMART10_PERSISTENCE_ENABLED=true`** gesetzt sein. Die automatische
+Beispielanlage aktiviert diesen getrennten Schalter nicht. Das bestehende Schema
+V1–V4 muss vor dem Start bereitstehen; dieser Folgeauftrag ergänzt keine Migration.
+Die folgenden Migrationsschritte sind nur erforderlich, soweit sie im Cluster
+noch nicht abgeschlossen wurden.
+
+Falls die Spielfreischaltung noch fehlt, kann der Teampartner sie nach dem
+erfolgreichen Imagebuild setzen (löst einen Rollout aus):
+
+```bash
+kubectl set env deployment/gamebased-learning-api -n student-it220269 SMART10_PERSISTENCE_ENABLED=true
+kubectl rollout status deployment/gamebased-learning-api -n student-it220269
+```
+
+Ist der Schalter bereits gesetzt, genügt für das neue Image der bisherige
+Rollout-Neustart. Die automatisch angelegten Beispiele bleiben bei weiteren
+Neustarts unverändert bestehen.
+
+Nach dem Rollout `/api/health` sowie
+`/api/games/sample-smart10-programming` und
+`/api/games/sample-just-one-programming` auf der LeoCloud-Adresse prüfen.
+Neue Beispielrunden werden bei regulärem Abschluss wie andere gespeicherte
+Runden gewertet; lokale Frontend-Demos bleiben davon getrennt ungespeichert.
+Lokal geprüft: Maven-Paketbau und 62 ausgeführte Backendtests erfolgreich, davon
+drei neue Beispieltests; sieben PostgreSQL-Migrationstests mangels Testinstanz
+übersprungen. Das ist kein Nachweis eines bereits durchgeführten Cloud-Rollouts.
+
+### Allgemeiner Ablauf
+
 Hier wurde kein kubectl-Befehl und kein Zugriff auf die Cloud-Datenbank ausgeführt.
 Das bestehende Manifest verwendet DATABASE_JDBC_URL und Secret-Referenzen; sein
 PostgreSQL-Service heißt gamebased-learning-postgres. Es ist eine aktive Backendinstanz

@@ -2,6 +2,8 @@
 
 ## Accepted scope update
 
+Am 5. November gibt der Nutzer die beiden gespeicherten Programmier-Beispiele für den Produktionsstart ausdrücklich frei. `gamebased.sample-games.enabled` steuert ihre Anlage getrennt von `gamebased.demo-data.enabled`. In Prod ist die Anlage der zwei Beispiele standardmäßig aktiv und kann mit `SAMPLE_GAMES_ENABLED=false` abgeschaltet werden. Bestehende IDs werden einschließlich gelöschter Einträge nicht erneut angelegt, verändert oder veröffentlicht. Angelegt wird über den bestehenden versionierten Schreibadapter innerhalb der Starttransaktion. Alte Legacy-Demos bleiben nur Dev/Test vorbehalten. Die getrennte Spielfreischaltung `SMART10_PERSISTENCE_ENABLED` bleibt unverändert; beim späteren Rollout ist sie für spielbare gespeicherte Runden ausdrücklich zu setzen.
+
 Der Auftrag vom 4. November 2026 ersetzt die früheren Beschränkungen zu Host- und Lehrer-Teilnahme in den historischen Designabschnitten: Ein Host entscheidet bei Erstellung per Toggle über aktive Teilnahme. Aktive Hosts, auch Lehrer, werden als normale Teammitglieder gewertet; beobachtende Hosts bleiben aus Teilnehmerergebnissen ausgeschlossen. Die Ausnahme gilt nur im internen verifizierten Spiel-Speicherweg, nicht für frei übergebene Ergebnisse.
 
 Der gemeinsame synchronisierte Raumdienst bedient Smart10 und Just One über ticketgebundene WebSockets. Eine einzelne aktive Backendinstanz reserviert Codes unter demselben Lock wie die Raumerstellung; das vorbereitete Kubernetes-Manifest verwendet eine Replica und Recreate, damit beim späteren Rollout keine zwei In-Memory-Instanzen gleichzeitig Codes/Tickets ausstellen. Raumablauf gilt 24 Stunden nach Erstellung auch während des Spiels; Neustarts und Verbindungsabbruch schließen Räume. Ein serverseitiger Takt führt reguläre Smart10-Zugtimeouts ohne Clientbefehl aus. Der Host wählt 5–120 Sekunden, Standard 20.
@@ -41,7 +43,7 @@ Siehe `proposal.md` und `specs/smart10-session-persistence/spec.md`. Der Hauptch
 
 - Keine neue allgemeine Spieltypen-Metatabellenarchitektur, Punkte- oder Levelkurve, Top-3-Bonus, Leaderboard- oder KI-Funktion.
 - Keine private Schüler-Einladung, aktive Lehrerrolle im Multiplayer, Lobby-Wiederaufnahme nach Verbindungsabbruch oder Änderung des offenen Access-Changes.
-- Keine automatische produktive Demo-Saat, keine rückwirkende Erfindung historischer Smart10-Karten aus untypisierten Legacy-Optionen und keine produktive Migration durch diesen Planungsauftrag.
+- Keine automatische produktive Anlage alter Entwicklungs-Demos; ausgenommen sind die am 5. November ausdrücklich freigegebenen zwei gespeicherten Beispielspiele. Keine rückwirkende Erfindung historischer Smart10-Karten aus untypisierten Legacy-Optionen und keine produktive Migration durch diesen Planungsauftrag.
 
 ## Decisions
 
@@ -51,7 +53,7 @@ V1/V2 bleiben unverändert. Eine additive V3-Migration je H2 und PostgreSQL erg�
 
 Für bestehende `player_answers` setzt V3 `answer_slot_key = 'question'` und `smart10_card_id = NULL`. Für eine Smart10-Karte bildet ausschließlich der interne Speicherdienst `answer_slot_key = 'card:' + smart10_card_id` und speichert `smart10_card_id`. Ein `CHECK` begrenzt `NULL` auf `question` und nicht-`NULL` auf das Kartenpräfix; `UNIQUE(participant_id, question_version_id, answer_slot_key)` ersetzt die alte Eindeutigkeit. Der genaue Suffixwert wird im Dienst aus der UUID gebildet und validiert, weil eine portable SQL-Cast-Regel dafür nicht vorausgesetzt wird. Ein zusammengesetzter FK `(question_version_id, smart10_card_id)` auf `smart10_cards(question_version_id, id)` verhindert eine Karte aus einer anderen Frageversion. Der Dienst lehnt kartenlose Antworten zu Smart10-Fragen und Kartenantworten zu anderen Spieltypen ab. Für Nicht-Smart10 bleibt der `question`-Slot und damit eine Antwort pro Frage. Die serverseitige Snapshot-Prüfung schließt zusätzlich Karten außerhalb der gespielten Spielversion aus. Das kanonische `payload_hash` enthält Karten-ID und Slot, damit ein Retry mit geänderter Karte nicht als identisch gilt. Die Alternative, zwölf Antworten in einer JSON-Antwort pro Gruppenfrage zusammenzufassen, würde Kartenidentität und individuelle Antwortzeiten unzugänglich machen und wird verworfen.
 
-Vorhandene `answer_options` und `single_choice`-Bestände werden nicht in Smart10-Karten umgedeutet. Eine gespeicherte Smart10-Version ohne vollständige und passende zwölf Karten je Frage wird beim Start abgelehnt. Demodaten bleiben im Frontend explizit lokal und ungespeichert. Produktive automatische Demo-Saat ist ausgeschlossen.
+Vorhandene `answer_options` und `single_choice`-Bestände werden nicht in Smart10-Karten umgedeutet. Eine gespeicherte Smart10-Version ohne vollständige und passende zwölf Karten je Frage wird beim Start abgelehnt. Lokale Frontend-Demos bleiben explizit ungespeichert. Nur die zwei ausdrücklich freigegebenen gespeicherten Beispielspiele werden über den getrennten Schalter auch in Prod angelegt.
 
 ### Server als Quelle von Inhalt und Bewertung
 
@@ -91,7 +93,7 @@ Ein serverseitiges, standardmäßig für Prod ausgeschaltetes Smart10-Persistenz
 ## Migration Plan
 
 1. V1/V2 unverändert lassen. V3 für H2 und PostgreSQL auf leeren Datenbanken sowie auf Kopien befüllter V2-Datenbanken prüfen. `smart10_cards` additiv anlegen; vorhandene `player_answers` mit `answer_slot_key='question'` backfillen, dann Nicht-NULL, CHECK, neue UNIQUE- und zusammengesetzte FK-Regeln aktivieren. Alte Antwort-IDs, Inhalte und Zeitpunkte vor/nach Migration vergleichen.
-2. Server-Lese-/Schreibpfade, Kartenvalidierung und Testdaten für gespeicherte Smart10-Versionen ergänzen. Keine produktive Demo-Saat und keine Ableitung typisierter Lösungen aus unklaren Bestandsoptionen. Kopie, Versionierung, Löschung und historische Antworten auf beiden Datenbanken prüfen.
+2. Server-Lese-/Schreibpfade, Kartenvalidierung und Testdaten für gespeicherte Smart10-Versionen ergänzen. Keine produktive Anlage alter Entwicklungs-Demos und keine Ableitung typisierter Lösungen aus unklaren Bestandsoptionen. Die zwei am 5. November freigegebenen gespeicherten Beispiele bleiben eine getrennt konfigurierte Ausnahme. Kopie, Versionierung, Löschung und historische Antworten auf beiden Datenbanken prüfen.
 3. Solo- und Multiplayer-Transport zusammen mit dem Frontend umstellen, Ticketbindung und Serverbewertung integrieren. Unter Dev/Test-Flag regulären Abschluss, Nullpunkte, Fehler/Retry und Abbruch auf einer echten Wegwerf-PostgreSQL-Datenbank sowie H2 prüfen; Frontend-Tests und Build ausführen.
 4. Für eine spätere produktive Freischaltung den separaten Access-Change, die tatsächlich laufenden Migrationen, Rollout-Reihenfolge, Sicherung/Restore, Ticket-/Instanzrouting und Nutzerzugriff nachweisen. Bis dahin bleibt das Prod-Flag aus. Ein Rollback nach V3 belässt additive Daten zunächst bestehen; alten Code nur nach geprüftem Schema- und Zugriffszustand starten. Diese Planung führt keinen Rollout aus.
 

@@ -59,6 +59,17 @@ Eine persistierbare Smart10-Runde SHALL aus einem serverseitig geladenen, berech
 - **WHEN** die Person ausdrücklich den lokalen Demopfad wählt
 - **THEN** wird diese Runde ausdrücklich als Demo ohne dauerhaftes Ergebnis angezeigt
 
+### Requirement: Freigegebene gespeicherte Beispiele für den Produktionsstart
+Die beiden ausdrücklich freigegebenen Spiele `sample-smart10-programming` und `sample-just-one-programming` SHALL bei aktivem `gamebased.sample-games.enabled` als öffentliche versionierte Spiele angelegt werden. Dieser Schalter SHALL unabhängig von den alten Entwicklungs-Demos sein und in Prod standardmäßig aktiv sein; `SAMPLE_GAMES_ENABLED=false` SHALL die Anlage abschalten können. Existierende IDs einschließlich gelöschter Einträge MUST unverändert bleiben. Ein Neustart MUST weder Duplikate noch neue Versionen vorhandener Beispiele erzeugen. Diese Anlage MUST weder Migrationen noch die produktive Spielfreischaltung automatisch aktivieren.
+
+#### Scenario: Produktionsstart ohne Entwicklungs-Demos
+- **WHEN** Beispieldaten aktiviert und alte Entwicklungs-Demos deaktiviert sind
+- **THEN** werden ausschließlich die beiden vollständigen gespeicherten Programmier-Beispiele hinzugefügt und können über den normalen öffentlichen Spielekatalog geladen werden
+
+#### Scenario: Beispiel nach Bearbeitung erneut starten
+- **WHEN** der Server nach einer Bearbeitung oder nach gespeicherten Ergebnissen neu startet
+- **THEN** bleiben Spielinhalt, Versionen und vorhandene Ergebnisse erhalten; eine regulär gespielte Beispielrunde nutzt denselben Ergebnisdienst wie andere gespeicherte Spiele
+
 ### Requirement: Verifizierte Identität für persistierte Spielaktionen
 Persistierbare Smart10-Runden SHALL Host und aktive Teilnehmer an ihre validierte Schul-Keycloak-Identität und vorhandene Anwendungsbenutzer binden. Eine WebSocket-Verbindung SHALL vor Spielaktionen eine kurzlebige, einmalige serverseitig ausgestellte Berechtigung annehmen; abgelaufene, wiederverwendete oder anonyme Zugriffe MUST abgewiesen werden. Verbindungskennungen, Anzeigenamen und Client-Claims SHALL keine Benutzeridentität ersetzen. Die bestehende Erneuerung des Logins SHALL vor einer neuen Verbindung genutzt werden können, ohne Bearer-Tokens in WebSocket-URLs offenzulegen.
 

@@ -2,6 +2,33 @@
 
 Stand: 5. November 2026
 
+## Gespeicherte Beispiele für den nächsten Teampartner-Rollout
+
+Nach der Prüfung des leeren öffentlichen LeoCloud-Katalogs hat der Nutzer
+ausdrücklich beauftragt, die beiden gespeicherten Beispiele für den nächsten
+Rollout vorzubereiten, zu committen und zu pushen. Der Teampartner übernimmt
+den Rollout; hier wird kein Zugriff auf die Cloud-Datenbank ausgeführt.
+
+`gamebased.sample-games.enabled` trennt die vollständigen Beispiele
+`sample-smart10-programming` und `sample-just-one-programming` von der alten
+Entwicklungs-Saat. In Prod ist ihre Anlage jetzt standardmäßig aktiv; mit
+`SAMPLE_GAMES_ENABLED=false` kann sie deaktiviert werden. Fehlende IDs werden
+über den versionierten Schreibadapter angelegt. Existierende und gelöschte
+Einträge werden nicht überschrieben oder erneut veröffentlicht. Alte
+Legacy-Demos bleiben in Prod aus. Diese ausdrückliche Freigabe ersetzt nur
+für die beiden Beispiele die frühere Beschränkung produktiver Beispieldaten.
+
+Der bestehende Schalter `SMART10_PERSISTENCE_ENABLED=true` muss beim Rollout
+für das tatsächliche Spielen und Speichern gesetzt sein. Schemafreigabe und
+Migration werden durch die Beispielanlage nicht verändert. Details stehen in
+docs/classroom-todos-implementation.md im Abschnitt zum nächsten Rollout.
+
+Prüfung dieses Folgeauftrags: Maven-Paketbau einschließlich Tests erfolgreich,
+69 Tests insgesamt, davon 62 erfolgreich ausgeführt und sieben PostgreSQL-
+Migrationstests mangels Testinstanz übersprungen. Drei neue Tests prüfen Anlage
+ohne Legacy-Demos, unveränderte Versionen bei wiederholtem Start sowie den
+idempotenten gespeicherten Smart10-Abschluss. Kein Frontendcode geändert.
+
 ## Klassenstatistik am 5. November
 
 Ausgangspunkt dieses Folgeauftrags ist main b22af9a mit den unten beschriebenen
@@ -43,7 +70,9 @@ und ist kein vollständiges gespeichertes Smart10-Spiel. Er bleibt unverändert 
 wird aber über die additive API-Angabe spielbar=false/startHinweis nicht mehr als startbereit
 angeboten. Dev/Test ergänzen idempotent vollständige gespeicherte Programmierbeispiele
 sample-smart10-programming (zwölf Karten) und sample-just-one-programming (fünf Begriffe).
-Prod legt standardmäßig keine Beispiele an. Die Oberfläche zeigt API-Fehlermeldungen
+Die alte Entwicklungs-Saat bleibt in Prod deaktiviert; die spätere ausdrückliche
+Freigabe der zwei gespeicherten Beispiele ist im neuesten Abschnitt beschrieben.
+Die Oberfläche zeigt API-Fehlermeldungen
 ohne JSON-Hülle; Solo/Lobby verhindern den Start unvollständiger Inhalte.
 Kein Datenbankreset und keine Änderung vorhandener Migrationen.
 
