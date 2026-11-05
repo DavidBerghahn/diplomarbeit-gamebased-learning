@@ -1,12 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ApiService } from '../api.service';
+import { AuthService, UserProfile } from '../auth.service';
 import { Statistics } from './statistics';
 
 describe('Klassenstatistik', () => {
   let fixture: ComponentFixture<Statistics>;
   let component: Statistics;
   const api = { request: vi.fn() };
+  const auth = { loadProfile: vi.fn<() => Promise<UserProfile>>() };
+  const profile = (role: UserProfile['role']): UserProfile => ({
+    id: 'viewer', externalSubject: 'subject', username: 'viewer', displayName: 'Viewer', role, active: true,
+  });
   const play = (sessionId: string, score: number, finishedAt = '2026-11-05T12:00:00Z') => ({
     sessionId,
     score,
@@ -32,9 +37,10 @@ describe('Klassenstatistik', () => {
 
   beforeEach(async () => {
     api.request.mockReset().mockResolvedValue(students());
+    auth.loadProfile.mockReset().mockResolvedValue(profile('TEACHER'));
     await TestBed.configureTestingModule({
       imports: [Statistics],
-      providers: [provideRouter([]), { provide: ApiService, useValue: api }],
+      providers: [provideRouter([]), { provide: ApiService, useValue: api }, { provide: AuthService, useValue: auth }],
     }).compileComponents();
     fixture = TestBed.createComponent(Statistics);
     component = fixture.componentInstance;
@@ -130,5 +136,40 @@ describe('Klassenstatistik', () => {
       'Kein Zugriff',
     );
     expect(fixture.nativeElement.querySelector('.class-section')).toBeNull();
+  });
+
+  it('lets students read and filter every class without offering class assignment', async () => {
+    auth.loadProfile.mockResolvedValue(profile('STUDENT'));
+    const studentFixture = TestBed.createComponent(Statistics);
+    studentFixture.detectChanges();
+    await studentFixture.whenStable();
+    studentFixture.detectChanges();
+    const studentView = studentFixture.nativeElement as HTMLElement;
+    const studentComponent = studentFixture.componentInstance;
+    expect(studentView.querySelectorAll('.class-section')).toHaveLength(3);
+    expect(studentComponent.totalPoints()).toBe(30);
+    expect(studentView.textContent).not.toContain('Klassen zuordnen');
+    expect(studentView.textContent).not.toContain('Zuordnen');
+    expect(studentView.querySelector('.assignment')).toBeNull();
+    studentComponent.selectClass('4AHITM');
+    studentFixture.detectChanges();
+    expect(studentComponent.totalPoints()).toBe(3);
+    expect(studentView.querySelectorAll('.class-section')).toHaveLength(1);
+    const emil = studentComponent.students().find((s) => s.id === 'emil')!;
+    studentComponent.classInputs[emil.id] = '5BHITM';
+    const requestCount = api.request.mock.calls.length;
+    await studentComponent.assignClass(emil);
+    expect(api.request).toHaveBeenCalledTimes(requestCount);
+  });
+
+  it.each(['TEACHER', 'ADMIN'] as const)('keeps class assignment available to %s', async (role) => {
+    auth.loadProfile.mockResolvedValue(profile(role));
+    const managementFixture = TestBed.createComponent(Statistics);
+    managementFixture.detectChanges();
+    await managementFixture.whenStable();
+    managementFixture.detectChanges();
+    const view = managementFixture.nativeElement as HTMLElement;
+    expect(view.textContent).toContain('Klassen zuordnen');
+    expect(view.querySelector('.assignment')).not.toBeNull();
   });
 });

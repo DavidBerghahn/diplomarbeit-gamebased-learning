@@ -21,7 +21,7 @@ export const routes: Routes = [
   { path: 'kwizbattle', component: Quizbattle, canActivate: [authenticatedGuard] },
   { path: 'solo/:id', component: Solo, canActivate: [authenticatedGuard] },
   { path: 'home', component: Home, canActivate: [authenticatedGuard] },
-  { path: 'statistics', component: Statistics, canActivate: [teacherGuard] },
+  { path: 'statistics', component: Statistics, canActivate: [authenticatedGuard] },
   { path: 'hosted', component: HostedSessions, canActivate: [authenticatedGuard] },
   { path: 'games', component: Games, canActivate: [authenticatedGuard] },
   { path: 'myGames', component: MyGames, canActivate: [teacherGuard] },

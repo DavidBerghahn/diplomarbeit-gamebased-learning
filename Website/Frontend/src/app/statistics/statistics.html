@@ -1,6 +1,6 @@
 <main class="statistics-page">
   <nav><a routerLink="/home">← Startseite</a><a routerLink="/games">Alle Spiele</a></nav>
-  <span class="eyebrow">Lehrerbereich</span>
+  <span class="eyebrow">Spielübersicht</span>
   <h1>Klassenstatistik</h1>
   <p>Alle Schülerpunkte und Klassensummen aus abgeschlossenen Solo- und Multiplayer-Spielen.</p>
   <p class="hint">
@@ -25,7 +25,7 @@
     /></label>
     <button type="button" (click)="load()" [disabled]="loading()">Aktualisieren</button>
   </div>
-  @if (unassignedCount()) {
+  @if (canAssignClasses() && unassignedCount()) {
     <aside class="notice">
       <strong>{{ unassignedCount() }} Schüler ohne Klassenzuordnung</strong>
       <p>
@@ -35,9 +35,11 @@
       <button type="button" (click)="selectClass(unassignedClass)">Klassen zuordnen</button>
     </aside>
   }
-  <p class="success" role="status">{{ assignmentMessage() }}</p>
-  @if (assignmentError()) {
-    <p class="error" role="alert">{{ assignmentError() }}</p>
+  @if (canAssignClasses()) {
+    <p class="success" role="status">{{ assignmentMessage() }}</p>
+    @if (assignmentError()) {
+      <p class="error" role="alert">{{ assignmentError() }}</p>
+    }
   }
   @if (loading()) {
     <p role="status">Statistik wird geladen …</p>
@@ -85,7 +87,7 @@
                 <th scope="col">Spiele</th>
                 <th scope="col">Punkte</th>
                 <th scope="col">
-                  {{ group.name === unassignedClass ? 'Klassenzuordnung' : 'Verlauf' }}
+                  {{ group.name === unassignedClass && canAssignClasses() ? 'Klassenzuordnung' : 'Verlauf' }}
                 </th>
               </tr>
             </thead>
@@ -96,7 +98,7 @@
                   <td>{{ plays(student).length }}</td>
                   <td class="student-points">{{ points(student) | number: '1.0-0' }}</td>
                   <td>
-                    @if (group.name === unassignedClass) {
+                    @if (group.name === unassignedClass && canAssignClasses()) {
                       <form class="assignment" (ngSubmit)="assignClass(student)">
                         <label class="sr-only" [for]="'class-' + student.id"
                           >Klasse für {{ student.name }}</label
@@ -135,11 +137,13 @@
       <p>Keine Schüler in dieser Auswahl. Schüler erscheinen nach ihrem ersten Login.</p>
     }
   }
-  <datalist id="school-classes">
-    @for (name of assignableClasses(); track name) {
-      <option [value]="name"></option>
-    }
-  </datalist>
+  @if (canAssignClasses()) {
+    <datalist id="school-classes">
+      @for (name of assignableClasses(); track name) {
+        <option [value]="name"></option>
+      }
+    </datalist>
+  }
   @if (selected(); as student) {
     <section class="details">
       <h2>{{ student.name }} · {{ student.schoolClass }}</h2>

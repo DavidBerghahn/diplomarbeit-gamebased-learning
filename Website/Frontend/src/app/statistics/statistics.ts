@@ -3,6 +3,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../api.service';
+import { AuthService } from '../auth.service';
 
 interface Play {
   sessionId: string;
@@ -34,6 +35,8 @@ interface ClassSummary {
 })
 export class Statistics implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+  readonly canAssignClasses = signal(false);
   readonly unassignedClass = 'Ohne Klasse';
   readonly students = signal<Student[]>([]);
   readonly loading = signal(true);
@@ -83,6 +86,9 @@ export class Statistics implements OnInit {
   );
   ngOnInit(): void {
     void this.load();
+    void this.auth.loadProfile().then((profile) => {
+      this.canAssignClasses.set(!!profile?.active && (profile.role === 'TEACHER' || profile.role === 'ADMIN'));
+    }).catch(() => this.canAssignClasses.set(false));
   }
   selectClass(name: string): void {
     this.schoolClass.set(name);
@@ -103,6 +109,7 @@ export class Statistics implements OnInit {
     }
   }
   async assignClass(student: Student): Promise<void> {
+    if (!this.canAssignClasses()) return;
     if (this.assigning()) return;
     this.assignmentError.set('');
     this.assignmentMessage.set('');

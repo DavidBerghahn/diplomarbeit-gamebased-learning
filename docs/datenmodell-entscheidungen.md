@@ -99,3 +99,7 @@ Just-One-Hosts dürfen ungültige Versuche nachträglich löschen und den jeweil
 Punkt zurücknehmen. Diese Freigaben ersetzen für diesen Auftrag die früheren offenen
 oder entgegenstehenden Aussagen zu Lehrer-Teilnahme und Host-Ausschluss.
 Der Cloud-Rollout bleibt ausdrücklich ausgeschlossen.
+
+## Ergänzung vom 5. November 2026: Lesende Klassenstatistik für Schüler
+
+David bestätigt ausdrücklich: Schüler dürfen **alle Klassen wie Lehrkräfte** in der Klassenstatistik sehen. Die Freigabe gilt für aktive angemeldete Konten und umfasst die bestehende lesende Auswertung mit Schülern, Punkten, Spielhäufigkeiten und Mitspielern. Sie ersetzt den bisherigen Ausschluss von Schülern aus dieser Ansicht. Änderungen an Klassenzuordnungen und sonstige Verwaltungsrechte bleiben Lehrkräften und Admins vorbehalten; konkrete Begriffe und Antworten werden weiterhin nicht in der Statistik angezeigt.

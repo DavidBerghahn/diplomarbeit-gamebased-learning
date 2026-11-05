@@ -189,11 +189,15 @@ Lehrer und Admins SHALL Smart10 aller drei Modi sowie Just One per CSV-Vorlage i
 - **THEN** wird der Import mit verständlichem Fehler abgewiesen und nicht gespeichert
 
 ### Requirement: Klassen- und Schülerstatistik
-Lehrer und Admins SHALL alle Klassen mit Schülern, abgeschlossenen Spielen, Spielhäufigkeit, Punkten und Mitspielern einsehen können. Schüler MUST vom allgemeinen Klassenstatistik-Endpunkt ausgeschlossen sein. Statistikantworten SHALL keine konkreten Begriffe, Hinweise oder Antworten enthalten. Demos und abgebrochene Räume MUST ausgeschlossen bleiben.
+Aktive angemeldete Schüler, Lehrer und Admins SHALL alle Klassen mit Schülern, abgeschlossenen Spielen, Spielhäufigkeit, Punkten und Mitspielern einsehen können. Schüler SHALL dabei ausschließlich lesen können; Änderungen an Klassenzuordnungen MUST weiterhin aktiven Lehrern und Admins vorbehalten bleiben. Nicht angemeldete und inaktive Konten MUST vom Statistikzugriff ausgeschlossen bleiben. Statistikantworten SHALL keine konkreten Begriffe, Hinweise oder Antworten enthalten. Demos und abgebrochene Räume MUST ausgeschlossen bleiben.
 
 #### Scenario: Schüler öffnet Klassenstatistik
-- **WHEN** eine Schüleridentität die Statistik-API direkt aufruft
-- **THEN** wird sie serverseitig mit 403 abgewiesen
+- **WHEN** eine aktive angemeldete Schüleridentität die Statistik-API direkt aufruft
+- **THEN** erhält sie dieselbe lesende Übersicht aller Klassen wie Lehrer und Admins, einschließlich anderer Klassen
+
+#### Scenario: Schüler verändert eine Klassenzuordnung
+- **WHEN** eine Schüleridentität die Zuordnungs-API direkt aufruft
+- **THEN** wird die Änderung serverseitig mit 403 abgewiesen; die Statistikoberfläche bietet Schülern keine Zuordnungsformulare oder Verwaltungsaktionen an
 
 #### Scenario: Noch offener Access-Change
 - **WHEN** die neue Smart10-Persistenz lokal vorhanden ist, die geplanten Sichtbarkeitsregeln aber noch nicht umgesetzt und geprüft sind

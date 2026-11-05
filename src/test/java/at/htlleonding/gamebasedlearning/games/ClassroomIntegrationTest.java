@@ -131,7 +131,8 @@ class ClassroomIntegrationTest {
         }
     }
 
-    @Test void statisticsOnlyTeachersAndAdminsSeeAllClassesWithoutAnswerContent() {
+    @Test void activeStudentsAndTeachersSeeAllClassesWithoutAnswerContent() {
+        io.restassured.RestAssured.given().get("/api/statistics").then().statusCode(401);
         AppUser student=user(UserRole.STUDENT), teacher=user(UserRole.TEACHER), other=user(UserRole.STUDENT);
         QuarkusTransaction.requiringNew().run(()->em.find(AppUser.class,other.id).schoolClass="4OTHER");
         Game game=game("Smart10",teacher);
@@ -148,7 +149,19 @@ class ClassroomIntegrationTest {
         String json=mapper.valueToTree(result).toString();
         assertFalse(json.contains("Aussage"));assertFalse(json.contains("answerData"));
         resource.auth=auth(student);
+        var studentView=resource.statistics(null);
+        assertEquals(data.stream().map(StatisticsResource.Student::id).toList(),
+                studentView.stream().map(StatisticsResource.Student::id).toList());
+        assertTrue(studentView.stream().anyMatch(s->s.id().equals(other.id.toString()) && s.schoolClass().equals("4OTHER")));
+        assertEquals(46,studentView.stream().filter(s->s.id().equals(student.id.toString())).findFirst().orElseThrow().plays().getFirst().score());
+        QuarkusTransaction.requiringNew().run(()->em.find(AppUser.class,student.id).active=false);
         assertThrows(jakarta.ws.rs.ForbiddenException.class,()->resource.statistics(null));
+        resource.auth=new at.htlleonding.gamebasedlearning.auth.AuthProvider() {
+            @Override public at.htlleonding.gamebasedlearning.auth.AuthenticatedUser currentUser(jakarta.ws.rs.core.HttpHeaders headers) {
+                throw new jakarta.ws.rs.NotAuthorizedException("Bearer");
+            }
+        };
+        assertThrows(jakarta.ws.rs.NotAuthorizedException.class,()->resource.statistics(null));
     }
 
     private at.htlleonding.gamebasedlearning.auth.AuthProvider auth(AppUser user) {

@@ -2,6 +2,13 @@
 
 Stand: 5. November 2026
 
+## Klassenstatistik für Schüler: Veröffentlichung beauftragt
+
+- David bestätigt ausdrücklich, dass Schüler **alle Klassen wie Lehrkräfte** lesen dürfen. Auf Basis `c187223` sind der Statistik-Leseendpunkt, die authentifizierte Route und der Navigationslink entsprechend geöffnet. Filter, Summen, Schülerverläufe und DTO-Inhalte bleiben unverändert; keine Migration.
+- Klassen zuordnen und sonstige Verwaltungsaktionen bleiben ausschließlich aktiven Lehrkräften/Admins vorbehalten. Für Schüler fehlen die entsprechenden UI-Formulare und Aufforderungen; `assignClass()` sendet keinen PUT. Der bestehende Backend-Schreibschutz bleibt unverändert. Ohne Anmeldung bleibt Statistikzugriff gesperrt, inaktive Konten erhalten 403.
+- Bestehender Coder-Chat hat umgesetzt; bestehender Reviewer-Chat meldet in der gezielten Rechteprüfung keinen wesentlichen Restbefund. Beide Delegationen funktionierten. Lokal 70 Backendtests, davon 63 erfolgreich ausgeführt und sieben PostgreSQL-Tests mangels Instanz übersprungen; 79 Frontendtests, Frontendbuild, Diff- und OpenSpec-Prüfung erfolgreich. Neues Lesen über Klassengrenzen sowie unveränderte Schreibsperren sind in den Tests enthalten.
+- David hat Commit, GitHub-Push und LeoCloud-Rollout ausdrücklich freigegeben. Veröffentlichung erfolgt nach erfolgreichem GitHub-Lauf mit dem geprüften Image; der tatsächliche Live-Nachweis wird anschließend ergänzt. Die neue fachliche Entscheidung ist in `docs/datenmodell-entscheidungen.md` und im bestehenden Smart10-Change festgehalten.
+
 ## Just-One-Zielwortschutz: Bugfix am 5. November
 
 - **Live bestätigt am 5. November, 10:42 Uhr (Europe/Vienna):** Codecommit `cbd91cbf3c43bb95f74c18fa3fcb8fa1016edf42` nach erfolgreichem GitHub-Lauf `42002787662` ausgerollt (H2, PostgreSQL, Frontend und Imagebau erfolgreich). Die OCI-Revision wurde geprüft; aktives Image ist `ghcr.io/davidberghahn/diplomarbeit-gamebased-learning@sha256:95e21be1ffad8c2d0b1227822483ed388f1fe11e2258dec6a024fdb53a1b10e4`. Eine bereite Instanz ohne Neustarts, Backend und Datenbank `UP`.

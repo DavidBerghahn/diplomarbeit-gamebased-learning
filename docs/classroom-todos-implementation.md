@@ -21,7 +21,7 @@ LeoCloud-Rollout und Änderungen an der Cloud-Datenbank sind ausdrücklich ausge
 | Datenbankanbindung | Spielerstellung, Kopien, Status, Katalog, Solo und Multiplayer an gespeicherte Versionen angeschlossen; bestätigter Commit und Retry | API-Vertrags-, Solo-, Speicher- und echter WebSocket-Test; H2 und PostgreSQL |
 | CSV beider Spiele | Vorlagen für drei Smart10-Modi und Just One; Vorschau, Quotes/Zeilenumbrüche, Kartenanzahl-/Rangprüfung; serverseitige Prüfung beim Speichern | CSV-Tests und Erstellungstest |
 | Statistik ohne Antwortdetails | Statistik-DTO enthält nur Spiele, Modus, Datum, Punkte und Mitspieler | DTO-Test ohne Antwortinhalte |
-| Alle Klassen und Schüler | Lehrer/Admin sehen alle Klassen und Schüler sowie Spielhäufigkeit und Mitspieler; Schüler erhalten 403 | Klassen-/Berechtigungstest |
+| Alle Klassen und Schüler | Aktive angemeldete Schüler, Lehrer und Admins sehen alle Klassen und Schüler sowie Spielhäufigkeit und Mitspieler; Klassen ändern bleibt Lehrer/Admin vorbehalten | Klassen-/Berechtigungstest |
 
 Die lokale Just-One-Demo bleibt als Quelldatei erhalten, ist aber nicht mehr der normale Spielweg.
 Die Route /justOne führt zur Spieleauswahl. Gespeicherte Just-One-Spiele werden über
@@ -51,6 +51,8 @@ Schülern ist das Spiel zunächst öffentlich zu stellen.
 ## Datenfluss
 
 ### Ergänzung der Klassenstatistik am 5. November 2026
+
+Zusätzlicher Beschluss Davids: Auch Schüler dürfen alle Klassen wie Lehrkräfte **lesen**. Die Statistikroute und Navigation stehen daher allen angemeldeten aktiven Konten offen. Ohne Login bleibt die API gesperrt; inaktive Konten werden abgewiesen. Schüler erhalten keine Klassenzuordnungsformulare und dürfen die Zuordnungs-API weiterhin nicht verändern. Die nachfolgenden Angaben zur Klassenzuordnung gelten nur für Lehrkräfte und Admins.
 
 Unter `/statistics` kann ein Lehrer/Admin alle Klassen oder eine einzelne Klasse
 auswählen. Angezeigt werden die gespeicherten Punkte je Schüler, die Summe pro

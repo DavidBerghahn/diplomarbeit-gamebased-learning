@@ -46,6 +46,7 @@ describe('Home', () => {
     expect(text).not.toContain('Meine Spiele');
     expect(text).not.toContain('Spiel erstellen');
     expect(text).not.toContain('Schüleransicht');
+    expect(text).toContain('Klassenstatistik');
   });
 
   it.each(['TEACHER', 'ADMIN'] as const)('shows game management actions to %s users', async (role) => {
@@ -70,6 +71,7 @@ describe('Home', () => {
     expect(component.canManageGames).toBe(false);
     expect(home.textContent).not.toContain('Meine Spiele');
     expect(home.textContent).not.toContain('Spiel erstellen');
+    expect(home.textContent).toContain('Klassenstatistik');
     expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
 
     buttons[1].click();

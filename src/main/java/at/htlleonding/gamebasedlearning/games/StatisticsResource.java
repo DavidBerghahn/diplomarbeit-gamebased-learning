@@ -37,7 +37,7 @@ public class StatisticsResource {
     @GET
     public List<Student> statistics(@Context HttpHeaders headers) {
         AppUser viewer = users.getOrCreateFromIdentity(auth.currentUser(headers));
-        if (!viewer.active || viewer.role == UserRole.STUDENT) throw new ForbiddenException();
+        if (!viewer.active) throw new ForbiddenException();
         // The project's admin accounts are students too; their permissions must not hide their results.
         List<AppUser> students = em.createQuery("select u from AppUser u where u.role in :roles order by u.schoolClass, u.displayName", AppUser.class)
                 .setParameter("roles", List.of(UserRole.STUDENT, UserRole.ADMIN)).getResultList();
